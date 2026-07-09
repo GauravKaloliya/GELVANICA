@@ -8,7 +8,7 @@
 
 const REQUIRED_VARS = {
   landing: [],
-  frontend: ['NEXT_PUBLIC_DOCS_URL'],
+  'cloud-web': ['NEXT_PUBLIC_DOCS_URL'],
   docs: ['NEXT_PUBLIC_API_URL'],
 };
 

@@ -35,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push(Routes.frontend.signIn.build({}))
+      router.push(Routes.cloudWeb.signIn.build({}))
     }
   }, [isLoading, isAuthenticated, router])
 

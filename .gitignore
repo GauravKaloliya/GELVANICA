@@ -19,30 +19,29 @@ npm-debug.log*
 .next/
 out/
 
-# Electron
-electron/dist/
-electron/out/
-electron/build/
-electron/main/index.js*
-electron/main/index.d.ts*
-electron/preload/index.js*
-electron/preload/index.d.ts*
-electron/preload/loading.js*
-electron/preload/loading.d.ts*
-electron/src/*.js*
-electron/src/*.d.ts*
-electron/vite.config.js*
-electron/*.d.ts*
+# Desktop app (Electron)
+local-app/dist/
+local-app/out/
+local-app/build/
+local-app/main/index.js*
+local-app/main/index.d.ts*
+local-app/preload/index.js*
+local-app/preload/index.d.ts*
+local-app/preload/loading.js*
+local-app/preload/loading.d.ts*
+local-app/src/*.js*
+local-app/src/*.d.ts*
+local-app/vite.config.js*
+local-app/*.d.ts*
 
 # Secrets
 client_secret_*.apps.googleusercontent.com.json
 
-# Electron
-electron/dist/
-electron/out/
-electron/build/
-
 # Python local DB
 backend/local.db
+
+# Build artifact: backend Flask code copied into docs/ for Vercel
+docs/api/app/
+
 .claude/
 

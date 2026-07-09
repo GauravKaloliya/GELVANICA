@@ -7,7 +7,7 @@ import {
   ChevronDown, Search, ExternalLink, Download, Command,
 } from 'lucide-react';
 import type { AppRoute, AnchorHash, ExternalUrl } from '../lib/routes';
-import { Routes, frontendUrl, docsUrl, landingUrl, mobileDefault, toExternalUrl } from '../lib';
+import { Routes, cloudWebUrl, docsUrl, landingUrl, mobileDefault, toExternalUrl } from '../lib';
 import gnoviumLogoImg from '../assets/logo/logo.png';
 
 const gnoviumLogoSrc = gnoviumLogoImg.src || gnoviumLogoImg;
@@ -23,7 +23,7 @@ export type NavItemConfig = {
   | { type: 'anchor'; href: AnchorHash }
 );
 
-type Variant = 'landing' | 'frontend' | 'docs';
+type Variant = 'landing' | 'cloud-web' | 'docs';
 
 export interface UniversalNavbarProps {
   variant: Variant;
@@ -157,7 +157,7 @@ function useFocusTrap(open: boolean, containerRef: React.RefObject<HTMLDivElemen
 /* ─── Variant defaults ──────────────────────── */
 const VARIANT_META: Record<Variant, { position: string; badge: string; logoAria: string }> = {
   landing: { position: 'fixed', badge: 'APP', logoAria: 'Gnovium Home' },
-  frontend: { position: 'fixed', badge: 'APP', logoAria: 'Gnovium App Home' },
+  'cloud-web': { position: 'fixed', badge: 'APP', logoAria: 'Gnovium App Home' },
   docs: { position: 'sticky', badge: 'DOCS', logoAria: 'Gnovium Docs Home' },
 };
 
@@ -655,7 +655,7 @@ export function DocsRightSlot({
 }
 
 /** Landing right slot: Get Started button */
-export function LandingRightSlot({ href = frontendUrl() }: { href?: string }) {
+export function LandingRightSlot({ href = cloudWebUrl() }: { href?: string }) {
   return (
     <a
       href={href}
@@ -666,17 +666,17 @@ export function LandingRightSlot({ href = frontendUrl() }: { href?: string }) {
     </a>
   );
 }
+/** Cloud-web auth right slot (sign-in / sign-up / user menu) */
 
-/** Frontend auth right slot (sign-in / sign-up / user menu) */
-export function FrontendRightSlot({
+export function CloudWebRightSlot({
   user,
   isLoading,
   pathname,
   onLogout,
   getAvatarUrl,
-  signInHref = Routes.frontend.signIn.build({}),
-  signUpHref = Routes.frontend.signUp.build({}),
-  workspaceHref = Routes.frontend.workspace.build({}),
+  signInHref = Routes.cloudWeb.signIn.build({}),
+  signUpHref = Routes.cloudWeb.signUp.build({}),
+  workspaceHref = Routes.cloudWeb.workspace.build({}),
 }: {
   user: { name?: string; email?: string; avatar_url?: string } | null;
   isLoading: boolean;
@@ -794,18 +794,18 @@ export function FrontendRightSlot({
     </div>
   );
 }
+/** Cloud-web mobile auth slot */
 
-/** Frontend mobile auth slot */
-export function FrontendMobileAuthSlot({
+export function CloudWebMobileAuthSlot({
   user,
   isLoading,
   pathname,
   onLogout,
   onClose,
   getAvatarUrl,
-  signInHref = Routes.frontend.signIn.build({}),
-  signUpHref = Routes.frontend.signUp.build({}),
-  workspaceHref = Routes.frontend.workspace.build({}),
+  signInHref = Routes.cloudWeb.signIn.build({}),
+  signUpHref = Routes.cloudWeb.signUp.build({}),
+  workspaceHref = Routes.cloudWeb.workspace.build({}),
 }: {
   user: { name?: string; email?: string; avatar_url?: string } | null;
   isLoading: boolean;

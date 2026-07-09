@@ -4,7 +4,7 @@ export type { EnvConfig } from './env';
 export {
   appUrl,
   docsUrl,
-  frontendUrl,
+  cloudWebUrl,
   landingUrl,
 } from './urls';
 

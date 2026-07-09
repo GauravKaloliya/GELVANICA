@@ -5,7 +5,7 @@ describe('envSchema', () => {
   it('parses valid env with defaults', () => {
     const result = envSchema.parse({});
     expect(result.NEXT_PUBLIC_LANDING_URL).toBe('http://localhost:3000');
-    expect(result.NEXT_PUBLIC_FRONTEND_URL).toBe('http://localhost:3001');
+    expect(result.NEXT_PUBLIC_CLOUD_WEB_URL).toBe('http://localhost:3001');
     expect(result.NEXT_PUBLIC_DOCS_URL).toBe('http://localhost:3002');
     expect(result.NEXT_PUBLIC_API_URL).toBe('http://localhost:5000');
     expect(result.NEXT_PUBLIC_API_BASE_PATH).toBe('/api/v1');

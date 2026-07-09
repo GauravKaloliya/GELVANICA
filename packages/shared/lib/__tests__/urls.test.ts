@@ -4,22 +4,22 @@ import { createEnvConfig } from '../env';
 
 const DEV_CONFIG = createEnvConfig({
   NEXT_PUBLIC_LANDING_URL: 'http://localhost:3000',
-  NEXT_PUBLIC_FRONTEND_URL: 'http://localhost:3001',
+  NEXT_PUBLIC_CLOUD_WEB_URL: 'http://localhost:3001',
   NEXT_PUBLIC_DOCS_URL: 'http://localhost:3002',
   NEXT_PUBLIC_API_URL: 'http://localhost:5000',
   NEXT_PUBLIC_LANDING_BASE_PATH: '',
-  NEXT_PUBLIC_FRONTEND_BASE_PATH: '/app',
+  NEXT_PUBLIC_CLOUD_WEB_BASE_PATH: '/app',
   NEXT_PUBLIC_DOCS_BASE_PATH: '/api/v1/docs',
   NEXT_PUBLIC_API_BASE_PATH: '/api/v1',
 });
 
 const PROD_CONFIG = createEnvConfig({
   NEXT_PUBLIC_LANDING_URL: 'https://gnovium.com',
-  NEXT_PUBLIC_FRONTEND_URL: 'https://app.gnovium.com',
+  NEXT_PUBLIC_CLOUD_WEB_URL: 'https://app.gnovium.com',
   NEXT_PUBLIC_DOCS_URL: 'https://api.gnovium.com',
   NEXT_PUBLIC_API_URL: 'https://api.gnovium.com',
   NEXT_PUBLIC_LANDING_BASE_PATH: '',
-  NEXT_PUBLIC_FRONTEND_BASE_PATH: '',
+  NEXT_PUBLIC_CLOUD_WEB_BASE_PATH: '',
   NEXT_PUBLIC_DOCS_BASE_PATH: '/v1/docs',
   NEXT_PUBLIC_API_BASE_PATH: '/v1',
 });
@@ -29,8 +29,8 @@ describe('appUrl — development', () => {
     expect(appUrl('landing', '/', DEV_CONFIG)).toBe('http://localhost:3000/');
   });
 
-  it('frontend at /app base path', () => {
-    expect(appUrl('frontend', '/signin', DEV_CONFIG)).toBe('http://localhost:3001/app/signin');
+  it('cloud-web at /app base path', () => {
+    expect(appUrl('cloud-web', '/signin', DEV_CONFIG)).toBe('http://localhost:3001/app/signin');
   });
 
   it('docs at /api/v1/docs base path', () => {
@@ -51,8 +51,8 @@ describe('appUrl — production', () => {
     expect(appUrl('landing', '/', PROD_CONFIG)).toBe('https://gnovium.com/');
   });
 
-  it('frontend at own subdomain with no base path', () => {
-    expect(appUrl('frontend', '/signin', PROD_CONFIG)).toBe('https://app.gnovium.com/signin');
+  it('cloud-web at own subdomain with no base path', () => {
+    expect(appUrl('cloud-web', '/signin', PROD_CONFIG)).toBe('https://app.gnovium.com/signin');
   });
 
   it('docs at /v1/docs base path on api subdomain', () => {
@@ -63,7 +63,7 @@ describe('appUrl — production', () => {
     expect(appUrl('docs', '/', PROD_CONFIG)).toBe('https://api.gnovium.com/v1/docs/');
   });
 
-  it('frontend home', () => {
-    expect(appUrl('frontend', '/', PROD_CONFIG)).toBe('https://app.gnovium.com/');
+  it('cloud-web home', () => {
+    expect(appUrl('cloud-web', '/', PROD_CONFIG)).toBe('https://app.gnovium.com/');
   });
 });

@@ -1,5 +1,5 @@
 {
-  "name": "gnovium-electron",
+  "name": "local-app",
   "version": "0.1.0",
   "private": true,
   "description": "Gnovium Electron shell — wraps Flask API + product UI",

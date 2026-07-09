@@ -16,12 +16,12 @@ export function appUrl<T extends AppId>(
 
   const baseMap: Record<AppId, string> = {
     landing: cfg.NEXT_PUBLIC_LANDING_URL,
-    frontend: cfg.NEXT_PUBLIC_FRONTEND_URL,
+    'cloud-web': cfg.NEXT_PUBLIC_CLOUD_WEB_URL,
     docs: cfg.NEXT_PUBLIC_DOCS_URL,
   };
   const basePathMap: Record<AppId, string> = {
     landing: cfg.NEXT_PUBLIC_LANDING_BASE_PATH,
-    frontend: cfg.NEXT_PUBLIC_FRONTEND_BASE_PATH,
+    'cloud-web': cfg.NEXT_PUBLIC_CLOUD_WEB_BASE_PATH,
     docs: cfg.NEXT_PUBLIC_DOCS_BASE_PATH,
   };
 
@@ -37,9 +37,9 @@ export function docsUrl(path = ''): AppRoute<'docs'> {
   return appUrl('docs', path || '/');
 }
 
-/** Shorthand: frontend URL for a given path */
-export function frontendUrl(path = ''): AppRoute<'frontend'> {
-  return appUrl('frontend', path || '/');
+/** Shorthand: cloud-web URL for a given path */
+export function cloudWebUrl(path = ''): AppRoute<'cloud-web'> {
+  return appUrl('cloud-web', path || '/');
 }
 
 /** Shorthand: landing URL for a given path */

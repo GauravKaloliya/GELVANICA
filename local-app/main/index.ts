@@ -15,7 +15,7 @@ initRendererErrorHandler();
 
 // ── Path resolution ──
 // __dirname = dist/main/main/ in both dev and prod.
-// Dev:  ../../../renderer/ = projectRoot/electron/renderer/
+// Dev:  ../../../renderer/ = projectRoot/local-app/renderer/
 // Prod: ../../renderer/    = asar/dist/renderer/
 function resolveRenderer(...segments: string[]): string {
   return path.join(__dirname, isDev ? "../../../renderer" : "../../renderer", ...segments);
@@ -213,7 +213,7 @@ function createAuthWindow(): Promise<ElectronAuthData> {
 
     authWindow.webContents.on("did-finish-load", () => {
       const url = authWindow?.webContents.getURL();
-      if (!url?.includes("/auth/electron/callback")) return;
+      if (!url?.includes("/auth/local-app/callback")) return;
 
       const parsed = new URL(url);
       const queryAuth = parsed.searchParams.get("auth");
@@ -250,7 +250,7 @@ function createAuthWindow(): Promise<ElectronAuthData> {
       }
     }
 
-    const signinUrl = `${AUTH_URL}/signin?mode=electron`;
+    const signinUrl = `${AUTH_URL}/signin?mode=local-app`;
     authWindow.loadURL(signinUrl);
   });
 }

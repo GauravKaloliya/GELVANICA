@@ -7,8 +7,8 @@ import { createEnvConfig, assertEnv } from './env';
 let validated = false;
 
 const APP_CRITICAL_VARS: Record<string, string[]> = {
-  landing: ['NEXT_PUBLIC_LANDING_URL', 'NEXT_PUBLIC_DOCS_URL', 'NEXT_PUBLIC_FRONTEND_URL'],
-  frontend: ['NEXT_PUBLIC_FRONTEND_URL', 'NEXT_PUBLIC_DOCS_URL'],
+  landing: ['NEXT_PUBLIC_LANDING_URL', 'NEXT_PUBLIC_DOCS_URL', 'NEXT_PUBLIC_CLOUD_WEB_URL'],
+  'cloud-web': ['NEXT_PUBLIC_CLOUD_WEB_URL', 'NEXT_PUBLIC_DOCS_URL'],
   docs: ['NEXT_PUBLIC_DOCS_URL', 'NEXT_PUBLIC_API_URL'],
 };
 
@@ -19,8 +19,8 @@ export function bootstrapEnv(): void {
   const appName =
     process.env.NEXT_PUBLIC_DOCS_BASE_PATH !== undefined
       ? 'docs'
-      : process.env.NEXT_PUBLIC_FRONTEND_BASE_PATH !== undefined
-        ? 'frontend'
+      : process.env.NEXT_PUBLIC_CLOUD_WEB_BASE_PATH !== undefined
+        ? 'cloud-web'
         : 'landing';
 
   try {

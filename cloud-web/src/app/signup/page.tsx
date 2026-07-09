@@ -270,9 +270,9 @@ export default function SignUpPage() {
       }
 
       const params = new URLSearchParams(window.location.search);
-      if (params.get("mode") === "electron") {
+      if (params.get("mode") === "local-app") {
         const authData = encodeURIComponent(JSON.stringify({ access_token: tokensRef.current!.access_token, refresh_token: tokensRef.current!.refresh_token, user: finalUser }));
-        window.location.href = `/auth/electron/callback?auth=${authData}`;
+        window.location.href = `/auth/local-app/callback?auth=${authData}`;
         return;
       }
 
@@ -592,7 +592,7 @@ export default function SignUpPage() {
           <p className="mt-8 text-center text-xs font-mono text-[var(--muted)]">
             Already have an account?{" "}
             <Link
-               href={Routes.frontend.signIn.build({})}
+               href={Routes.cloudWeb.signIn.build({})}
               className="font-black text-[var(--foreground)] border-b-2 border-[var(--foreground)] pb-0.5 hover:opacity-80 transition-opacity"
             >
               Sign in

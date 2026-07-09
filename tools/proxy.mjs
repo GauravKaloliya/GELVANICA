@@ -11,7 +11,7 @@ const ROOT = resolve(__dirname, '..');
 // ── Configuration ────────────────────────────────────────────
 const PORTS = {
   landing: 3000,
-  frontend: 3001,
+  'cloud-web': 3001,
   docs: 3002,
   backend: 5000,
   proxy: 8080,
@@ -19,7 +19,7 @@ const PORTS = {
 
 const TARGETS = [
   { prefix: '/api/v1/docs', url: `http://localhost:${PORTS.docs}`, strip: false },
-  { prefix: '/app',         url: `http://localhost:${PORTS.frontend}`, strip: false },
+  { prefix: '/app',         url: `http://localhost:${PORTS['cloud-web']}`, strip: false },
   { prefix: '/api/v1',      url: `http://localhost:${PORTS.backend}`, strip: true },
 ];
 
@@ -89,7 +89,7 @@ log('proxy', 'Starting dev servers...\n');
 
 const procs = [
   { name: 'landing',  cmd: 'npm', args: [...NEXT_DEV, '-w=landing', '--', '--port', String(PORTS.landing)],                               port: PORTS.landing,  health: '/' },
-  { name: 'frontend', cmd: 'npm', args: [...NEXT_DEV, '-w=frontend', '--', '--port', String(PORTS.frontend)],  env: { NEXT_PUBLIC_BASE_PATH: '/app' },       port: PORTS.frontend, health: '/app' },
+  { name: 'cloud-web', cmd: 'npm', args: [...NEXT_DEV, '-w=cloud-web', '--', '--port', String(PORTS['cloud-web'])],  env: { NEXT_PUBLIC_BASE_PATH: '/app' },       port: PORTS['cloud-web'], health: '/app' },
   { name: 'docs',     cmd: 'npm', args: [...NEXT_DEV, '-w=docs', '--', '--port', String(PORTS.docs)],          env: { NEXT_PUBLIC_BASE_PATH: '/api/v1/docs' }, port: PORTS.docs,     health: '/api/v1/docs' },
   { name: 'backend',  cmd: 'python3', args: ['backend/run.py'],                                                                          port: PORTS.backend, health: '/' },
 ];

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { HardDrive, Sparkles } from 'lucide-react';
 import ParticleGraph from './ParticleGraph';
 import Link from 'next/link';
-import { Routes, frontendUrl } from '@gnovium/shared';
+import { Routes, cloudWebUrl } from '@gnovium/shared';
 
 export default function Hero() {
   return (
@@ -69,7 +69,7 @@ export default function Hero() {
                 Download Gnovium
               </Link>
               <Link
-                href={frontendUrl()}
+                href={cloudWebUrl()}
                 className="text-step-1 font-black font-mono uppercase tracking-wider px-6 py-3 border-2 border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--code-bg)] transition-all flex items-center gap-2 bg-[var(--card-bg)]"
               >
                 Get Started

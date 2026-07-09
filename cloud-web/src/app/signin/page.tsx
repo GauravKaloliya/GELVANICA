@@ -100,9 +100,9 @@ export default function SignInPage() {
     try {
       const { user, tokens } = await login(emailTrimmed, password);
       const params = new URLSearchParams(window.location.search);
-      if (params.get("mode") === "electron") {
+      if (params.get("mode") === "local-app") {
         const authData = encodeURIComponent(JSON.stringify({ access_token: tokens.access_token, refresh_token: tokens.refresh_token, user }));
-        window.location.href = `/auth/electron/callback?auth=${authData}`;
+        window.location.href = `/auth/local-app/callback?auth=${authData}`;
         return;
       }
       loginSession(user, tokens);
@@ -142,9 +142,9 @@ export default function SignInPage() {
         try {
           const { user, tokens } = await googleLogin(response.id_token);
           const params = new URLSearchParams(window.location.search);
-          if (params.get("mode") === "electron") {
+          if (params.get("mode") === "local-app") {
             const authData = encodeURIComponent(JSON.stringify({ access_token: tokens.access_token, refresh_token: tokens.refresh_token, user }));
-            window.location.href = `/auth/electron/callback?auth=${authData}`;
+            window.location.href = `/auth/local-app/callback?auth=${authData}`;
             return;
           }
           loginSession(user, tokens);
@@ -354,7 +354,7 @@ export default function SignInPage() {
           <p className="mt-8 text-center text-xs font-mono text-[var(--muted)]">
             Not a member?{" "}
             <Link
-               href={Routes.frontend.signUp.build({})}
+               href={Routes.cloudWeb.signUp.build({})}
               className="font-black text-[var(--foreground)] border-b-2 border-[var(--foreground)] pb-0.5 hover:opacity-80 transition-opacity"
             >
               Sign up for free

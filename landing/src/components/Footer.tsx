@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Routes, docsUrl, frontendUrl } from '@gnovium/shared';
+import { Routes, docsUrl, cloudWebUrl } from '@gnovium/shared';
 
 const sections = [
   {
@@ -7,7 +7,7 @@ const sections = [
     links: [
       { href: '#features', label: 'Features' },
       { href: Routes.landing.download.build({}), label: 'Download' },
-      { href: frontendUrl(), label: 'Get Started' },
+      { href: cloudWebUrl(), label: 'Get Started' },
     ],
   },
   {

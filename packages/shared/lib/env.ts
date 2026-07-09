@@ -6,12 +6,12 @@ import { z } from 'zod';
  */
 export const envSchema = z.object({
   NEXT_PUBLIC_LANDING_URL: z.string().url().default('http://localhost:3000'),
-  NEXT_PUBLIC_FRONTEND_URL: z.string().url().default('http://localhost:3001'),
+  NEXT_PUBLIC_CLOUD_WEB_URL: z.string().url().default('http://localhost:3001'),
   NEXT_PUBLIC_DOCS_URL: z.string().url().default('http://localhost:3002'),
   NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:5000'),
 
   NEXT_PUBLIC_LANDING_BASE_PATH: z.string().default(''),
-  NEXT_PUBLIC_FRONTEND_BASE_PATH: z.string().default('/app'),
+  NEXT_PUBLIC_CLOUD_WEB_BASE_PATH: z.string().default('/app'),
   NEXT_PUBLIC_DOCS_BASE_PATH: z.string().default('/api/v1/docs'),
   NEXT_PUBLIC_API_BASE_PATH: z.string().default('/api/v1'),
 });
@@ -28,8 +28,8 @@ export const ENV_DEFINITIONS: Record<string, { description: string; default: str
     default: 'http://localhost:3000',
     required: false,
   },
-  NEXT_PUBLIC_FRONTEND_URL: {
-    description: 'Base URL of the frontend app',
+  NEXT_PUBLIC_CLOUD_WEB_URL: {
+    description: 'Base URL of the cloud-web app',
     default: 'http://localhost:3001',
     required: false,
   },
@@ -48,8 +48,8 @@ export const ENV_DEFINITIONS: Record<string, { description: string; default: str
     default: '',
     required: false,
   },
-  NEXT_PUBLIC_FRONTEND_BASE_PATH: {
-    description: 'Sub-path where frontend is served',
+  NEXT_PUBLIC_CLOUD_WEB_BASE_PATH: {
+    description: 'Sub-path where cloud-web is served',
     default: '/app',
     required: false,
   },

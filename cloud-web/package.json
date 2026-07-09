@@ -1,10 +1,10 @@
 {
-  "name": "frontend",
+  "name": "cloud-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node ../../scripts/validate-env.mjs frontend",
+    "prebuild": "node ../../scripts/validate-env.mjs cloud-web",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

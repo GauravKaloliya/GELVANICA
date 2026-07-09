@@ -1,6 +1,6 @@
 'use client';
 
-export default function ElectronAuthCallback() {
+export default function LocalAppAuthCallback() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4">
       <div className="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-6" />

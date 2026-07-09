@@ -5,7 +5,7 @@ export {
   default as UniversalNavbar,
   DocsRightSlot,
   LandingRightSlot,
-  FrontendRightSlot,
+  CloudWebRightSlot,
   FrontendMobileAuthSlot,
 } from './components/UniversalNavbar';
 export type { UniversalNavbarProps, NavItemConfig } from './components/UniversalNavbar';
@@ -17,7 +17,7 @@ export {
   envSchema,
   appUrl,
   docsUrl,
-  frontendUrl,
+  cloudWebUrl,
   landingUrl,
   Routes,
   crossApp,

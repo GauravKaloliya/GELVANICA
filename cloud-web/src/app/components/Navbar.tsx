@@ -6,8 +6,8 @@ import { useTheme } from './ThemeProvider';
 import { getAvatarUrl } from '@/lib/avatar';
 import {
   UniversalNavbar,
-  FrontendRightSlot,
-  FrontendMobileAuthSlot,
+  CloudWebRightSlot,
+  CloudWebMobileAuthSlot,
   Routes,
   getNavItems,
 } from '@gnovium/shared';
@@ -20,18 +20,18 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
-    router.push(Routes.frontend.signIn.build({}));
+    router.push(Routes.cloudWeb.signIn.build({}));
   };
 
   return (
     <UniversalNavbar
-      variant="frontend"
-      navItems={getNavItems('frontend')}
+      variant="cloud-web"
+      navItems={getNavItems('cloud-web')}
       theme={theme}
       onToggleTheme={toggle}
       pathname={pathname}
       rightSlot={
-        <FrontendRightSlot
+        <CloudWebRightSlot
           user={user ? { name: user.name, email: user.email, avatar_url: user.avatar_url ?? undefined } : null}
           isLoading={isLoading}
           pathname={pathname}
@@ -40,7 +40,7 @@ export default function Navbar() {
         />
       }
       mobileBottomSlot={(onClose) => (
-        <FrontendMobileAuthSlot
+        <CloudWebMobileAuthSlot
           user={user ? { name: user.name, email: user.email, avatar_url: user.avatar_url ?? undefined } : null}
           isLoading={isLoading}
           pathname={pathname}

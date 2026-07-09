@@ -5,7 +5,7 @@
 
 /* ─── App Identification ────────────────────── */
 
-export type AppId = 'landing' | 'frontend' | 'docs';
+export type AppId = 'landing' | 'cloud-web' | 'docs';
 
 /* ─── Branded Types ─────────────────────────── */
 
@@ -116,7 +116,7 @@ export const Routes = {
     whoItsFor: defineRoute('/#who-its-for'),
     about: defineRoute('/#about'),
   },
-  frontend: {
+  cloudWeb: {
     home: defineRoute('/'),
     signIn: defineRoute('/signin'),
     signUp: defineRoute('/signup'),

@@ -1,7 +1,7 @@
 import type { NavItemConfig } from '../components/UniversalNavbar';
-import { Routes, docsUrl, frontendUrl, toAnchorHash, toExternalUrl } from '../lib';
+import { Routes, docsUrl, cloudWebUrl, toAnchorHash, toExternalUrl } from '../lib';
 
-export type Variant = 'landing' | 'frontend' | 'docs';
+export type Variant = 'landing' | 'cloud-web' | 'docs';
 
 const LANDING_NAV: NavItemConfig[] = [
   { type: 'anchor', href: toAnchorHash(Routes.landing.features.build({})), label: 'Features' },
@@ -13,8 +13,8 @@ const LANDING_NAV: NavItemConfig[] = [
   { type: 'external', href: toExternalUrl(docsUrl()), label: 'Documentation' },
 ];
 
-const FRONTEND_NAV: NavItemConfig[] = [
-  { type: 'internal', href: Routes.frontend.home.build({}), label: 'Home' },
+const CLOUD_WEB_NAV: NavItemConfig[] = [
+  { type: 'internal', href: Routes.cloudWeb.home.build({}), label: 'Home' },
   { type: 'external', href: toExternalUrl(docsUrl()), label: 'Documentation' },
 ];
 
@@ -22,7 +22,7 @@ const DOCS_NAV: NavItemConfig[] = [];
 
 const NAV_MAP: Record<Variant, NavItemConfig[]> = {
   landing: LANDING_NAV,
-  frontend: FRONTEND_NAV,
+  'cloud-web': CLOUD_WEB_NAV,
   docs: DOCS_NAV,
 };
 
@@ -36,7 +36,7 @@ export interface MobileDefaultConfig {
 }
 
 export const mobileDefault: Record<Variant, MobileDefaultConfig | undefined> = {
-  landing: { href: frontendUrl(), label: 'Get Started' },
-  frontend: undefined,
+  landing: { href: cloudWebUrl(), label: 'Get Started' },
+  'cloud-web': undefined,
   docs: undefined,
 };

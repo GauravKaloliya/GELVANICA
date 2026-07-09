@@ -17,27 +17,27 @@ describe('Routes', () => {
     });
   });
 
-  describe('frontend', () => {
+  describe('cloud-web', () => {
     it('builds sign-in path', () => {
-      expect(Routes.frontend.signIn.build({})).toBe('/signin');
+      expect(Routes.cloudWeb.signIn.build({})).toBe('/signin');
     });
 
     it('builds sign-up path', () => {
-      expect(Routes.frontend.signUp.build({})).toBe('/signup');
+      expect(Routes.cloudWeb.signUp.build({})).toBe('/signup');
     });
 
     it('builds workspace detail with id parameter', () => {
-      const path = Routes.frontend.workspaceDetail.build({ id: 'abc-123' });
+      const path = Routes.cloudWeb.workspaceDetail.build({ id: 'abc-123' });
       expect(path).toBe('/workspaces/abc-123');
     });
 
     it('encodes URI components in parameters', () => {
-      const path = Routes.frontend.workspaceDetail.build({ id: 'my workspace' });
+      const path = Routes.cloudWeb.workspaceDetail.build({ id: 'my workspace' });
       expect(path).toBe('/workspaces/my%20workspace');
     });
 
     it('builds entity detail with multiple parameters', () => {
-      const path = Routes.frontend.entityDetail.build({
+      const path = Routes.cloudWeb.entityDetail.build({
         workspaceId: 'w1',
         entityId: 'e1',
       });
@@ -68,17 +68,17 @@ describe('RouteDefinition.match', () => {
   });
 
   it('matches parameterized paths', () => {
-    const result = Routes.frontend.workspaceDetail.match('/workspaces/abc-123');
+    const result = Routes.cloudWeb.workspaceDetail.match('/workspaces/abc-123');
     expect(result).toEqual({ id: 'abc-123' });
   });
 
   it('matches multi-parameter paths', () => {
-    const result = Routes.frontend.entityDetail.match('/workspaces/w1/entities/e1');
+    const result = Routes.cloudWeb.entityDetail.match('/workspaces/w1/entities/e1');
     expect(result).toEqual({ workspaceId: 'w1', entityId: 'e1' });
   });
 
   it('returns null for mismatched parameterized paths', () => {
-    const result = Routes.frontend.workspaceDetail.match('/workspaces');
+    const result = Routes.cloudWeb.workspaceDetail.match('/workspaces');
     expect(result).toBeNull();
   });
 });

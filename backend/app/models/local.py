@@ -144,6 +144,7 @@ class EntityTag(TextPKMixin, SoftDeleteMixin, db.Model):
 class EntityEvent(TextPKMixin, CreatedOnlyMixin, db.Model):
     __tablename__ = "entity_events"
 
+    workspace_id = db.Column(db.String(36), db.ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
     entity_id = db.Column(db.String(36), db.ForeignKey("entities.id", ondelete="RESTRICT"), nullable=False)
     event_type = db.Column(db.Text, nullable=False)
     payload = db.Column(db.JSON, nullable=False)

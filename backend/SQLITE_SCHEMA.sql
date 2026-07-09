@@ -386,7 +386,7 @@ CREATE TABLE IF NOT EXISTS embeddings (
     entity_id TEXT REFERENCES entities(id) ON DELETE CASCADE,
     block_id TEXT,
     model TEXT NOT NULL,
-    embedding BLOB,  -- Raw float32 bytes; no ANN index available — similarity search is CPU-based
+    embedding TEXT,  -- JSON float32 array; no ANN index available — similarity search is CPU-based
     content_hash TEXT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_deleted BOOLEAN NOT NULL DEFAULT 0,
@@ -452,7 +452,10 @@ CREATE TABLE IF NOT EXISTS governance_reports (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
     workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     health_score REAL,
-    metrics TEXT DEFAULT '{}' CHECK(json_valid(metrics)),
+    duplicate_count INTEGER DEFAULT 0,
+    orphan_count INTEGER DEFAULT 0,
+    stale_count INTEGER DEFAULT 0,
+    report TEXT DEFAULT '{}' CHECK(json_valid(report)),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { bootstrapEnv } from "@gnovium/shared";
+
+bootstrapEnv();
 import Navbar from "./components/Navbar";
 import { SessionProvider } from "@/lib/session";
 import ThemeProvider from "./components/ThemeProvider";

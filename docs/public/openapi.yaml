@@ -1,0 +1,4565 @@
+# Gnovium Knowledge OS API — OpenAPI 3.0.3 Specification
+# Generated at 2026-07-07T13:45:58.497Z
+
+openapi: 3.0.3
+info:
+  title: Gnovium Knowledge OS API
+  version: 1.0.1
+  description: "Gnovium API is a local-first Knowledge Operating System API for building applications where knowledge behaves like a living system rather than a collection of disconnected documents.
+
+This API supports:
+- Block-based content management with rich text editing
+- Structured relational knowledge modeling with typed entities and properties
+- Interactive knowledge graph with traversal, pathfinding, and queries
+- Git-inspired versioning with branches, snapshots, and visual diffs
+- AI-powered semantic search and natural language question answering
+- Workspace governance with health scoring and duplicate detection
+- Cross-device synchronization with conflict resolution
+- File management with presigned URL uploads (cloud mode)
+
+Deployment modes:
+- **Local Mode** (default): SQLite storage, offline-first, local AI via Inference Runtime
+- **Cloud Mode**: PostgreSQL, S3 storage, managed infrastructure"
+  contact:
+    name: Gaurav Kaloliya — Founder & Creator
+    url: https://www.linkedin.com/in/gaurav-kaloliya-b44569417
+    email: gaurav@gnovium.com
+  license:
+    name: MIT
+    url: https://github.com/GauravKaloliya/gnovium/blob/main/LICENSE
+  termsOfService: https://gnovium.com/terms
+servers:
+  - url: https://api.gnovium.com/api/v1
+    description: Production (Cloud Mode)
+    
+  - url: http://localhost:5000/api/v1
+    description: Local Development (Local Mode)
+    
+  - url: https://staging.api.gnovium.com/api/v1
+    description: Staging
+    
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Check API health
+      description: Public liveness endpoint for load balancers, uptime checks, and deployment smoke tests. Requires no authentication.
+      operationId: healthCheck
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security: []
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a user
+      description: Cloud-only. Creates a user account. Passwords must be at least 8 characters and are stored as bcrypt hashes. Returns JWT access and refresh tokens.
+      operationId: authRegister
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRegisterRequest"
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Log in
+      description: Cloud-only. Authenticates with email and password, creates a server-side session, and returns JWT access and refresh tokens.
+      operationId: authLogin
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh access token
+      description: Cloud-only. Uses a valid refresh token to issue a new access token. Send the refresh token in the Authorization header. Only a new access_token is returned — the existing refresh token is reused.
+      operationId: authRefresh
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /auth/check-email:
+    get:
+      tags:
+        - Auth
+      summary: Check email availability
+      description: Cloud-only. Checks whether an email address is already registered. Public endpoint, no auth required.
+      operationId: authCheckEmail
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+          type: string
+          description: Email address to check.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security: []
+  /auth/google:
+    post:
+      tags:
+        - Auth
+      summary: Sign in with Google
+      description: Cloud-only. Authenticates using a Google OAuth credential token. Returns the same token envelope as login.
+      operationId: authGoogle
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security: []
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Log out
+      description: Cloud-only. Revokes the current refresh-token session so it cannot be used again.
+      operationId: authLogout
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user
+      description: Cloud-only. Returns the authenticated user's profile including email, name, avatar, and timestamps.
+      operationId: authMe
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    patch:
+      tags:
+        - Auth
+      summary: Update current user
+      description: Cloud-only. Partially updates the authenticated user's profile. Only send the fields you want to change.
+      operationId: authMeUpdate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthMeUpdateRequest"
+  /workspaces/:
+    get:
+      tags:
+        - Workspaces
+      summary: List workspaces
+      description: Returns workspaces owned by or accessible to the current user.
+      operationId: workspacesList
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Workspaces
+      summary: Create workspace
+      description: Creates a workspace and associates it with the authenticated user as the owner.
+      operationId: workspacesCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspaceRequest"
+  /workspaces/{id}:
+    get:
+      tags:
+        - Workspaces
+      summary: Get workspace
+      description: Retrieves a single workspace by ID.
+      operationId: workspacesGet
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    patch:
+      tags:
+        - Workspaces
+      summary: Update workspace
+      description: Partially updates workspace name, description, or settings. Setting description to null clears it. Settings replaces the entire dict — omitted keys are lost, set a key to null to clear it.
+      operationId: workspacesUpdate
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Workspaces
+      summary: Delete workspace
+      description: Deletes a workspace permanently. All associated entities, blocks, relations, tags, files, comments, and notifications are deleted.
+      operationId: workspacesDelete
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /workspaces/{id}/stats:
+    get:
+      tags:
+        - Workspaces
+      summary: Workspace statistics
+      description: Returns a curated snapshot of workspace health and activity — entity count, block count, relation count, recent changes, and member stats.
+      operationId: workspacesStats
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/:
+    get:
+      tags:
+        - Entities
+      summary: List entities
+      description: Returns entities, optionally filtered by workspace and entity type.
+      operationId: entitiesList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: entity_type_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Filter by entity type.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Entities
+      summary: Create entity
+      description: Creates a page, record, or graph node inside a workspace. The entity_type_id determines what properties the entity supports.
+      operationId: entitiesCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEntityRequest"
+  /entities/{id}:
+    get:
+      tags:
+        - Entities
+      summary: Get entity
+      description: Retrieves one entity by ID including its properties and metadata.
+      operationId: entitiesGet
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    patch:
+      tags:
+        - Entities
+      summary: Update entity
+      description: Partially updates title, icon, cover image, archive flag, or flexible properties. Omitted fields remain unchanged.
+      operationId: entitiesUpdate
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Entities
+      summary: Delete entity
+      description: Deletes an entity permanently. Cascades to all blocks, property values, relations, tags, file links, comments, and notifications. Use POST /entities/<id>/restore to undo the deletion.
+      operationId: entitiesDelete
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/{id}/archive:
+    post:
+      tags:
+        - Entities
+      summary: Archive entity
+      description: Marks an entity as archived without deleting it. Archived entities are hidden from default views but can be searched and restored.
+      operationId: entitiesArchive
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/{id}/restore:
+    post:
+      tags:
+        - Entities
+      summary: Restore entity
+      description: Restores a deleted entity back to active status.
+      operationId: entitiesRestore
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/{id}/duplicate:
+    post:
+      tags:
+        - Entities
+      summary: Duplicate entity
+      description: Creates a deep copy of an entity including all its blocks and properties. The copy is titled "Original Copy" by default.
+      operationId: entitiesDuplicate
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Source entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/{id}/children:
+    get:
+      tags:
+        - Entities
+      summary: List child entities
+      description: Returns direct child entities of a parent entity. Children inherit the parent's workspace context.
+      operationId: entitiesChildrenList
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Parent entity ID
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Entities
+      summary: Create child entity
+      description: Creates a new entity as a child of the specified parent. Inherits the parent workspace. Ideal for hierarchical knowledge structures.
+      operationId: entitiesChildrenCreate
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Parent entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/{id}/versions:
+    get:
+      tags:
+        - Entities
+      summary: List entity versions
+      description: Cloud-only. Returns version history for an entity. Each entry represents a point-in-time snapshot of the entity's state. Cloud-only — returns 404 in local mode.
+      operationId: entitiesVersions
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/types:
+    get:
+      tags:
+        - Entities
+      summary: List entity types
+      description: Returns entity type definitions for a workspace. Each type defines a reusable schema for entities.
+      operationId: entityTypesList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Entities
+      summary: Create entity type
+      description: Defines a reusable type for entities in a workspace. Custom types enable structured knowledge modeling.
+      operationId: entityTypesCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /entities/properties:
+    get:
+      tags:
+        - Entities
+      summary: List properties
+      description: Returns property definitions for a workspace or entity type. Properties define the schema for entity metadata.
+      operationId: propertiesList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Entities
+      summary: Create property
+      description: "Adds a reusable typed property to a workspace or entity type. Supported types: text, number, select, multi_select, date, boolean, url."
+      operationId: propertiesCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /tags/:
+    get:
+      tags:
+        - Tags
+      summary: List tags
+      description: Returns all tags for a workspace.
+      operationId: tagsList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Tags
+      summary: Create tag
+      description: Creates a new tag with an optional color. Tags are lightweight labels that can be applied to entities.
+      operationId: tagsCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /tags/{id}:
+    get:
+      tags:
+        - Tags
+      summary: Get tag
+      description: Retrieves a single tag by ID.
+      operationId: tagsGet
+      parameters:
+        - name: tag_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Tag ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    patch:
+      tags:
+        - Tags
+      summary: Update tag
+      description: Partially updates a tag's name or color.
+      operationId: tagsUpdate
+      parameters:
+        - name: tag_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Tag ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Tags
+      summary: Delete tag
+      description: Permanently deletes a tag. Entity-tag associations are also removed.
+      operationId: tagsDelete
+      parameters:
+        - name: tag_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Tag ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /tags/{tag_id}/entities/{entity_id}:
+    post:
+      tags:
+        - Tags
+      summary: Tag an entity
+      description: Applies a tag to an entity. Both the tag and entity must exist in the same workspace.
+      operationId: tagsTagEntity
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Tag ID
+          
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Tags
+      summary: Untag an entity
+      description: Removes a tag from an entity. The tag itself is not deleted.
+      operationId: tagsUntagEntity
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Tag ID
+          
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /blocks/:
+    get:
+      tags:
+        - Blocks
+      summary: List blocks
+      description: Returns blocks for an entity. If no entity_id is specified, returns all blocks across the user's accessible workspaces.
+      operationId: blocksList
+      parameters:
+        - name: entity_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Filter blocks by parent entity.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Blocks
+      summary: Create block
+      description: "Creates a block inside an entity. If position is omitted, the block is appended after existing siblings. Block types: text, heading_1-3, bulleted_list, numbered_list, to_do, code, quote, callout, image, divider, table."
+      operationId: blocksCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /blocks/{id}:
+    get:
+      tags:
+        - Blocks
+      summary: Get block
+      description: Retrieves a single block by ID.
+      operationId: blocksGet
+      parameters:
+        - name: block_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Block ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    patch:
+      tags:
+        - Blocks
+      summary: Update block
+      description: Partially updates a block's type, position, parent, or content. Only send the fields that changed.
+      operationId: blocksUpdate
+      parameters:
+        - name: block_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Block ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Blocks
+      summary: Delete block
+      description: Deletes a block permanently.
+      operationId: blocksDelete
+      parameters:
+        - name: block_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Block ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /blocks/{id}/move:
+    post:
+      tags:
+        - Blocks
+      summary: Move block
+      description: Moves a block to a new parent and/or position. Fractional positions allow insertion between siblings without re-indexing.
+      operationId: blocksMove
+      parameters:
+        - name: block_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Block ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /blocks/reorder:
+    post:
+      tags:
+        - Blocks
+      summary: Reorder blocks
+      description: Batch-updates block positions for an entity in a single call. Provide an ordered array of block IDs with new positions.
+      operationId: blocksReorder
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /blocks/entity/{entity_id}:
+    get:
+      tags:
+        - Blocks
+      summary: List entity blocks
+      description: Shorthand for listing all blocks belonging to a specific entity.
+      operationId: blocksEntityList
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /relations/:
+    get:
+      tags:
+        - Relations
+      summary: List relations
+      description: Returns graph relations for a workspace.
+      operationId: relationsList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Relations
+      summary: Create relation
+      description: "Creates a typed edge between two entities. Relation types are free-form strings: references, depends_on, part_of, related_to, implements, extends, or custom."
+      operationId: relationsCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /relations/{id}:
+    get:
+      tags:
+        - Relations
+      summary: Get relation
+      description: Retrieves a single relation by ID.
+      operationId: relationsGet
+      parameters:
+        - name: relation_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Relation ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Relations
+      summary: Delete relation
+      description: Deletes a relation permanently. The entities remain unaffected.
+      operationId: relationsDelete
+      parameters:
+        - name: relation_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Relation ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /relations/entity/{entity_id}:
+    get:
+      tags:
+        - Relations
+      summary: List outgoing relations
+      description: Returns all relations where the specified entity is the source — the "what I link to" view.
+      operationId: relationsEntity
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /relations/backlinks/{entity_id}:
+    get:
+      tags:
+        - Relations
+      summary: List backlinks
+      description: Returns all relations where the specified entity is the target — the "who links to me" view.
+      operationId: relationsBacklinks
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /relations/neighbors/{entity_id}:
+    get:
+      tags:
+        - Relations
+      summary: List graph neighbors
+      description: Returns all neighboring entities and their relation types around a given node. Used by the graph renderer to build localized views.
+      operationId: relationsNeighbors
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /relations/path:
+    get:
+      tags:
+        - Relations
+      summary: Find graph path
+      description: Finds the shortest path between two entities in the relation graph using BFS.
+      operationId: relationsPath
+      parameters:
+        - name: source_entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Starting entity ID.
+          
+        - name: target_entity_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Destination entity ID.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /comments/:
+    get:
+      tags:
+        - Comments
+      summary: List comments
+      description: Lists all comments, optionally filtered by entity or parent comment (for threaded replies).
+      operationId: commentsList
+      parameters:
+        - name: entity_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Filter comments by entity.
+          
+        - name: parent_comment_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: List replies for this parent comment.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Comments
+      summary: Create comment
+      description: Creates a comment on an entity, block, or as a reply to another comment. At least one of entity_id or block_id must be provided.
+      operationId: commentsCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /comments/{id}:
+    get:
+      tags:
+        - Comments
+      summary: Get comment
+      description: Retrieves a single comment by ID.
+      operationId: commentsGet
+      parameters:
+        - name: comment_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Comment ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    patch:
+      tags:
+        - Comments
+      summary: Update comment
+      description: Updates comment text. The content field is required in the update body.
+      operationId: commentsUpdate
+      parameters:
+        - name: comment_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Comment ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Comments
+      summary: Delete comment
+      description: Deletes a comment permanently. Threaded replies are preserved.
+      operationId: commentsDelete
+      parameters:
+        - name: comment_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Comment ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /branches/:
+    get:
+      tags:
+        - Branches
+      summary: List branches
+      description: Returns version-control branches for a workspace.
+      operationId: branchesList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Branches
+      summary: Create branch
+      description: Creates a branch for workspace experimentation or review workflows. Branches are Git-inspired — safe spaces to make changes without affecting the main knowledge base.
+      operationId: branchesCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /branches/{id}:
+    get:
+      tags:
+        - Branches
+      summary: Get branch
+      description: Retrieves a single branch by ID.
+      operationId: branchesGet
+      parameters:
+        - name: branch_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Branch ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Branches
+      summary: Delete branch
+      description: Permanently deletes a branch and its associated changesets and snapshots.
+      operationId: branchesDelete
+      parameters:
+        - name: branch_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Branch ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /branches/{id}/merge:
+    post:
+      tags:
+        - Branches
+      summary: Merge branch into target
+      description: Merges the specified branch into a target branch. Creates a merge changeset capturing the diff.
+      operationId: branchesMergeById
+      parameters:
+        - name: branch_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Source branch ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /branches/merge:
+    post:
+      tags:
+        - Branches
+      summary: Merge two branches
+      description: Merges any two branches by specifying both source and target branch IDs explicitly.
+      operationId: branchesMerge
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /versions/changesets:
+    get:
+      tags:
+        - Versions
+      summary: List changesets
+      description: Cloud-only. Returns changesets for a branch. Each changeset represents a group of changes with a message.
+      operationId: versionsChangesetsList
+      parameters:
+        - name: branch_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Filter by branch.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Versions
+      summary: Create changeset
+      description: Cloud-only. Creates a changeset, optionally attached to a snapshot. Changesets track what changed and why.
+      operationId: versionsChangesetsCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /versions/snapshots:
+    get:
+      tags:
+        - Versions
+      summary: List snapshots
+      description: Cloud-only. Returns named snapshots for a branch. Snapshots are point-in-time markers of workspace state.
+      operationId: versionsSnapshotsList
+      parameters:
+        - name: branch_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Filter by branch.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Versions
+      summary: Create snapshot
+      description: Cloud-only. Creates a named snapshot marker for a branch. Snapshots capture the full workspace state at a point in time.
+      operationId: versionsSnapshotsCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /versions/entities/{entity_id}/snapshot:
+    post:
+      tags:
+        - Versions
+      summary: Snapshot entity
+      description: Cloud-only. Captures the current entity state into an entity version record. Optionally attach to a changeset.
+      operationId: versionsEntitySnapshot
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /versions/entities/{entity_id}:
+    get:
+      tags:
+        - Versions
+      summary: List entity versions
+      description: Cloud-only. Returns version history for an entity. Each version is a point-in-time snapshot that can be compared or restored.
+      operationId: versionsEntitiesList
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /versions/blocks/{block_id}:
+    get:
+      tags:
+        - Versions
+      summary: List block versions
+      description: Cloud-only. Returns version history for a specific block within an entity.
+      operationId: versionsBlocksList
+      parameters:
+        - name: block_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Block ID
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /versions/compare:
+    get:
+      tags:
+        - Versions
+      summary: Compare versions
+      description: Cloud-only. Returns a field-level diff between two entity versions. Shows what changed between left (older) and right (newer).
+      operationId: versionsCompare
+      parameters:
+        - name: left_version_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Older entity version ID.
+          
+        - name: right_version_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Newer entity version ID.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /versions/restore/{version_id}:
+    post:
+      tags:
+        - Versions
+      summary: Restore entity version
+      description: Cloud-only. Applies a saved entity version snapshot back onto the live entity. Creates a new version entry for audit trail.
+      operationId: versionsRestore
+      parameters:
+        - name: version_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity version ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /diffs/compare:
+    post:
+      tags:
+        - Diffs
+      summary: Compare snapshots or branches
+      description: Cloud-only. Returns a structured diff between two snapshots or branches. Shows added, removed, and modified blocks with their content changes. Ideal for building visual diff viewers.
+      operationId: diffsCompare
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /search/:
+    get:
+      tags:
+        - Search
+      summary: Search workspace
+      description: Searches entities and blocks by keyword, PostgreSQL full text, hybrid, or semantic mode. Hybrid mode combines keyword matching with embedding similarity for the best results.
+      operationId: searchQuery
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: q
+          in: query
+          required: true
+          schema:
+          type: string
+          description: Search query. Minimum 1 character.
+          
+        - name: mode
+          in: query
+          required: false
+          schema:
+          type: string
+          description: "Search mode: keyword, full_text, hybrid (default), or semantic."
+          
+        - name: limit
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Maximum results. Range 1–50. Defaults to 20.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /ai/query:
+    post:
+      tags:
+        - AI
+      summary: Ask workspace AI
+      description: Submits a natural language question about your workspace. The API retrieves relevant context via semantic search, assembles it as context, and asks the configured Inference Runtime (local GPU-native or cloud) to answer based on your knowledge. Returns both the answer and source documents.
+      operationId: aiQuery
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /files/:
+    get:
+      tags:
+        - Files
+      summary: List files
+      description: Returns file metadata records filtered by workspace or uploader.
+      operationId: filesList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: uploaded_by
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Filter by uploader user ID.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Files
+      summary: Create file metadata
+      description: Creates a metadata record for an already-uploaded object. Storage provider is set automatically based on the current mode (local disk in local mode, S3 in cloud mode).
+      operationId: filesCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /files/upload:
+    post:
+      tags:
+        - Files
+      summary: Upload file
+      description: Uploads a file using multipart/form-data. In local mode, the file is saved to the local filesystem. In cloud mode, it is uploaded to S3.
+      operationId: filesUpload
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /files/{id}:
+    get:
+      tags:
+        - Files
+      summary: Get file metadata
+      description: Retrieves a single file metadata record by ID.
+      operationId: filesGet
+      parameters:
+        - name: file_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: File ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    delete:
+      tags:
+        - Files
+      summary: Delete file
+      description: Deletes a file permanently. The underlying file bytes are removed from disk.
+      operationId: filesDelete
+      parameters:
+        - name: file_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: File ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /files/{id}/download:
+    get:
+      tags:
+        - Files
+      summary: Download file
+      description: Streams file content directly. In local mode, serves from the local filesystem. In cloud mode, redirects to the S3 public URL.
+      operationId: filesDownload
+      parameters:
+        - name: file_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: File ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /files/cleanup-orphans:
+    post:
+      tags:
+        - Files
+      summary: Clean up orphaned files
+      description: Finds all file records with zero entity links and deletes them permanently (database record + disk bytes). Omitting workspace_id cleans up orphans across all workspaces.
+      operationId: filesCleanupOrphans
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /files/presign:
+    post:
+      tags:
+        - Files
+      summary: Get presigned upload URL
+      description: Cloud-only. Returns an S3 presigned upload URL for direct browser-to-S3 uploads. Only available in cloud mode. Returns 404 in local mode.
+      operationId: filesPresign
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /files/{file_id}/entities/{entity_id}:
+    post:
+      tags:
+        - Files
+      summary: Link file to entity
+      description: Associates an uploaded file with an entity and optionally a specific block within that entity.
+      operationId: filesLinkEntity
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: File ID
+          
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Entity ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /graph/:
+    get:
+      tags:
+        - Graph
+      summary: Get graph materialization
+      description: Returns the latest stored graph snapshot for a workspace. Create one first with POST /graph/materialize.
+      operationId: graphGet
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /graph/materialize:
+    post:
+      tags:
+        - Graph
+      summary: Materialize graph
+      description: Builds and stores a fresh graph snapshot from current entities and relations. Call this after significant changes before querying the graph.
+      operationId: graphMaterialize
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /graph/query:
+    post:
+      tags:
+        - Graph
+      summary: Query graph nodes & edges
+      description: Returns filtered nodes and edges for a workspace. Supports filtering by relation type and entity type. Ideal for rendering a subset of the knowledge graph.
+      operationId: graphQuery
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /graph/traverse:
+    post:
+      tags:
+        - Graph
+      summary: Traverse graph from a node
+      description: BFS traversal starting from a center node up to a configurable depth. Returns all reachable nodes and edges. Depth is capped at 5 to prevent runaway queries.
+      operationId: graphTraverse
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /graph/paths:
+    post:
+      tags:
+        - Graph
+      summary: Find shortest graph path
+      description: "Finds the shortest BFS path between two entities. Returns ordered node IDs, traversed edges, and distance. Returns distance: -1 with empty path if no connection exists."
+      operationId: graphPaths
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /sync/:
+    get:
+      tags:
+        - Sync
+      summary: List sync operations
+      description: Cloud-only. Returns sync operations for a workspace. Set pending=true to return unsynced operations only.
+      operationId: syncList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: pending
+          in: query
+          required: false
+          schema:
+          type: boolean
+          description: When true, only pending (unsynced) operations are returned.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Sync
+      summary: Create sync operation
+      description: Cloud-only. Ingests a client operation for cross-device synchronization. Used by the offline sync engine to queue changes made on other devices.
+      operationId: syncCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /sync/{id}:
+    get:
+      tags:
+        - Sync
+      summary: Get sync operation
+      description: Cloud-only. Retrieves a single sync operation by ID.
+      operationId: syncGet
+      parameters:
+        - name: op_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Sync operation ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /sync/{id}/ack:
+    post:
+      tags:
+        - Sync
+      summary: Acknowledge sync operation
+      description: Cloud-only. Marks a sync operation as applied. Used to confirm that an operation has been processed by the server.
+      operationId: syncAck
+      parameters:
+        - name: op_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Sync operation ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /activity/:
+    get:
+      tags:
+        - Activity
+      summary: List activity
+      description: Returns recent activity log records for a workspace. Each entry shows who did what, when, and on which entity.
+      operationId: activityList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /governance/health:
+    get:
+      tags:
+        - Governance
+      summary: Get workspace health
+      description: Returns the latest workspace health report including health score, duplicate count, orphan count, and stale entity count. Does not recalculate — use POST /governance/health-score for fresh data.
+      operationId: governanceHealth
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /governance/duplicates:
+    get:
+      tags:
+        - Governance
+      summary: Find duplicates
+      description: Returns entities with identical (case-insensitive) titles within a workspace.
+      operationId: governanceDuplicates
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /governance/orphans:
+    get:
+      tags:
+        - Governance
+      summary: Find orphans
+      description: Returns entities with zero relations — no incoming or outgoing connections. These entities are isolated from the knowledge graph.
+      operationId: governanceOrphans
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /governance/stale:
+    get:
+      tags:
+        - Governance
+      summary: Find stale entities
+      description: Returns entities not updated in 90+ days. Use this to identify knowledge that needs refreshing.
+      operationId: governanceStale
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /governance/health-score:
+    post:
+      tags:
+        - Governance
+      summary: Calculate health score
+      description: Forces a fresh health score calculation. Score ranges from 0–100 based on duplicate (×5), orphan (×2), and stale penalties.
+      operationId: governanceHealthScore
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /notifications/:
+    get:
+      tags:
+        - Notifications
+      summary: List notifications
+      description: Returns notifications filtered by workspace and/or user.
+      operationId: notificationsList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: user_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Filter by recipient user.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Notifications
+      summary: Create notification
+      description: "Creates a notification for a user. Notification types: mention, comment, update, invite, system."
+      operationId: notificationsCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /notifications/{id}/read:
+    post:
+      tags:
+        - Notifications
+      summary: Mark notification read
+      description: Marks a single notification as read.
+      operationId: notificationsRead
+      parameters:
+        - name: notification_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Notification ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /jobs/:
+    get:
+      tags:
+        - Jobs
+      summary: List jobs
+      description: Cloud-only. Returns background job records for a workspace.
+      operationId: jobsList
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+        - name: page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page number. Defaults to 1.
+          
+        - name: per_page
+          in: query
+          required: false
+          schema:
+          type: integer
+          description: Page size from 1 to 100. Defaults to 25.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+    post:
+      tags:
+        - Jobs
+      summary: Create job
+      description: Cloud-only. Creates a background job record with an arbitrary payload. Jobs track async operations like graph materialization or embedding refresh.
+      operationId: jobsCreate
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /jobs/{id}/running:
+    post:
+      tags:
+        - Jobs
+      summary: Mark job running
+      description: Cloud-only. Transitions a job from queued to the running state.
+      operationId: jobsRunning
+      parameters:
+        - name: job_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Job ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /jobs/{id}/completed:
+    post:
+      tags:
+        - Jobs
+      summary: Mark job completed
+      description: Cloud-only. Transitions a job to completed and stores its result payload.
+      operationId: jobsCompleted
+      parameters:
+        - name: job_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Job ID
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /dashboard/overview:
+    get:
+      tags:
+        - Dashboard
+      summary: Workspace dashboard overview
+      description: Returns a curated snapshot of workspace activity and health — entity count, block count, relation count, comments, members, archived items, and recently updated entities. Ideal for building workspace home screens.
+      operationId: dashboardOverview
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+          type: string
+          format: uuid
+          description: Workspace scope for the operation.
+          
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /backups/export:
+    post:
+      tags:
+        - Backups
+      summary: Export workspace
+      description: Exports all workspace data as a portable JSON bundle. Includes entities, blocks, relations, tags, branches, versions, and file metadata. Works across local and cloud modes.
+      operationId: backupsExport
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /backups/export-to-disk:
+    post:
+      tags:
+        - Backups
+      summary: Export workspace to disk
+      description: Same as export but writes the JSON to instance/backups/ on the server instead of returning it inline. Useful for automated local backups or pre-migration snapshots.
+      operationId: backupsExportToDisk
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+  /backups/import:
+    post:
+      tags:
+        - Backups
+      summary: Import workspace
+      description: "Imports workspace data from a JSON bundle. Creates entities, blocks, relations, tags, and more from the provided data. Note: the files field in the import body is informational only and is not imported."
+      operationId: backupsImport
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - BearerAuth: []
+          
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT access token obtained via OAuth2 or direct login. Format: Bearer <token>"
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for server-to-server authentication. Generate from workspace settings.
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.gnovium.com/oauth/authorize
+          tokenUrl: https://api.gnovium.com/oauth/token
+          scopes:
+            workspace:read: Read workspace metadata and content
+            workspace:write: Create, update, and delete workspace content
+            workspace:admin: Manage workspace settings, members, and billing
+            user:read: Read user profile information
+            user:write: Update user profile settings
+            offline_access: Receive refresh tokens for long-lived access
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: string
+            request_id:
+              type: string
+    DataEnvelope:
+      type: object
+      properties:
+        data:
+          type: object
+    ListEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        meta:
+          type: object
+          properties:
+            page:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+            pages:
+              type: integer
+    AuthRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          minLength: 8
+          description: Password (min 8 chars)
+        name:
+          type: string
+          description: Full name
+    AuthLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AuthMeUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+    CreateWorkspaceRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Workspace name
+        description:
+          type: string
+          description: Workspace description
+        settings:
+          type: object
+          description: Flexible workspace settings
+    CreateEntityRequest:
+      type: object
+      required:
+        - workspace_id
+        - entity_type_id
+        - title
+      properties:
+        workspace_id:
+          type: string
+          format: uuid
+        entity_type_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        icon:
+          type: string
+        cover_image:
+          type: string
+          format: uri
+          nullable: true
+        properties:
+          type: object
+    HealthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - healthy
+                - degraded
+                - unhealthy
+            service:
+              type: string
+            version:
+              type: string
+            uptime:
+              type: number
+            timestamp:
+              type: string
+              format: date-time
+tags:
+  - name: System
+    description: Health checks and system information
+    
+  - name: Auth
+    description: Authentication and user management
+    
+  - name: Workspaces
+    description: Workspace CRUD and management
+    
+  - name: Entities
+    description: Entity/page CRUD and management
+    
+  - name: Blocks
+    description: Content blocks within entities
+    
+  - name: Tags
+    description: Tag management and assignment
+    
+  - name: Relations
+    description: Typed relations between entities
+    
+  - name: Comments
+    description: Comment system with threads
+    
+  - name: Branches
+    description: Version control branches
+    
+  - name: Versions
+    description: Version history and snapshots
+    
+  - name: Diffs
+    description: Comparison between versions
+    
+  - name: Search
+    description: Full-text and semantic search
+    
+  - name: AI
+    description: AI-powered workspace assistant
+    
+  - name: Files
+    description: File upload and management
+    
+  - name: Graph
+    description: Knowledge graph queries
+    
+  - name: Sync
+    description: Cross-device synchronization
+    
+  - name: Activity
+    description: Activity and audit logs
+    
+  - name: Governance
+    description: Workspace health and governance
+    
+  - name: Dashboard
+    description: Workspace dashboard analytics
+    
+  - name: Notifications
+    description: User notifications
+    
+  - name: Jobs
+    description: Background job management
+    
+  - name: Backups
+    description: Workspace export and import
+    
+externalDocs:
+  description: Gnovium API Documentation
+  url: https://api.gnovium.com/docs

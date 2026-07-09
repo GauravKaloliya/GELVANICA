@@ -1555,7 +1555,7 @@ export function mountEditor(pageStore, blocksChangedCallback) {
       const name = downloadBtn.dataset.name
       const fileId = downloadBtn.dataset.fileId
       if (fileId) {
-        window.open(`http://localhost:${window.__apiPort || 5001}/api/v1/files/${fileId}/download`)
+        window.open(`http://localhost:${window.__apiPort || 5000}/api/v1/files/${fileId}/download`)
       } else if (url) {
         const a = document.createElement('a')
         a.href = url
@@ -1569,7 +1569,7 @@ export function mountEditor(pageStore, blocksChangedCallback) {
     if (openBtn) {
       const fileId = openBtn.dataset.fileId
       if (fileId) {
-        window.open(`http://localhost:${window.__apiPort || 5001}/api/v1/files/${fileId}/download`)
+        window.open(`http://localhost:${window.__apiPort || 5000}/api/v1/files/${fileId}/download`)
       }
       return
     }

@@ -304,7 +304,7 @@ export function mountSidebar(router, store) {
             <span class="search-modal-hint"><span class="kbd-badge">esc</span> to close</span>
           </div>
           <div class="search-modal-founder">
-            <img class="search-modal-founder-img" src="logo/Gaurav Kaloliya.jpeg" alt="Gaurav Kaloliya" />
+            <img class="search-modal-founder-img" src="logo/founder.jpeg" alt="Gaurav Kaloliya" />
             <div class="search-modal-founder-info">
               <div class="search-modal-founder-name">Gaurav Kaloliya</div>
               <div class="search-modal-founder-title">Founder & Creator of Gnovium</div>

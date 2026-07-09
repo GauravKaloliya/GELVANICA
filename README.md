@@ -2,51 +2,6 @@
 
 <br />
 
-<!-- Animated Robot Mascot -->
-<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g>
-    <animateTransform attributeName="transform" type="translate" values="0,0; 0,-6; 0,0" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
-    <rect x="40" y="70" width="80" height="65" rx="12" stroke="#09090b" stroke-width="3" fill="#fff"/>
-    <circle cx="63" cy="99" r="5" fill="#09090b"/><circle cx="97" cy="99" r="5" fill="#09090b"/>
-    <path d="M68 118 Q80 128 92 118" stroke="#09090b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <circle cx="54" cy="108" r="4" fill="#09090b" opacity=".12"/><circle cx="106" cy="108" r="4" fill="#09090b" opacity=".12"/>
-    <line x1="80" y1="70" x2="80" y2="50" stroke="#09090b" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="80" cy="45" r="6" stroke="#09090b" stroke-width="2.5" fill="#09090b">
-      <animate attributeName="opacity" values="1; 0.6; 1" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
-      <animate attributeName="r" values="6; 7.8; 6" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
-    </circle>
-    <rect x="32" y="85" width="10" height="15" rx="3" stroke="#09090b" stroke-width="2.5" fill="#fff"/>
-    <rect x="118" y="85" width="10" height="15" rx="3" stroke="#09090b" stroke-width="2.5" fill="#fff"/>
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="0,32,86; -12,32,86; 0,32,86" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
-      <rect x="28" y="82" width="14" height="8" rx="4" stroke="#09090b" stroke-width="2" fill="#fff"/>
-    </g>
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="0,128,86; -12,128,86; 0,128,86" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1" begin="0.4s"/>
-      <rect x="118" y="82" width="14" height="8" rx="4" stroke="#09090b" stroke-width="2" fill="#fff"/>
-    </g>
-    <rect x="48" y="128" width="18" height="10" rx="3" stroke="#09090b" stroke-width="2.5" fill="#fff"/>
-    <rect x="94" y="128" width="18" height="10" rx="3" stroke="#09090b" stroke-width="2.5" fill="#fff"/>
-    <g>
-      <animateTransform attributeName="transform" type="scale" values="1,1; 1.25,1.25; 1,1" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1" begin="0.6s" additive="sum"/>
-      <animateTransform attributeName="transform" type="translate" values="23.75,-8.75; 23.75,-8.75; 23.75,-8.75" dur="2s" repeatCount="indefinite" begin="0.6s" additive="sum"/>
-      <path d="M130 35 C130 30 125 25 120 25 C114 25 110 30 110 35 C110 42 120 48 120 48 C120 48 130 42 130 35Z" stroke="#09090b" stroke-width="2" fill="#09090b">
-        <animate attributeName="opacity" values="0.5; 1; 0.5" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1" begin="0.6s"/>
-      </path>
-    </g>
-    <text x="15" y="38" font-size="14" fill="#09090b">
-      <animate attributeName="opacity" values="0; 1; 0" dur="2.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
-      ✦
-    </text>
-    <text x="140" y="62" font-size="10" fill="#09090b">
-      <animate attributeName="opacity" values="0; 1; 0" dur="2.8s" repeatCount="indefinite" begin="1.2s" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
-      ✦
-    </text>
-  </g>
-</svg>
-
-<br />
-
 # GNOVIUM <sup style="font-size:1rem;font-weight:900;color:#09090b;background:#fff;padding:2px 10px;border:2px solid #09090b;margin-left:8px;">MVP</sup>
 
 ### KNOWLEDGE OS FOR HUMANS & MACHINES
@@ -55,13 +10,13 @@
 
 [![Version](https://img.shields.io/badge/release-v1.0.1-000?style=for-the-badge&labelColor=fff)](https://github.com/GauravKaloliya/GNOVIUM/releases)
 [![License](https://img.shields.io/badge/license-MIT-000?style=for-the-badge&labelColor=fff)](LICENSE)
-[![Endpoints](https://img.shields.io/badge/endpoints-106-000?style=for-the-badge&labelColor=fff)](gnovium-docs/public/openapi.json)
-[![Routes](https://img.shields.io/badge/routes-71-000?style=for-the-badge&labelColor=fff)](gnovium-docs/public/openapi.json)
-[![Modules](https://img.shields.io/badge/modules-24-000?style=for-the-badge&labelColor=fff)](gnovium-docs/src/data/modules)
-[![AI](https://img.shields.io/badge/ai-Ollama-000?style=for-the-badge&labelColor=fff)](#-ai-workspace-assistant)
+[![Endpoints](https://img.shields.io/badge/endpoints-111-000?style=for-the-badge&labelColor=fff)](docs/public/openapi.json)
+[![Routes](https://img.shields.io/badge/routes-80-000?style=for-the-badge&labelColor=fff)](docs/public/openapi.json)
+[![Modules](https://img.shields.io/badge/modules-22-000?style=for-the-badge&labelColor=fff)](docs/src/data/modules)
+[![AI](https://img.shields.io/badge/ai-Inference-000?style=for-the-badge&labelColor=fff)](#-ai-workspace-assistant)
 [![Mode](https://img.shields.io/badge/mode-local+cloud-000?style=for-the-badge&labelColor=fff)](#-deployment-modes)
 [![Build](https://img.shields.io/badge/build-passing-000?style=for-the-badge&labelColor=fff)]()
-[![Docs](https://img.shields.io/badge/docs-neo--brutalist-000?style=for-the-badge&labelColor=fff)](https://github.com/GauravKaloliya/GNOVIUM/tree/main/gnovium-docs)
+[![Monorepo](https://img.shields.io/badge/monorepo-npm%20workspaces-000?style=for-the-badge&labelColor=fff)](package.json)
 
 <br />
 
@@ -73,17 +28,18 @@
 ║  editing, relational knowledge graphs, Git-inspired versioning, and     ║
 ║  AI-powered semantic search into one unified workspace.                 ║
 ║                                                                          ║
-║  106 ENDPOINTS · 71 ROUTES · 24 MODULES · 2 DEPLOYMENT MODES           ║
+║  111 ENDPOINTS · 80 ROUTES · 22 MODULES · 2 DEPLOYMENT MODES           ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
 <br />
 
 [🚀 Quick Start](#-quick-start) •
-[🏗 Architecture](#-system-architecture) •
+[🏗 Monorepo Architecture](#-monorepo-architecture) •
+[🖥 Proxy & Routing](#-proxy--routing) •
+[🏗 System Architecture](#-system-architecture) •
 [📖 API Reference](#-complete-api-routes) •
-[📚 Documentation](gnovium-docs/README.md) •
-[🌐 Website](https://gnovium.vercel.app) •
+[📚 Docs](docs/README.md) •
 [🐛 Issues](https://github.com/GauravKaloliya/GNOVIUM/issues)
 
 <br />
@@ -122,10 +78,6 @@ Gaurav Kaloliya isn't just building another note-taking app. He's reimagining wh
 
 Gnovium is the culmination of that vision. It's not a product. It's a **Knowledge Operating System** — and this MVP is just the beginning.
 
-> *"My goal is to build the infrastructure layer for organizational intelligence. Gnovium v1 is the foundation. Everything after builds toward autonomous knowledge evolution."*
->
-> *— Gaurav Kaloliya*
-
 <br />
 
 <div align="center">
@@ -154,55 +106,9 @@ Gnovium combines:
 - **Visual knowledge graphs** — interactive graph view with zoom, filters, and navigation
 - **Workspace versioning** — Git-inspired snapshots, branches, diffs, and restore
 - **AI-assisted knowledge discovery** — semantic search, Q&A, summarization, recommendations
+- **Safety-First AI pipeline** — multi-agent runtime with staged safety gates (Policy → Permission → Simulation → Diff → Approval), read-only tools bypass approval, practical MVP backends (llama.cpp, ONNX Runtime, TensorRT-LLM) alongside the custom GPU-native runtime
 
 all within a **unified workspace** that works offline-first by default.
-
-### Problem Space
-
-The MVP focuses on solving three fundamental problems in knowledge work:
-
-| # | Problem | Description |
-|---|---------|-------------|
-| 1 | **Knowledge Fragmentation** | Information is scattered across documents, apps, folders, and clouds. Context is lost. Connections are forgotten. |
-| 2 | **Loss of Context & Relationships** | Traditional tools treat knowledge as isolated files. The relationships between ideas — the most valuable part — are invisible. |
-| 3 | **No Safe Experimentation** | Making changes to knowledge structures is permanent. There's no undo, no branches, no way to safely explore alternatives. |
-
-### The Gnovium Solution
-
-Rather than building a complete Knowledge Operating System, the MVP **validates the core concepts** that will serve as the foundation for future organizational intelligence capabilities:
-
-- ✅ Connected knowledge through typed relations and backlinks
-- ✅ Visual exploration via an interactive knowledge graph
-- ✅ Safe experimentation through Git-inspired versioning
-- ✅ Intelligent retrieval via AI-powered semantic search
-- ✅ Workspace health through governance checks and scoring
-- ✅ Privacy-first with local-mode ownership and offline capability
-- ✅ Future-proof with the same knowledge model across deployment modes
-
-<br />
-
----
-
-<br />
-
-## 🎯 MVP OBJECTIVES
-
-<br />
-
-The MVP aims to achieve the following objectives:
-
-| # | Objective | Status |
-|---|-----------|--------|
-| 1 | Provide a modern block-based workspace with rich text editing | ✅ Complete |
-| 2 | Support structured relational knowledge management with custom properties and typed relations | ✅ Complete |
-| 3 | Visualize knowledge relationships through an interactive knowledge graph | ✅ Complete |
-| 4 | Introduce Git-inspired versioning for knowledge work with branches, snapshots, and diffs | ✅ Complete |
-| 5 | Enable AI-powered workspace search and question answering via local LLMs | ✅ Complete |
-| 6 | Provide workspace health insights through governance checks | ✅ Complete |
-| 7 | Support Local Mode as the default deployment model with offline-first operation | ✅ Complete |
-| 8 | Maintain compatibility with future Cloud Mode deployments | ✅ Complete |
-| 9 | Preserve the same knowledge model across deployment modes | ✅ Complete |
-| 10 | Document all API endpoints with OpenAPI 3.0.3 specification | ✅ Complete |
 
 <br />
 
@@ -220,16 +126,15 @@ Gnovium operates in two deployment modes, both using **identical API contracts a
 <tr>
 <td width="50%" valign="top" style="border:3px solid #000;padding:20px;">
 
-### 🖥 LOCAL MODE *(Default)*
+### LOCAL MODE *(Default)*
 
 **Your knowledge stays yours.**
 
 Run Gnovium entirely on your device with zero setup required.
 
 **Storage:** SQLite
-**AI:** Local Ollama
+**AI:** Local Inference Runtime
 **Operation:** Offline-first
-**Performance:** Instant
 **Data Ownership:** Complete
 
 ```
@@ -238,25 +143,19 @@ GNOVIUM_MODE=local
 
 **Database:** `instance/gnovium.db` (SQLite)
 
-**Backend Server:** `http://localhost:5000`
+**Backend Server:** `http://localhost:5001`
 
 **Ideal For:**
 - Personal knowledge bases
 - Academic research
-- Learning & study
 - Privacy-first workflows
 - Offline environments
 - Sensitive data
 
-```bash
-# Start local
-GNOVIUM_MODE=local python run.py
-```
-
 </td>
 <td width="50%" valign="top" style="border:3px solid #000;padding:20px;">
 
-### ☁️ CLOUD MODE
+### CLOUD MODE
 
 **Transform personal knowledge into shared intelligence.**
 
@@ -265,14 +164,12 @@ Enable cloud infrastructure for collaboration and scale.
 **Storage:** PostgreSQL (NeonDB)
 **File Storage:** S3-compatible
 **Cache:** Redis
-**AI:** Cloud LLM provider
+**AI:** Cloud Inference Runtime
 **Sync:** Multi-device real-time
 
 ```
 GNOVIUM_MODE=cloud
 ```
-
-**Database:** NeonDB (PostgreSQL)
 
 **API Endpoint:** `https://api.gnovium.com`
 
@@ -282,27 +179,12 @@ GNOVIUM_MODE=cloud
 - Managed backups
 - Production deployments
 - Enterprise workflows
-- Shared workspaces
-
-```bash
-# Start cloud
-GNOVIUM_MODE=cloud docker compose up -d
-```
 
 </td>
 </tr>
 </table>
 
-> **The Knowledge Model Never Changes.** Whether you run on SQLite locally or NeonDB in the cloud, every entity, block, relation, tag, version, branch, and graph operation works identically. Your application code writes once, runs anywhere.
-
-### Mode Configuration
-
-| Variable | Values | Default | Description |
-|----------|--------|---------|-------------|
-| `GNOVIUM_MODE` | `local` or `cloud` | `local` | Deployment mode |
-| `DATABASE_URL` | connection string | — | Database URL (cloud) |
-| `S3_BUCKET` | bucket name | — | S3 bucket (cloud) |
-| `REDIS_URL` | connection string | — | Redis URL (cloud) |
+> **The Knowledge Model Never Changes.** Whether you run on SQLite locally or NeonDB in the cloud, every entity, block, relation, tag, version, branch, and graph operation works identically.
 
 <br />
 
@@ -310,760 +192,237 @@ GNOVIUM_MODE=cloud docker compose up -d
 
 <br />
 
-## 👥 TARGET USERS & USE CASES
+## 🚀 QUICK START
 
 <br />
 
-### Primary Users
+```bash
+# Install all workspaces
+npm install
 
-| User Type | Why Gnovium |
-|-----------|-------------|
-| **🎓 Students** | Organize research, connect course materials, create study knowledge graphs, experiment with ideas safely |
-| **🔬 Researchers** | Build literature knowledge bases, track paper relationships, use AI to find connections across domains |
-| **💼 Knowledge Workers** | Replace scattered docs with a connected knowledge system, reduce context-switching, find information faster |
-| **📋 Product Managers** | Connect product specs, user research, roadmap items; create living product documentation |
-| **🚀 Startup Founders** | Build company knowledge from day one, create branches for strategic experiments, maintain governance |
+# Start everything via unified proxy (landing + frontend + docs + backend)
+npm run dev
 
-### Early Adopter Profile
+# Or run individual apps:
+npm run dev -w landing    # Landing page (port 3100 standalone → 3000 via proxy)
+npm run dev -w frontend   # Web dashboard (port 3101)
+npm run dev -w docs       # API docs portal (port 3102)
+npm run dev:backend        # Flask API (port 5001)
 
-Users currently using **Notion**, **Obsidian**, or **Logseq** who want:
+# Build all three Next.js apps
+npm run build:all
 
-- Stronger version control (branches, snapshots, diffs)
-- Better relationship management (typed relations, backlinks, graph)
-- AI-powered retrieval (semantic search, Q&A, summarization)
-- Privacy-first local operation with optional cloud sync
-- Governance and health metrics for workspace quality
-
-### Example Use Cases
-
-**Personal Knowledge Base:**
-```
-Create entities for projects, notes, ideas
-Connect them with "references" or "extends" relations
-Visualize the graph to find hidden connections
-Use AI to ask "What projects relate to authentication?"
+# Run the Flask backend (port 5001)
+npm run dev:backend
 ```
 
-**Team Collaboration:**
-```
-Create a shared workspace for your team
-Set governance policies for write access
-Collaborate on entities with version history
-Review changes via diffs before merging
-```
-
-**Research Lab:**
-```
-Create entity types for papers, experiments, hypotheses
-Link papers that cite each other via relations
-Use branches to explore alternative research directions
-AI-summarize papers and find related work
-```
-
-<br />
+| URL (via proxy) | App | Internal Port |
+|---------------|-----|---------------|
+| `http://localhost:3000/` | Landing page | 3100 |
+| `http://localhost:3000/app` | Frontend dashboard | 3101 |
+| `http://localhost:3000/api/v1/docs` | API documentation | 3102 |
+| `http://localhost:3000/api/v1/` | Flask backend API | 5001 |
 
 ---
 
 <br />
 
-## 🧩 CORE MVP FEATURES
+## 🏗 MONOREPO ARCHITECTURE
 
 <br />
 
-### 1. 🧱 Block-Based Workspace
-
-The fundamental building block of Gnovium. Every entity (page) contains blocks — modular content units that can be arranged, nested, and reordered.
-
-#### Block Types
-
-| Block Type | Description | Content Shape |
-|-----------|-------------|---------------|
-| `text` | Plain paragraph | `{"text": "..."}` |
-| `heading_1` | Large heading | `{"text": "..."}` |
-| `heading_2` | Medium heading | `{"text": "..."}` |
-| `heading_3` | Small heading | `{"text": "..."}` |
-| `bulleted_list` | Bullet point | `{"text": "..."}` |
-| `numbered_list` | Numbered item | `{"text": "..."}` |
-| `to_do` | Checkbox item | `{"text": "...", "checked": false}` |
-| `code` | Code block | `{"text": "...", "language": "python"}` |
-| `quote` | Block quote | `{"text": "..."}` |
-| `callout` | Highlighted note | `{"text": "...", "icon": "💡"}` |
-| `image` | Embedded image | `{"url": "...", "alt": "..."}` |
-| `divider` | Horizontal rule | `{}` |
-| `table` | Data table | `{"rows": [...], "cols": [...]}` |
-
-#### Features
-
-- ✅ Rich text editing with formatting
-- ✅ Nested pages (parent-child entity hierarchy)
-- ✅ Position-based block ordering
-- ✅ Batch reorder via dedicated endpoint
-- ✅ Move blocks between parents
-- ✅ Soft delete with restore
-
-#### Goals
-
-Enable **flexible knowledge capture** without rigid structure. Write freely, organize later.
-
-<br />
-
-### 2. 🔗 Relational Knowledge System
-
-Transform isolated notes into **connected knowledge** through typed relations, backlinks, tags, and custom properties.
-
-#### Features
-
-| Feature | Description |
-|---------|-------------|
-| **Custom Entity Types** | Define your own types (Page, Document, Meeting Note, Task, etc.) with custom property schemas |
-| **Custom Properties** | Per-type property definitions with types: text, number, select, multi_select, date, boolean, url |
-| **Tags** | Lightweight labels for cross-cutting classification |
-| **Typed Relations** | Directed edges between entities with types: `refers_to`, `depends_on`, `part_of`, `related_to`, `implements`, `extends` |
-| **Backlinks** | Automatic "who links to me" view for every entity |
-
-#### Example Knowledge Structure
-
 ```
-Project Page ──refers_to──→ Task Page
-     │                          │
-     │                          │
-     ▼                          ▼
-Research Notes ←─refers_to── Decisions
-     │
-     │
-     ▼
- Architecture Doc ──depends_on──→ API Spec
+┌─────────────────────────────────────────────────────────────────────┐
+│                        GNOVIUM MONOREPO                             │
+│                    npm workspaces · 5 packages                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  landing/          Landing page (Next.js 16, port 3100)              │
+│  ├── src/components/*.tsx    — 17 sections + reveal animations       │
+│  ├── src/app/page.tsx       — Single-page marketing site             │
+│  └── packages: @gnovium/shared, framer-motion, lucide-react          │
+│                                                                      │
+│  frontend/         Web dashboard (Next.js 16, port 3101)             │
+│  ├── src/app/signin|signup  — Auth gateway (Google OAuth + email)   │
+│  ├── src/app/page.tsx       — Protected dashboard                    │
+│  └── basePath: /app (behind proxy)                                   │
+│                                                                      │
+│  docs/             API docs portal (Next.js 16, port 3102)           │
+│  ├── src/data/modules/*.ts  — 22 module files (111 endpoints)        │
+│  ├── src/components/*.tsx   — 15 components + shared UniversalNavbar │
+│  └── basePath: /api/v1/docs (behind proxy)                           │
+│                                                                      │
+│  electron/         Desktop app (Electron + vanilla JS SPA)           │
+│  ├── main/index.ts          — BrowserWindow + FlaskManager           │
+│  ├── renderer/js/*.js       — 10 page modules + 8 components         │
+│  └── basePath: N/A (standalone Electron app)                         │
+│                                                                      │
+│  packages/         Shared packages                                   │
+│  └── shared/                — @gnovium/shared                        │
+│       ├── components/                                                 │
+│       │   ├── UniversalNavbar.tsx  — Navbar (landing/docs/frontend)  │
+│       │   └── DownloadContent.tsx  — Download button component       │
+│       ├── styles/                                                    │
+│       │   └── base.css          — 832-line unified design system     │
+│       └── index.ts              — Package exports                    │
+│                                                                      │
+│  backend/          Flask API (Python 3.11, port 5001)                │
+│  ├── app/api/v1/*/routes.py   — 22 module route files                │
+│  ├── app/services/*.py        — Business logic layer                 │
+│  └── features: JWT auth, SQLAlchemy, SQLite/PostgreSQL, AI pipeline  │
+│                                                                      │
+│  tools/                                                              │
+│  └── proxy.mjs     — Reverse proxy (Node.js, port 3000)              │
+│                                                                      │
+│  Docker deployment:                                                  │
+│  ├── nginx.conf              — Route all apps behind nginx           │
+│  └── docker-compose.yml      — 5 services (nginx + 4 apps)           │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Custom Property Types
+### Shared Package (`@gnovium/shared`)
 
-| Type | Description | Example Value |
-|------|-------------|---------------|
-| `text` | Free-form text | `"Authentication flow"` |
-| `number` | Numeric value | `42` |
-| `select` | Single selection | `"Active"` |
-| `multi_select` | Multiple selections | `["Research", "Engineering"]` |
-| `date` | Date value | `"2026-06-22"` |
-| `boolean` | True/false | `true` |
-| `url` | URL link | `"https://example.com"` |
+The shared package at `packages/shared/` provides:
 
-#### Goals
+| Export | Description | Used By |
+|--------|-------------|---------|
+| `UniversalNavbar` | Variant-based responsive navbar with theme toggle, creator credit, API status, customizable right slot | docs, landing, (frontend uses its own) |
+| `DownloadContent` | Download button with dropdown menu | docs, landing |
+| `base.css` | 832-line unified design system: 6 themes, neo-brutalist tokens, custom utilities, component styles | docs, landing, frontend (via @import) |
 
-Transform isolated notes into a **connected knowledge ecosystem** where every piece of information knows its context and relationships.
-
-<br />
-
-### 3. 🕸 Visual Knowledge Graph
-
-See your knowledge as a living network. The graph view visualizes entities as nodes and relations as edges, making hidden connections visible.
-
-#### Features
-
-| Feature | Description |
-|---------|-------------|
-| **Interactive Graph** | Pan, zoom, click-to-open entities directly from the graph |
-| **Node Relationships** | Visual edges showing typed connections between entities |
-| **Filters** | Filter by entity type, relation type, module |
-| **Traversal** | BFS traversal from any node with configurable depth (max 5) |
-| **Pathfinding** | Find the shortest path between any two entities |
-| **Materialization** | Compute and cache graph snapshots for performance |
-
-#### Graph API Operations
-
-| Operation | Description |
-|-----------|-------------|
-| `GET /graph/` | Get latest materialized graph snapshot |
-| `POST /graph/materialize` | Build fresh graph from current data |
-| `POST /graph/query` | Query filtered nodes and edges |
-| `POST /graph/traverse` | BFS traversal from center node (depth ≤ 5) |
-| `POST /graph/paths` | Shortest path between two entities |
-
-#### Goals
-
-Help users **discover hidden connections** between ideas that would otherwise remain invisible.
-
-<br />
-
-### 4. 🔀 Workspace Versioning
-
-Git-inspired versioning for knowledge work. Create branches, snapshot state, compare diffs, and restore with confidence.
-
-#### Page History
-
-| Feature | Description |
-|---------|-------------|
-| Save versions | Automatic version creation on entity updates |
-| Restore versions | Roll back to any previous version |
-| View change history | List all versions with timestamps |
-
-#### Workspace Snapshots
-
-| Feature | Description |
-|---------|-------------|
-| Create snapshots | Point-in-time captures of entire workspace state |
-| Compare snapshots | Visual diff between any two snapshots |
-| Restore snapshots | Revert workspace to snapshot state |
-| Delete snapshots | Remove outdated snapshots |
-
-#### Branches
-
-| Feature | Description |
-|---------|-------------|
-| Create branch | Fork workspace into independent line of development |
-| Edit independently | Make changes without affecting main branch |
-| Merge branches | Integrate changes back with conflict resolution |
-| Compare branches | Diff view between any two branches |
-| Default branch | Designate which branch is the source of truth |
-
-#### Versioning Architecture
-
-```
-main ───●───●───●───●───●─── (stable, default)
-              \
-feature-1      ●───●───●─── (experimental changes)
-                          \
-feature-2                  ●───●───●─── (further experiments)
-
-Snapshots:  S1      S2      S3      (workspace-wide captures)
-```
-
-#### Goals
-
-Allow **experimentation without risk**. Users can explore alternative knowledge structures, make sweeping changes, or test AI-generated content — all with the safety net of versioning.
-
-<br />
-
-### 5. 👁 Diff Viewer
-
-Visual comparison between versions, snapshots, and branches. Understand exactly what changed, down to the individual block.
-
-#### Features
-
-| Feature | Description |
-|---------|-------------|
-| **Added blocks** | Highlighted in green — content that didn't exist before |
-| **Deleted blocks** | Highlighted in red — content that was removed |
-| **Modified blocks** | Highlighted in amber — content that was changed |
-| **Multi-level comparison** | Compare entities, blocks, snapshots, or branches |
-
-#### Diff Comparison Options
-
-| Comparison | Description |
-|-----------|-------------|
-| Entity versions | Before/after of a single entity |
-| Workspace snapshots | Full workspace state comparison |
-| Branches | Cross-branch diff for merge review |
-
-#### Goals
-
-Make knowledge evolution **transparent and understandable**. No more wondering "what changed and when."
-
-<br />
-
-### 6. 🤖 AI Workspace Assistant
-
-Intelligent retrieval powered by local LLMs (Ollama) or cloud AI. Ask questions about your workspace and get grounded answers.
-
-#### Features
-
-| Feature | Description |
-|---------|-------------|
-| **Workspace-wide search** | Full-text, semantic, and hybrid search modes |
-| **Natural language Q&A** | Ask questions, get answers grounded in your knowledge |
-| **Summarization** | Generate concise summaries of entities and content |
-| **Related page recommendations** | AI-powered content discovery |
-
-#### Example Queries
-
-| Query | What Happens |
-|-------|-------------|
-| `"Summarize Project Alpha"` | AI retrieves Project Alpha entity, generates summary |
-| `"What notes mention authentication?"` | Semantic search finds all auth-related content |
-| `"Show related pages to onboarding"` | Graph + AI recommend related entities |
-| `"Compare the architecture of v1 and v2"` | Multi-entity analysis with diff awareness |
-
-#### AI Pipeline
-
-```
-User Question
-     │
-     ▼
-Semantic Search ──→ Embedding Model (Ollama/Cloud)
-     │
-     ▼
-Context Assembly ──→ Relevant entities, blocks, relations
-     │
-     ▼
-LLM Generation ──→ Grounded Answer + Source Citations
-     │
-     ▼
-Response ──→ { answer, sources: [...] }
-```
-
-#### Search Modes
-
-| Mode | Description | Backend |
-|------|-------------|---------|
-| `keyword` | Simple text match on title and content | SQLite FTS / PostgreSQL tsvector |
-| `full_text` | Advanced full-text search with ranking | PostgreSQL only |
-| `hybrid` | Combines keyword + semantic (default) | Both |
-| `semantic` | Embedding-based vector similarity | Ollama / Cloud |
-
-#### Goals
-
-Improve **knowledge retrieval efficiency**. Find what you need, discover what you didn't know existed, and get AI-powered insights — all without leaving your workspace.
-
-<br />
-
-### 7. 📊 Governance Dashboard
-
-Workspace health monitoring and quality management. Detect problems before they become knowledge rot.
-
-#### Features
-
-| Feature | Description | API Endpoint |
-|---------|-------------|--------------|
-| **Health Score** | Overall workspace quality (0-100) | `GET /governance/health` |
-| **Duplicate Detection** | Find entities with identical/similar titles | `GET /governance/duplicates` |
-| **Orphan Detection** | Identify entities with zero connections | `GET /governance/orphans` |
-| **Stale Content Detection** | Find entities not updated in 90+ days | `GET /governance/stale` |
-| **Comprehensive Reports** | Full governance report with findings | `POST /governance/health-score` |
-
-#### Health Score Formula
-
-```
-score = max(0, 100 - penalty)
-penalty = min(70, duplicates × 5 + orphans × 2 + stale)
-```
-
-| Score Range | Status | Indicator |
-|-------------|--------|-----------|
-| **90-100** | Excellent — workspace is healthy | 🟢 |
-| **70-89** | Needs attention — some cleanup required | 🟡 |
-| **Below 70** | Requires cleanup — significant issues | 🔴 |
-
-#### Dashboard Metrics
-
-```
-{
-  "entity_count": 42,
-  "block_count": 215,
-  "relation_count": 18,
-  "comment_count": 7,
-  "member_count": 3,
-  "archived_count": 5,
-  "health_score": 82,
-  "recent_entities": [...]
-}
-```
-
-#### Goals
-
-Reduce **workspace clutter** and maintain knowledge quality. Governance turns knowledge management from a fire drill into a routine practice.
-
-<br />
+All CSS is consolidated into `packages/shared/styles/base.css` — the source of truth for all design tokens, theme variables, and custom utility classes. Each app's `globals.css` is a thin importer (4 lines each), achieving a **58% reduction** in total CSS lines (2,117 → 882).
 
 ---
 
-<br />
-
-## 🏗 SYSTEM ARCHITECTURE
+## 🖥 PROXY & ROUTING
 
 <br />
 
-### High-Level Architecture
+The dev proxy (`tools/proxy.mjs`) is a Node.js reverse proxy that runs all apps behind a single port (3000).
 
-```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                          GNOVIUM SYSTEM                                     │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────┐         ┌──────────────────────────────┐       │
-│  │     FRONTEND (NextJS)    │         │      BACKEND (Flask)          │       │
-│  │                         │         │                              │       │
-│  │  ┌───────────────────┐  │  HTTP   │  ┌────────────────────────┐  │       │
-│  │  │ Block Editor      │  │◄──────►│  │  API v1 Router         │  │       │
-│  │  │ Graph UI          │  │         │  │  • 24 route modules    │  │       │
-│  │  │ Dashboard         │  │         │  │  • Auth middleware     │  │       │
-│  │  │ Version UI        │  │         │  │  • Rate limiting       │  │       │
-│  │  │ Search Interface  │  │         │  └───────────┬────────────┘  │       │
-│  │  └───────────────────┘  │         │              │               │       │
-│  └─────────────────────────┘         │              │               │       │
-│                                       │              ▼               │       │
-│                                       │  ┌────────────────────────┐  │       │
-│                                       │  │    Services Layer      │  │       │
-│                                       │  │  • Entity Service      │  │       │
-│                                       │  │  • Block Service       │  │       │
-│                                       │  │  • Graph Service       │  │       │
-│                                       │  │  • AI Service          │  │       │
-│                                       │  │  • Version Service     │  │       │
-│                                       │  │  • Governance Service  │  │       │
-│                                       │  └───────────┬────────────┘  │       │
-│                                       │              │               │       │
-│                                       │              ▼               │       │
-│                                       │  ┌────────────────────────┐  │       │
-│                                       │  │   Data Layer           │  │       │
-│                                       │  │  • Models & Schemas    │  │       │
-│                                       │  │  • Repositories        │  │       │
-│                                       │  │  • Migrations          │  │       │
-│                                       │  └───┬───────┬───────┬────┘  │       │
-│                                       └──────┼───────┼───────┼──────┘       │
-│                                              │       │       │              │
-│              ┌───────────────────────────────┼───────┼───────┼──────────┐   │
-│              │         LOCAL MODE            │       │       │          │   │
-│              │  ┌─────────────┐  ┌────────┐ │       │       │          │   │
-│              │  │   SQLite    │  │ Ollama │ │       │       │          │   │
-│              │  │  Database   │  │   AI   │ │       │       │          │   │
-│              │  └─────────────┘  └────────┘ │       │       │          │   │
-│              └───────────────────────────────┼───────┼───────┼──────────┘   │
-│              ┌───────────────────────────────┼───────┼───────┼──────────┐   │
-│              │         CLOUD MODE            │       │       │          │   │
-│              │  ┌──────────────┐  ┌───────┐ │       │       │          │   │
-│              │  │  NeonDB (PG) │  │  S3   │ │       │       │          │   │
-│              │  └──────────────┘  └───────┘ │       │       │          │   │
-│              │  ┌────────────────────────┐   │       │       │          │   │
-│              │  │       Redis Cache      │   │       │       │          │   │
-│              │  └────────────────────────┘   │       │       │          │   │
-│              └───────────────────────────────┼───────┼───────┼──────────┘   │
-│                                              │       │       │              │
-│              ┌───────────────────────────────▼───────▼───────▼──────────┐   │
-│              │                    DATA STORES                            │   │
-│              │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
-│              │  │ Entities │  │  Blocks  │  │ Relations│  │  Tags    │  │   │
-│              │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
-│              │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │   │
-│              │  │ Version  │  │ Branches │  │  Graph   │  │  Files   │  │   │
-│              │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │   │
-│              └───────────────────────────────────────────────────────────┘   │
-└────────────────────────────────────────────────────────────────────────────┘
+### Proxy Features
+
+- **WebSocket upgrade** — Required for Turbopack HMR in Next.js
+- **Keep-alive agent** — `maxSockets: 64` for connection reuse
+- **Host header preservation** — Original Host passed through (critical for basePath asset URLs)
+- **Sequential startup** — Waits for each app's health check before launching the next
+- **Graceful shutdown** — Kills all child processes on SIGINT/SIGTERM
+- **Per-app health checks** — Each app gets its own health endpoint and timeout (30s)
+
+### Internal Ports
+
+| App | Internal Port |
+|-----|---------------|
+| Landing | 3100 |
+| Frontend | 3101 |
+| Docs | 3102 |
+| Backend (Flask) | 5001 |
+
+> **Note:** Backend runs on port **5001** (not 5000) because macOS AirPlay Receiver occupies port 5000 by default.
+
+### Routing Table
+
+| Incoming Path | Target App | Target URL |
+|--------------|------------|------------|
+| `/` (fallback) | Landing | `http://localhost:3100` |
+| `/app*` | Frontend | `http://localhost:3101/app*` |
+| `/api/v1/docs*` | Docs | `http://localhost:3102/api/v1/docs*` |
+| `/api/v1/*` (strip prefix) | Backend | `http://localhost:5001/*` |
+
+### BasePath Configuration
+
+Frontend and docs use `NEXT_PUBLIC_BASE_PATH` env variable to set `basePath` in `next.config.ts`:
+
+```env
+# frontend/.env.local
+NEXT_PUBLIC_BASE_PATH=/app
+
+# docs/.env.local
+NEXT_PUBLIC_BASE_PATH=/api/v1/docs
 ```
 
-### Technology Stack
-
-#### Frontend
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Framework | **React + Next.js** | Server-rendered React with static export |
-| Styling | **TailwindCSS** | Utility-first CSS with custom design system |
-| Editor | **Custom Block Editor** | Rich text block-based content editing |
-| Graph | **Custom Graph Renderer** | Interactive knowledge graph visualization |
-| Animation | **Framer Motion** | Smooth transitions and micro-interactions |
-| Syntax | **Prism React Renderer** | Code block syntax highlighting |
-| Icons | **Lucide React** | Consistent icon system |
-| Font | **Geist + Geist Mono** | Typography and monospace code display |
-| Deployment | **Vercel** | Static site hosting with edge CDN |
-
-#### Backend
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Framework | **Flask (Python)** | Lightweight, flexible API server |
-| Auth | **JWT + bcrypt** | Access/refresh token authentication |
-| ORM | **SQLAlchemy** | Database abstraction layer |
-| Validation | **Custom Schema System** | Request/response validation |
-| Serialization | **Custom Serializer** | JSON serialization with envelope |
-| Search | **SQLite FTS / PG tsvector** | Full-text search engines |
-| AI | **Ollama** | Local LLM for embeddings and generation |
-| Jobs | **Background Threading** | Async job processing |
-| Sync | **Operation Queue** | Offline sync with conflict resolution |
-| Rate Limiting | **Token Bucket** | Per-user request throttling |
-
-#### Database
-
-| Store | Local Mode | Cloud Mode |
-|-------|-----------|------------|
-| **Primary Database** | SQLite (`instance/gnovium.db`) | PostgreSQL via NeonDB |
-| **File Storage** | Local filesystem (`uploads/`) | S3-compatible object storage |
-| **Cache Layer** | SimpleCache (in-memory) | Redis / Upstash |
-| **Vector Store** | Ollama embeddings (in-memory) | Cloud vector DB |
-| **Search Index** | SQLite FTS5 | PostgreSQL tsvector |
-
-#### Schema Design
-
-Both SQLite and PostgreSQL share the **same logical schema**:
-
-**Core Tables:** `users`, `workspaces`, `entities`, `entity_types`, `entity_properties`, `blocks`
-**Relation Tables:** `relations`, `tags`, `entity_tags`
-**Version Tables:** `versions`, `changesets`, `snapshots`, `branches`
-**Utility Tables:** `comments`, `files`, `notifications`, `jobs`, `sync_operations`, `activity_logs`, `governance_reports`
-
-<br />
+This ensures asset URLs (CSS, JS, images) are correct when served behind the proxy path prefix. When running standalone (without proxy), set `NEXT_PUBLIC_BASE_PATH` to empty or omit it.
 
 ---
 
-<br />
-
-## 💾 DATA MODEL
+## 🐳 Docker Deployment
 
 <br />
 
-### Entity (Page)
+Production deployment uses **nginx** as the reverse proxy:
 
-The fundamental unit of knowledge. Every entity has a type, properties, and can contain blocks.
-
-```
-Entity
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── entity_type_id: UUID (FK → entity_types)
-├── title: String
-├── icon: String (emoji or icon name)
-├── cover_image: String (URL, nullable)
-├── parent_entity_id: UUID (FK → entities, nullable — for nesting)
-├── properties: JSONB (flexible key-value store per entity type)
-├── is_archived: Boolean
-├── is_deleted: Boolean (soft delete)
-├── created_by: UUID (FK → users)
-├── created_at: DateTime
-└── updated_at: DateTime
+```yaml
+# docker-compose.yml — 5 services
+nginx:80     → landing:3000  (/)
+             → frontend:3000 (/app)
+             → docs:3000     (/api/v1/docs)
+             → backend:5000  (/api/v1/)
 ```
 
-### Block
-
-Content units within entities. Orderable, nestable, type-aware.
-
-```
-Block
-├── id: UUID (primary key)
-├── entity_id: UUID (FK → entities)
-├── parent_block_id: UUID (FK → blocks, nullable — for nesting)
-├── block_type: Enum (text, heading_1..3, bulleted_list, numbered_list, to_do, code, quote, callout, image, divider, table)
-├── content: JSONB (type-specific content)
-├── position: Float (ordering)
-├── is_deleted: Boolean (soft delete)
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-### Relation
-
-Typed, directed edges between entities forming the knowledge graph.
-
-```
-Relation
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── source_entity_id: UUID (FK → entities)
-├── target_entity_id: UUID (FK → entities)
-├── relation_type: Enum (refers_to, depends_on, part_of, related_to, implements, extends)
-├── metadata: JSONB (optional additional data)
-├── is_deleted: Boolean (soft delete)
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-### Version (Changeset)
-
-Tracks changes to entities with point-in-time snapshots.
-
-```
-Changeset
-├── id: UUID (primary key)
-├── branch_id: UUID (FK → branches)
-├── snapshot_id: UUID (FK → snapshots, nullable)
-├── message: String
-├── author_id: UUID (FK → users)
-├── created_at: DateTime
-└── changes: JSONB (delta of modifications)
-```
-
-### Snapshot
-
-Workspace-wide point-in-time capture.
-
-```
-Snapshot
-├── id: UUID (primary key)
-├── branch_id: UUID (FK → branches)
-├── name: String
-├── description: Text (nullable)
-├── created_at: DateTime
-└── data: JSONB (serialized workspace state)
-```
-
-### Branch
-
-Independent line of development, Git-inspired.
-
-```
-Branch
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── name: String
-├── parent_branch_id: UUID (FK → branches, nullable)
-├── description: Text (nullable)
-├── is_default: Boolean
-├── is_deleted: Boolean (soft delete)
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-### Tag
-
-Lightweight label for cross-cutting classification.
-
-```
-Tag
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── name: String
-├── color: String (hex color)
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-### Entity Type
-
-Custom type definitions for entities with property schemas.
-
-```
-EntityType
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── name: String
-├── icon: String
-├── config: JSONB (settings like allow_children)
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-### Entity Property
-
-Property definitions for entity types.
-
-```
-EntityProperty
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── entity_type_id: UUID (FK → entity_types)
-├── name: String
-├── property_type: Enum (text, number, select, multi_select, date, boolean, url)
-├── config: JSONB (type-specific config like options for select)
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-### Complete Entity-Relationship Diagram
-
-```
-users ──1:N──→ workspaces ──1:N──→ entities ──1:N──→ blocks
-                                       │
-                                       │ 1:N
-                                       ▼
-                                 entity_types ──1:N──→ entity_properties
-                                       │
-                                  entities ──N:M──→ tags (via entity_tags)
-                                       │
-                                  entities ──N:N──→ entities (via relations)
-                                       │
-                                  entities ──1:N──→ versions (changesets)
-                                       │
-                                  workspaces ──1:N──→ branches ──1:N──→ snapshots
-                                       │
-                                  workspaces ──1:N──→ activity_logs
-                                  workspaces ──1:N──→ governance_reports
-                                  workspaces ──1:N──→ backups
-                                       │
-                                  entities ──1:N──→ comments
-                                  entities ──1:N──→ files (via entity_files)
-                                       │
-                                  users ──1:N──→ notifications
-                                  users ──1:N──→ jobs
-                                  workspaces ──1:N──→ sync_operations
-```
-
-<br />
+Each app has its own `Dockerfile` and is built as a standalone Next.js app (`output: "standalone"`). The backend runs Flask directly.
 
 ---
 
-<br />
-
-## 🔄 MVP USER FLOW
+## 🎨 CSS CONSOLIDATION
 
 <br />
 
-The complete user journey through the Gnovium MVP:
+All three Next.js apps share a single CSS foundation:
 
-```
-START
-  │
-  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  1. CREATE KNOWLEDGE                                                │
-│                                                                     │
-│  User creates pages and blocks via POST /entities and POST /blocks │
-│  Rich text editing with headings, lists, code, images, tables      │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  2. CONNECT KNOWLEDGE                                               │
-│                                                                     │
-│  User creates relations and backlinks via POST /relations           │
-│  Tags applied for cross-cutting classification                      │
-│  Custom properties give entities structured fields                  │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  3. EXPLORE KNOWLEDGE                                               │
-│                                                                     │
-│  Graph view visualizes all connections interactively                │
-│  POST /graph/query to get filtered graph data                       │
-│  POST /graph/traverse to explore neighborhoods                      │
-│  POST /graph/paths to find shortest connections                     │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  4. ASK QUESTIONS                                                   │
-│                                                                     │
-│  AI assistant retrieves information via POST /ai/query              │
-│  Semantic search finds related content automatically                │
-│  GET /search with hybrid mode for best results                      │
-│  GET /ai/related/:id for AI-powered recommendations                 │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  5. EXPERIMENT SAFELY                                               │
-│                                                                     │
-│  User creates workspace branch via POST /branches                   │
-│  Make changes independently without affecting main                  │
-│  Snapshots capture point-in-time workspace state                    │
-│  POST /versions/entities/:id/snapshot for entity-level capture      │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  6. COMPARE CHANGES                                                 │
-│                                                                     │
-│  Diff viewer highlights modifications via POST /diffs/compare       │
-│  See added, deleted, and modified blocks at a glance                │
-│  GET /versions/compare for structured version comparison            │
-│  Merge branches back into main when ready                           │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  7. IMPROVE WORKSPACE                                               │
-│                                                                     │
-│  Governance dashboard suggests cleanup via GET /governance/*        │
-│  Detect duplicates, orphans, and stale content                      │
-│  Health score tracks overall workspace quality                      │
-│  Regular governance checks maintain knowledge hygiene               │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-                         REPEAT
+| File | Lines | Purpose |
+|------|-------|---------|
+| `packages/shared/styles/base.css` | 832 | **Source of truth** — 6 themes, design tokens, custom utilities, neo-brutalist components |
+| `landing/src/app/globals.css` | 42 | Imports + smooth-scroll + scroll-snap overrides |
+| `frontend/src/app/globals.css` | 4 | Imports only |
+| `docs/src/app/globals.css` | 4 | Imports only |
+| **Total** | **882** | **58% reduction from 2,117** |
+
+Each app uses `@source` directives so Tailwind v4 scans the shared components directory for class usage:
+
+```css
+@import "tailwindcss";
+@source "../../../packages/shared/components/";
+@source "../../../packages/shared/index.ts";
+@import "../../../packages/shared/styles/base.css";
 ```
 
-<br />
+### Landing Animation Alignment
+
+Landing page animations are aligned to docs' exact patterns:
+
+- `RevealSection` uses `whileInView` (not `useInView` + `animate`)
+- Card springs: `stiffness: 150`, `damping: 20`, `y: 10`
+- Stagger: `delayChildren: 0.05`, `staggerChildren: 0.03`
+- Hover: `whileHover={{ scale: 1.02 }}` on all card motion.divs
+- Easing: `cubic-bezier(0.16, 1, 0.3, 1)`
+
+### Merged Components
+
+Two landing page components were consolidated:
+
+| Before | After |
+|--------|-------|
+| `PositioningStrip.tsx` + `StatsStrip.tsx` | `PositioningStats.tsx` |
+| `DualMode.tsx` + `SameModelStrip.tsx` | `DualModeSection.tsx` |
 
 ---
 
-<br />
+## 💾 DATA MODEL (Summary)
+
+| Entity | Description |
+|--------|-------------|
+| **Entity (Page)** | Fundamental knowledge unit with type, properties, blocks |
+| **Block** | Content unit within entities (13 types: text, heading, code, image, etc.) |
+| **Relation** | Typed, directed edge between entities (forms the knowledge graph) |
+| **Tag** | Lightweight label for cross-cutting classification |
+| **Changeset** | Tracks changes to entities with point-in-time snapshots |
+| **Snapshot** | Workspace-wide point-in-time capture |
+| **Branch** | Independent line of development (Git-inspired) |
+| **EntityType** | Custom type definitions with property schemas |
+| **EntityProperty** | Property definitions per entity type (text, number, select, date, etc.) |
+
+---
 
 ## 📚 COMPLETE API ROUTES
 
@@ -1073,7 +432,7 @@ START
 
 | Environment | URL | Mode |
 |-------------|-----|------|
-| **Local Development** | `http://localhost:5000/api/v1` | `GNOVIUM_MODE=local` |
+| **Local Development** | `http://localhost:5001/api/v1` | `GNOVIUM_MODE=local` |
 | **Cloud Production** | `https://api.gnovium.com/api/v1` | `GNOVIUM_MODE=cloud` |
 | **Health Check** | `GET /health` (no version prefix) | Both |
 
@@ -1115,14 +474,16 @@ All API responses follow a standardized envelope:
 
 ---
 
-### 🔐 Auth Module (6 endpoints)
+### 🔐 Auth Module (8 endpoints)
 
-Identity and session management. Register, login, refresh, logout, and profile management.
+Identity and session management. Register, login, refresh, logout, and profile management. **Cloud only.**
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `POST` | `/auth/register` | — | Create a new account |
 | `POST` | `/auth/login` | — | Sign in with email + password |
+| `GET` | `/auth/check-email` | — | Check email availability |
+| `POST` | `/auth/google` | — | Google OAuth sign-in |
 | `POST` | `/auth/refresh` | Refresh | Get a new access token |
 | `POST` | `/auth/logout` | Refresh | Revoke the current session |
 | `GET` | `/auth/me` | Access | Get the authenticated user's profile |
@@ -1201,7 +562,7 @@ Top-level containers that group knowledge, entities, and collaborators.
 
 ---
 
-### 📄 Entities Module (11 endpoints)
+### 📄 Entities Module (15 endpoints)
 
 The fundamental unit of knowledge — pages, documents, databases, or any typed object.
 
@@ -1218,6 +579,10 @@ The fundamental unit of knowledge — pages, documents, databases, or any typed 
 | `GET` | `/entities/<id>/children` | Access | List child entities |
 | `POST` | `/entities/<id>/children` | Access | Create child entity |
 | `GET` | `/entities/<id>/versions` | Access | List entity version history |
+| `POST` | `/entities/types` | Access | Create an entity type |
+| `GET` | `/entities/types` | Access | List entity types |
+| `POST` | `/entities/properties` | Access | Create a custom property |
+| `GET` | `/entities/properties` | Access | List custom properties |
 
 **POST /entities/**
 ```json
@@ -1241,18 +606,20 @@ The fundamental unit of knowledge — pages, documents, databases, or any typed 
 
 ---
 
-### 🧱 Blocks Module (6 endpoints)
+### 🧱 Blocks Module (8 endpoints)
 
 The building blocks of entity content — text, headings, lists, code, and more.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `POST` | `/blocks/` | Access | Create a new block |
+| `POST` | `/blocks/` | Access | Create a block |
+| `GET` | `/blocks/` | Access | List blocks |
 | `GET` | `/blocks/<id>` | Access | Get block details |
 | `PATCH` | `/blocks/<id>` | Access | Update block content |
+| `POST` | `/blocks/<id>/move` | Access | Move block to new position |
 | `DELETE` | `/blocks/<id>` | Access | Soft-delete block |
-| `GET` | `/entities/<id>/blocks` | Access | List all blocks for an entity |
-| `POST` | `/blocks/reorder` | Access | Batch reorder blocks |
+| `POST` | `/blocks/reorder` | Access | Reorder blocks |
+| `GET` | `/blocks/entity/<entity_id>` | Access | Get blocks for an entity |
 
 **POST /blocks/**
 ```json
@@ -1272,15 +639,21 @@ The building blocks of entity content — text, headings, lists, code, and more.
 
 ---
 
-### 📎 Files Module (3 endpoints)
+### 📎 Files Module (9 endpoints)
 
 Upload, manage, and link files to entities.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
+| `GET` | `/files/` | Access | List files |
 | `POST` | `/files/upload` | Access | Upload file (multipart) |
+| `POST` | `/files/` | Access | Create file metadata |
 | `GET` | `/files/<id>` | Access | Get file metadata / download |
+| `GET` | `/files/<id>/download` | Access | Download file |
 | `DELETE` | `/files/<id>` | Access | Soft-delete file |
+| `POST` | `/files/presign` | Access | Generate presigned URL (cloud only) |
+| `POST` | `/files/<file_id>/entities/<entity_id>` | Access | Attach file to entity |
+| `POST` | `/files/cleanup-orphans` | Access | Remove orphaned file metadata |
 
 **POST /files/upload** — Multipart form upload
 ```json
@@ -1292,17 +665,19 @@ Upload, manage, and link files to entities.
 
 ---
 
-### 🏷️ Tags Module (5 endpoints)
+### 🏷️ Tags Module (7 endpoints)
 
-Lightweight labels for entities — simpler than relations but equally powerful.
+Classify entities with tags.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `POST` | `/tags/` | Access | Create a tag |
-| `GET` | `/tags/` | Access | List all tags |
+| `GET` | `/tags/` | Access | List tags |
 | `GET` | `/tags/<id>` | Access | Get tag details |
 | `PATCH` | `/tags/<id>` | Access | Update tag |
 | `DELETE` | `/tags/<id>` | Access | Delete tag |
+| `POST` | `/tags/<tag_id>/entities/<entity_id>` | Access | Assign tag to entity |
+| `DELETE` | `/tags/<tag_id>/entities/<entity_id>` | Access | Remove tag from entity |
 
 **POST /tags/**
 ```json
@@ -1314,7 +689,7 @@ Lightweight labels for entities — simpler than relations but equally powerful.
 
 ---
 
-### 🔗 Relations Module (4 endpoints)
+### 🔗 Relations Module (8 endpoints)
 
 Connect entities to form a knowledge graph with typed edges.
 
@@ -1324,6 +699,10 @@ Connect entities to form a knowledge graph with typed edges.
 | `GET` | `/relations/` | Access | List relations |
 | `GET` | `/relations/<id>` | Access | Get specific relation |
 | `DELETE` | `/relations/<id>` | Access | Soft-delete relation |
+| `GET` | `/relations/entity/<entity_id>` | Access | List relations for an entity |
+| `GET` | `/relations/backlinks/<entity_id>` | Access | List backlinks to an entity |
+| `GET` | `/relations/neighbors/<entity_id>` | Access | List neighbor entities |
+| `GET` | `/relations/path` | Access | Find path between entities |
 
 **Relation types:** `refers_to`, `depends_on`, `part_of`, `related_to`, `implements`, `extends`
 
@@ -1337,17 +716,21 @@ Connect entities to form a knowledge graph with typed edges.
 
 ---
 
-### 🔍 Search & AI Module (5 endpoints)
+### 🔍 Search Module (1 endpoint)
 
-Full-text, semantic, and hybrid search across workspace content. AI-powered Q&A and summarization.
+Full-text, semantic, and hybrid search across workspace content.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `GET` | `/search/` | Access | Search workspace content |
+
+### 🤖 AI Module (1 endpoint)
+
+AI-powered Q&A using the Inference Runtime with a Safety-First multi-agent pipeline (Supervisor → Planner → Worker Agents) and staged safety gates: Policy Validation → Permission Validation → Simulation/Dry-Run → Diff Generation → User Approval → Execution. Read-only tools (search, graph queries) bypass the approval stage; destructive writes require explicit confirmation.
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
 | `POST` | `/ai/query` | Access | Natural language Q&A |
-| `POST` | `/ai/summarize` | Access | Summarize entity/content |
-| `GET` | `/ai/related/<id>` | Access | AI-recommended related entities |
-| `POST` | `/search/semantic` | Access | Semantic search |
 
 **GET /search/**
 | Param | Type | Default | Description |
@@ -1370,7 +753,7 @@ Full-text, semantic, and hybrid search across workspace content. AI-powered Q&A 
 { "data": { "answer": "Project Alpha uses a microservices architecture with...", "sources": [{ "title": "...", "content": "..." }] } }
 ```
 
-**AI Pipeline:** Question → Semantic Search → Context Assembly → LLM Generation → Grounded Answer + Sources
+**AI Pipeline:** Question → Context Builder → Retriever → Inference Runtime → Multi-Agent Runtime → Safety Layer → Tool Runtime → Gnovium APIs → Workspace
 
 ---
 
@@ -1381,7 +764,7 @@ The visual knowledge graph — materialized, queryable, traversable.
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `GET` | `/graph/` | Access | Get latest materialized graph |
-| `POST` | `/graph/materialize` | Access | Build fresh graph snapshot |
+| `POST` | `/graph/materialize` | Access | Build graph snapshot (full rebuild on first call or schema change; subsequent calls apply incremental diffs) |
 | `POST` | `/graph/query` | Access | Query filtered nodes and edges |
 | `POST` | `/graph/traverse` | Access | BFS traversal from center node |
 | `POST` | `/graph/paths` | Access | Find shortest path between two nodes |
@@ -1412,16 +795,21 @@ The visual knowledge graph — materialized, queryable, traversable.
 
 ---
 
-### 🔀 Versions Module (3 endpoints)
+### 🔀 Versions Module (9 endpoints)
 
-Workspace versioning — snapshots, changesets, and entity history.
+Workspace versioning — snapshots, changesets, and entity history. **Cloud only.**
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `POST` | `/versions/` | Access | Create version (changeset) |
-| `GET` | `/versions/` | Access | List versions |
-| `GET` | `/versions/<id>` | Access | Get version details |
-| `POST` | `/versions/<id>/restore` | Access | Restore entity to version |
+| `GET` | `/versions/changesets` | Access | List changesets |
+| `POST` | `/versions/changesets` | Access | Create changeset |
+| `GET` | `/versions/snapshots` | Access | List snapshots |
+| `POST` | `/versions/snapshots` | Access | Create snapshot |
+| `POST` | `/versions/entities/<entity_id>/snapshot` | Access | Snapshot a specific entity |
+| `GET` | `/versions/entities/<entity_id>` | Access | Get entity version history |
+| `GET` | `/versions/blocks/<block_id>` | Access | Get block version history |
+| `GET` | `/versions/compare` | Access | Compare two versions |
+| `POST` | `/versions/restore/<version_id>` | Access | Restore entity to version |
 
 **POST /versions/**
 ```json
@@ -1433,21 +821,9 @@ Workspace versioning — snapshots, changesets, and entity history.
 
 ---
 
-### 📸 Snapshots Module (5 endpoints)
+<!-- Snapshots folded into Versions module above -->
 
-Workspace-wide point-in-time captures.
-
-| Method | Route | Auth | Description |
-|--------|-------|------|-------------|
-| `POST` | `/snapshots/` | Access | Create snapshot |
-| `GET` | `/snapshots/` | Access | List snapshots |
-| `GET` | `/snapshots/<id>` | Access | Get snapshot |
-| `DELETE` | `/snapshots/<id>` | Access | Delete snapshot |
-| `POST` | `/snapshots/<id>/restore` | Access | Restore from snapshot |
-
----
-
-### 🌿 Branches Module (5 endpoints)
+### 🌿 Branches Module (6 endpoints)
 
 Git-inspired branching for fearless experimentation.
 
@@ -1457,7 +833,8 @@ Git-inspired branching for fearless experimentation.
 | `GET` | `/branches/` | Access | List branches |
 | `GET` | `/branches/<id>` | Access | Get branch details |
 | `DELETE` | `/branches/<id>` | Access | Delete branch |
-| `POST` | `/branches/<id>/merge` | Access | Merge branch into another |
+| `POST` | `/branches/<id>/merge` | Access | Merge branch into target |
+| `POST` | `/branches/merge` | Access | Merge two branches directly |
 
 **POST /branches/**
 ```json
@@ -1475,7 +852,7 @@ Git-inspired branching for fearless experimentation.
 
 ### 👁 Diffs Module (1 endpoint)
 
-Visual comparison between versions, snapshots, and branches.
+**Cloud only.** Visual comparison between versions, snapshots, and branches.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
@@ -1495,7 +872,7 @@ Visual comparison between versions, snapshots, and branches.
 
 ### 🩺 Governance Module (5 endpoints)
 
-Workspace health — detect duplicates, orphans, stale content, and calculate a health score.
+Workspace health — detect duplicates, orphans, stale content, and calculate a health score. Analysis runs as background jobs with tiered processing: cheap checks (duplicate titles) execute inline; expensive analysis (full content similarity, stale detection) is delegated to async workers.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
@@ -1525,7 +902,7 @@ At-a-glance workspace overview with entity, block, relation counts and recent ac
 
 ---
 
-### 💬 Comments Module (4 endpoints)
+### 💬 Comments Module (5 endpoints)
 
 Threaded discussions on entities and blocks.
 
@@ -1533,6 +910,7 @@ Threaded discussions on entities and blocks.
 |--------|-------|------|-------------|
 | `POST` | `/comments/` | Access | Create a comment |
 | `GET` | `/comments/` | Access | List comments |
+| `GET` | `/comments/<id>` | Access | Get comment details |
 | `PATCH` | `/comments/<id>` | Access | Update comment |
 | `DELETE` | `/comments/<id>` | Access | Soft-delete comment |
 
@@ -1552,24 +930,29 @@ User notifications for workspace events.
 
 ---
 
-### ⚡ Jobs Module (2 endpoints)
+### ⚡ Jobs Module (4 endpoints)
 
-Asynchronous job tracking for long-running operations.
+Asynchronous job tracking for long-running operations. **Cloud only.**
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
+| `GET` | `/jobs/` | Access | List jobs |
 | `POST` | `/jobs/` | Access | Create a job |
-| `GET` | `/jobs/<id>` | Access | Get job status |
+| `POST` | `/jobs/<id>/running` | Access | Mark job as running |
+| `POST` | `/jobs/<id>/completed` | Access | Mark job as completed |
 
 ---
 
-### 🔄 Sync Module (1 endpoint)
+### 🔄 Sync Module (4 endpoints)
 
-Offline sync operations — queue operations for multi-device synchronization.
+Offline sync operations — queue operations for multi-device synchronization. **Cloud only.** Uses a Git-style operation log (ordered append-only changesets with server-side conflict resolution) rather than CRDTs — chosen for simplicity and predictable merge semantics in a workspace-oriented data model.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
+| `GET` | `/sync/` | Access | List sync operations |
 | `POST` | `/sync/` | Access | Ingest a sync operation |
+| `GET` | `/sync/<id>` | Access | Get sync operation status |
+| `POST` | `/sync/<id>/ack` | Access | Acknowledge sync operation |
 
 **Operation types:** `entity_create`, `entity_update`, `entity_delete`, `block_create`, `block_update`, `block_delete`, `relation_create`, `relation_delete`
 
@@ -1587,13 +970,14 @@ Audit trail of workspace events.
 
 ---
 
-### 💾 Backups Module (2 endpoints)
+### 💾 Backups Module (3 endpoints)
 
 Export and import workspace data for migration and safekeeping.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `POST` | `/backups/export` | Access | Export workspace as JSON |
+| `POST` | `/backups/export-to-disk` | Access | Export workspace to local disk |
 | `POST` | `/backups/import` | Access | Import workspace from JSON |
 
 **POST /backups/export**
@@ -1606,14 +990,13 @@ Export and import workspace data for migration and safekeeping.
 
 ---
 
-### 🏥 System Module (2 endpoints)
+### 🏥 System Module (1 endpoint)
 
-Health checks and system information.
+Health checks.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `GET` | `/health` | — | Liveness check (no auth) |
-| `POST` | `/system/seed` | Access | Seed workspace with sample data |
 
 **GET /health**
 ```json
@@ -1625,31 +1008,31 @@ Health checks and system information.
 
 ### API Route Summary
 
-| Module | Routes | Category |
-|--------|--------|----------|
-| Auth | 6 | 🔐 Authentication |
-| Workspaces | 6 | 📂 Workspace Management |
-| Entities | 11 | 📄 Page/Entity Management |
-| Blocks | 6 | 🧱 Block Content |
-| Files | 3 | 📎 File Management |
-| Tags | 5 | 🏷️ Classification |
-| Relations | 4 | 🔗 Knowledge Connections |
-| Search & AI | 5 | 🔍 Intelligence |
-| Graph | 5 | 🕸️ Knowledge Graph |
-| Versions | 4 | 🔀 Versioning |
-| Snapshots | 5 | 📸 Workspace Snapshots |
-| Branches | 5 | 🌿 Branching |
-| Diffs | 1 | 👁 Visual Diff |
-| Governance | 5 | 🩺 Health & Quality |
-| Dashboard | 1 | 📊 Analytics |
-| Comments | 4 | 💬 Discussion |
-| Notifications | 3 | 🔔 Alerts |
-| Jobs | 2 | ⚡ Async Operations |
-| Sync | 1 | 🔄 Offline Sync |
-| Activity | 1 | 📜 Audit Trail |
-| Backups | 2 | 💾 Data Portability |
-| System | 2 | 🏥 Health |
-| **Total** | **71** | **22 Modules** |
+| Module | Routes | Category | Deployment |
+|--------|:------:|----------|------------|
+| Health | 1 | 🏥 System Health | Both |
+| Auth | 8 | 🔐 Authentication | Cloud only |
+| Workspaces | 6 | 📂 Workspace Management | Both |
+| Entities | 15 | 📄 Page/Entity Management | Both |
+| Blocks | 8 | 🧱 Block Content | Both |
+| Relations | 8 | 🔗 Knowledge Connections | Both |
+| Comments | 5 | 💬 Discussion | Both |
+| Tags | 7 | 🏷️ Classification | Both |
+| Branches | 6 | 🌿 Branching | Both |
+| Versions | 9 | 🔀 Versioning | Cloud only |
+| Diffs | 1 | 👁 Visual Diff | Cloud only |
+| Search | 1 | 🔍 Search | Both |
+| AI | 1 | 🤖 AI Assistant | Both |
+| Files | 9 | 📎 File Management | Both |
+| Graph | 5 | 🕸️ Knowledge Graph | Both |
+| Governance | 5 | 🩺 Health & Quality | Both |
+| Dashboard | 1 | 📊 Analytics | Both |
+| Notifications | 3 | 🔔 Alerts | Both |
+| Jobs | 4 | ⚡ Async Operations | Cloud only |
+| Sync | 4 | 🔄 Offline Sync | Cloud only |
+| Activity | 1 | 📜 Audit Trail | Both |
+| Backups | 3 | 💾 Data Portability | Both |
+| **Total** | **111** | **22 Modules** | **83 both + 28 cloud-only** |
 
 <br />
 
@@ -1665,7 +1048,7 @@ Health checks and system information.
 
 - Python 3.10+
 - pip
-- (Optional) [Ollama](https://ollama.ai) for local AI
+- (Optional) AI Inference Runtime for local AI
 
 ### 1. Clone & Setup
 
@@ -1701,12 +1084,10 @@ cp .env.local .env
 ### 3. (Optional) Set Up Local AI
 
 ```bash
-# Install Ollama from https://ollama.ai
-# Then pull the embedding model
-ollama pull nomic-embed-text
-
-# (Optional) Pull a chat model for Q&A
-ollama pull llama3.2
+# Ensure the Inference Runtime is configured
+# Default: uses the local GPU-native runtime (CUDA)
+# Practical MVP backends (llama.cpp, ONNX Runtime, TensorRT-LLM) are supported day one
+# For cloud inference, set GNOVIUM_MODE=cloud
 ```
 
 ### 4. Run the Server
@@ -1715,18 +1096,18 @@ ollama pull llama3.2
 # From the backend directory
 GNOVIUM_MODE=local python run.py
 
-# The server starts at http://localhost:5000
-# Health check: GET http://localhost:5000/health
+# The server starts at http://localhost:5001
+# Health check: GET http://localhost:5001/health
 ```
 
 ### 5. Verify It Works
 
 ```bash
 # Health check
-curl http://localhost:5000/health
+curl http://localhost:5001/health
 
 # Register a user
-curl -X POST http://localhost:5000/api/v1/auth/register \
+curl -X POST http://localhost:5001/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"me@example.com","password":"secure-pass","name":"Test User"}'
 
@@ -1734,19 +1115,19 @@ curl -X POST http://localhost:5000/api/v1/auth/register \
 TOKEN="<access_token_from_response>"
 
 # Create a workspace
-curl -X POST http://localhost:5000/api/v1/workspaces/ \
+curl -X POST http://localhost:5001/api/v1/workspaces/ \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"My Knowledge Base"}'
 
 # Create an entity
-curl -X POST http://localhost:5000/api/v1/entities/ \
+curl -X POST http://localhost:5001/api/v1/entities/ \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"workspace_id":"<WS_ID>","title":"Research Notes","entity_type_id":"<TYPE_ID>"}'
 
 # Add a block
-curl -X POST http://localhost:5000/api/v1/blocks/ \
+curl -X POST http://localhost:5001/api/v1/blocks/ \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"entity_id":"<ENTITY_ID>","block_type":"text","content":{"text":"Hello Gnovium!"}}'
@@ -1756,7 +1137,7 @@ curl -X POST http://localhost:5000/api/v1/blocks/ \
 
 ```bash
 # Seed a workspace with sample data
-curl -X POST http://localhost:5000/api/v1/system/seed \
+curl -X POST http://localhost:5001/api/v1/system/seed \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"workspace_id":"<WS_ID>"}'
@@ -1787,18 +1168,29 @@ GNOVIUM/
 ├── README.md                         # You are here
 ├── LICENSE                           # MIT License
 ├── vercel.json                       # Vercel deployment configuration
+├── .vercelignore                     # Vercel ignore rules
+├── package.json                      # Root npm scripts (Vercel build)
+├── requirements.txt                  # Root pip dependencies (Vercel)
+├── .gitignore                        # Git ignore rules
+│
+├── gnovium_mvp_context.md            # MVP product & data model overview
+├── gnovium_llm_multiagent_architecture.md # Inference & multi-agent architecture
+│
+├── api/                              # Vercel serverless function entry point
+│   └── index.py                      # Imports Flask app from backend/
 │
 ├── backend/                          # Flask API Server
+│   ├── __init__.py                   # Makes backend a Python package
 │   ├── run.py                        # Application entry point
 │   ├── requirements.txt              # Python dependencies
 │   ├── pyproject.toml                # Python project metadata
-│   ├── API.md                        # Complete API reference (1498 lines)
+│   ├── API.md                        # Complete API reference (2152 lines)
 │   ├── SQLITE_SCHEMA.sql             # SQLite database schema
 │   ├── POSTGRESQL_SCHEMA.sql         # PostgreSQL database schema
 │   │
 │   ├── app/                          # Application package
 │   │   ├── __init__.py               # Flask app factory
-│   │   ├── extensions.py             # Flask extensions (SQLAlchemy, etc.)
+│   │   ├── extensions.py             # Flask extensions (SQLAlchemy, JWT, CORS, etc.)
 │   │   │
 │   │   ├── api/                      # API layer
 │   │   │   ├── __init__.py
@@ -1837,8 +1229,10 @@ GNOVIUM/
 │   │   │
 │   │   ├── models/                  # Database models
 │   │   │   ├── base.py              # Base model class
-│   │   │   ├── domain.py            # Domain models (entities, blocks, etc.)
-│   │   │   └── types.py             # Type definitions
+│   │   │   ├── types.py             # Custom SQLAlchemy types
+│   │   │   ├── domain.py            # Cloud models (PostgreSQL)
+│   │   │   ├── local.py             # Local models (SQLite)
+│   │   │   └── local_base.py        # SQLite-specific base
 │   │   │
 │   │   ├── schemas/                 # Request/response schemas
 │   │   │   ├── common.py            # Shared schema components
@@ -1865,8 +1259,9 @@ GNOVIUM/
 │   │   │   └── security.py          # Security utilities
 │   │   │
 │   │   ├── repositories/            # Data access layer
-│   │   │   ├── base.py              # Base repository
-│   │   │   └── domain.py            # Domain repositories
+│   │   │   ├── base.py              # Abstract repository interface
+│   │   │   ├── domain.py            # Cloud repository implementations
+│   │   │   └── local.py             # SQLite repository implementations
 │   │   │
 │   │   ├── graph/                   # Graph engine
 │   │   │   ├── __init__.py
@@ -1874,19 +1269,17 @@ GNOVIUM/
 │   │   │
 │   │   ├── ai/                      # AI integration
 │   │   │   ├── __init__.py
-│   │   │   └── service.py           # Ollama integration
+│   │   │   └── service.py           # Inference Runtime integration
 │   │   │
 │   │   ├── events/                  # Event system
 │   │   │   ├── __init__.py
 │   │   │   └── service.py           # Event publishing
 │   │   │
 │   │   ├── jobs/                    # Background job processing
-│   │   │   ├── __init__.py
-│   │   │   └── ...
+│   │   │   └── __init__.py
 │   │   │
 │   │   ├── sync/                    # Sync engine
-│   │   │   ├── __init__.py
-│   │   │   └── ...
+│   │   │   └── __init__.py
 │   │   │
 │   │   └── middleware/              # WSGI middleware
 │   │       ├── __init__.py
@@ -1904,9 +1297,69 @@ GNOVIUM/
 │   │
 │   └── .env                         # Environment configuration
 │
-├── gnovium-docs/                    # Next.js Documentation Site
+├── frontend/                        # Next.js Web Dashboard
+│   ├── README.md                    # Frontend documentation
+│   ├── next.config.ts               # Next.js configuration
+│   ├── package.json                 # Node dependencies
+│   ├── tsconfig.json                # TypeScript strict, @/ alias
+│   ├── postcss.config.mjs           # Tailwind v4 PostCSS
+│   ├── eslint.config.mjs            # ESLint flat config
+│   ├── vercel.json                  # Deployment + security headers
+│   │
+│   ├── public/
+│   │   └── logo/gnovium.jpeg        # Brand logo
+│   │
+│   └── src/
+│       ├── app/                     # Next.js pages
+│       │   ├── globals.css          # 6 themes · neo-brutalist design tokens
+│       │   ├── layout.tsx           # Root layout with session + theme
+│       │   ├── page.tsx             # Dashboard (protected)
+│       │   ├── signin/page.tsx      # Login + Google OAuth
+│       │   ├── signup/page.tsx      # Registration with avatar
+│       │   └── auth/electron/callback/page.tsx # Electron OAuth bridge
+│       │
+│       └── lib/
+│           ├── api.ts               # REST client (login, register, googleLogin)
+│           ├── avatar.ts            # DiceBear identicon fallback
+│           └── session.tsx          # SessionProvider + useSession() hook
+│
+├── electron/                        # Desktop App (Electron + Vite)
+│   ├── README.md                    # Electron app documentation
+│   ├── package.json                 # Dependencies (electron, vite, electron-builder)
+│   ├── vite.config.ts               # Vite config (renderer bundling)
+│   ├── electron-builder.yml         # Build config (DMG, AppImage, NSIS)
+│   │
+│   ├── main/
+│   │   └── index.ts                 # Main process (FlaskManager, IPC, tray, window mgmt)
+│   │
+│   ├── preload/
+│   │   ├── index.ts                 # Preload bridge (18 IPC methods)
+│   │   └── loading.ts               # Loading screen preload
+│   │
+│   ├── src/
+│   │   ├── flask-manager.ts         # Python subprocess lifecycle
+│   │   ├── error-boundary.ts        # Renderer error IPC proxy
+│   │   └── crash-reporter.ts        # Local crash report writer
+│   │
+│   └── renderer/
+│       ├── index.html               # SPA shell (landing + main layout)
+│       ├── loading.html             # Loading screen
+│       ├── styles.css               # 6 themes · full component CSS
+│       ├── gnovium-logo.jpeg        # App logo
+│       ├── js/
+│       │   ├── app.js               # SPA entry point
+│       │   ├── error-handler.js     # Global error handler
+│       │   ├── router/index.js      # Client-side router
+│       │   ├── store/               # Observer-pattern state
+│       │   ├── lib/                 # API client + DOM helpers
+│       │   ├── pages/               # 11 page modules
+│       │   └── components/          # 8 shared components
+│       └── logo/
+│           └── founder.jpeg         # Founder photo
+│
+├── docs/                    # Next.js Documentation Portal
 │   ├── README.md                    # Docs site documentation
-│   ├── next.config.ts              # Next.js configuration
+│   ├── next.config.ts              # Static export config
 │   ├── package.json                # Node dependencies
 │   ├── tsconfig.json               # TypeScript configuration
 │   ├── postcss.config.mjs          # PostCSS configuration
@@ -1917,72 +1370,54 @@ GNOVIUM/
 │   │   ├── openapi.yaml            # OpenAPI 3.0.3 spec (YAML)
 │   │   ├── api-version.json        # API version manifest
 │   │   ├── logo/gnovium.jpeg       # Logo
-│   │   └── images/                 # Images
+│   │   └── images/                 # (reserved for assets)
 │   │
 │   ├── scripts/
-│   │   └── generate-openapi.mjs    # OpenAPI spec generator
+│   │   └── generate-openapi.ts     # OpenAPI spec from TS endpoint data
 │   │
 │   └── src/
 │       ├── app/                    # Next.js pages
-│       │   ├── globals.css         # Global styles (6 themes, neo-brutalist)
+│       │   ├── globals.css         # Global styles (6 themes)
 │       │   ├── layout.tsx          # Root layout
-│       │   ├── page.tsx            # Main docs page (2214 lines)
+│       │   ├── page.tsx            # Main docs page
 │       │   ├── not-found.tsx       # 404 page
-│       │   ├── changelog/         # API changelog page
-│       │   └── error-catalog/     # Error catalog page
+│       │   ├── changelog/page.tsx  # Version changelog
+│       │   ├── download/page.tsx   # OpenAPI download
+│       │   └── error-catalog/page.tsx # Error catalog
 │       │
-│       ├── components/             # React components
-│       │   ├── Navigation.tsx      # Top navigation bar
-│       │   ├── Sidebar.tsx         # Desktop sidebar
-│       │   ├── MobileDocs.tsx      # Mobile-responsive docs
-│       │   ├── SearchPalette.tsx   # Modal search (Ctrl+K)
-│       │   ├── ThemeProvider.tsx   # 6-theme system
+│       ├── components/             # 15 React components
+│       │   ├── Navigation.tsx      # Top nav + endpoint counter
+│       │   ├── Sidebar.tsx         # Desktop module tree
+│       │   ├── MobileDocs.tsx      # Mobile accordion + tab nav
+│       │   ├── SearchPalette.tsx   # Ctrl+K modal search
+│       │   ├── ThemeProvider.tsx   # 6-theme context
 │       │   ├── Footer.tsx          # Site footer
-│       │   ├── Breadcrumbs.tsx     # Navigation breadcrumbs
+│       │   ├── Breadcrumbs.tsx     # Breadcrumb trail
 │       │   ├── ParticleGraph.tsx   # Animated background
-│       │   ├── BackToTop.tsx       # Scroll-to-top button
-│       │   ├── SchemaTree.tsx      # Schema visualization
-│       │   ├── ApiPlayground.tsx   # Interactive API playground
+│       │   ├── BackToTop.tsx       # Scroll-to-top FAB
+│       │   ├── SchemaTree.tsx      # JSON schema viewer
+│       │   ├── ApiPlayground.tsx   # Interactive "Send Request"
 │       │   ├── PageWrapper.tsx     # Layout wrapper
 │       │   ├── ErrorBoundary.tsx   # Error boundary
 │       │   ├── SkipToContent.tsx  # Accessibility
-│       │   └── Tooltip.tsx        # Tooltip component
+│       │   └── Tooltip.tsx        # Hover tooltip
 │       │
 │       └── data/                   # Data layer
-│           ├── index.ts           # Re-exports
-│           ├── types.ts           # TypeScript types
-│           ├── common.ts          # Shared utilities
-│           ├── icons.tsx          # Module icons & colors
-│           ├── changelog.ts       # Changelog & versioning
-│           ├── error-catalog.ts   # Error code catalog
-│           ├── auth-guide.ts      # Auth documentation
-│           └── modules/           # 24 endpoint modules
-│               ├── auth.ts        # 🔐 Auth endpoints
-│               ├── workspaces.ts  # 📂 Workspace endpoints
-│               ├── entities.ts    # 📄 Entity endpoints
-│               ├── blocks.ts      # 🧱 Block endpoints
-│               ├── files.ts       # 📎 File endpoints
-│               ├── tags.ts        # 🏷️ Tag endpoints
-│               ├── relations.ts   # 🔗 Relation endpoints
-│               ├── search.ts      # 🔍 Search endpoints
-│               ├── ai.ts          # 🤖 AI endpoints
-│               ├── graph.ts       # 🕸️ Graph endpoints
-│               ├── versions.ts    # 🔀 Version endpoints
-│               ├── branches.ts    # 🌿 Branch endpoints
-│               ├── diffs.ts       # 👁 Diff endpoints
-│               ├── system.ts      # 🏥 System endpoints
-│               ├── governance.ts  # 🩺 Governance endpoints
-│               ├── dashboard.ts   # 📊 Dashboard endpoints
-│               ├── comments.ts    # 💬 Comment endpoints
-│               ├── notifications.ts# 🔔 Notification endpoints
-│               ├── jobs.ts        # ⚡ Job endpoints
-│               ├── sync.ts        # 🔄 Sync endpoints
-│               ├── activity.ts    # 📜 Activity endpoints
-│               ├── backups.ts     # 💾 Backup endpoints
-│               ├── entity-types.ts# Entity type endpoints
-│               └── properties.ts  # Property endpoints
-│
-└── .gitignore                     # Git ignore rules
+│           ├── index.ts           # ENDPOINTS[] + MODULES[]
+│           ├── types.ts           # Shared TypeScript types
+│           ├── common.ts          # Shared schemas
+│           ├── icons.tsx          # Module icon components
+│           ├── changelog.ts       # Version history (v0.5.0 → v4.0.0)
+│           ├── error-catalog.ts   # 17 error codes
+│           ├── auth-guide.ts      # Auth methods
+│           └── modules/           # 22 endpoint module files
+│               ├── auth.ts, workspaces.ts, entities.ts, blocks.ts
+│               ├── files.ts, tags.ts, relations.ts, search.ts
+│               ├── ai.ts, graph.ts, versions.ts, branches.ts
+│               ├── diffs.ts, system.ts, governance.ts
+│               ├── dashboard.ts, comments.ts, notifications.ts
+│               ├── jobs.ts, sync.ts, activity.ts, backups.ts
+
 ```
 
 <br />
@@ -1999,7 +1434,7 @@ GNOVIUM/
 |---------|------|-------|-------------|--------|
 | **v0.5.0** | Beta | Developer Preview | Entity CRUD, Block CRUD, Relations, Basic Graph, Files, Notifications (28 endpoints, 7 modules) | ✅ Shipped |
 | **v0.9.0** | Beta | Beta Preview | Tags, Comments, Activity, Jobs, Rate Limiting, Standardized response envelope (72 endpoints, 18 modules) | ✅ Shipped |
-| **v1.0.0** | Major | **MVP Release** | All 24 modules, 106 endpoints, full feature set, JWT auth, Graph engine, AI search, Governance, Versioning | ✅ Current |
+| **v1.0.0** | Major | **MVP Release** | All 22 modules, 106 endpoints, 75 routes, full feature set, JWT auth, Graph engine, AI search, Governance, Versioning | ✅ Shipped |
 | **v1.0.1** | Patch | API Specification | OpenAPI 3.0.3 spec, Error catalog (17 codes), Auth guide (OAuth2 PKCE, API keys, PATs), Rate limit tiers, CORS guide, 6-theme neo-brutalist docs | ✅ Current |
 | **v1.1.0** | Minor | Cloud Mode Beta | NeonDB (PostgreSQL), S3 storage, Redis caching, GNOVIUM_MODE env var, Presigned URLs, Workspace sync | 🔜 Jul 2026 |
 | **v2.0.0** | Major | Cloud Sync | Real-time WebSocket sync, Multi-user collaboration, Shared workspaces, Role-based access, Automatic backups, API v2 migration | 🔜 Q4 2026 |
@@ -2010,8 +1445,8 @@ GNOVIUM/
 
 | Version | Status | Release | End of Life | Endpoints | Modules |
 |---------|--------|---------|-------------|-----------|---------|
-| v1.0.1 | **Current** | Jun 22, 2026 | Dec 2027 | 106 | 24 |
-| v1.0.0 | Superseded | Jun 2026 | — | 106 | 24 |
+| v1.0.1 | **Current** | Jun 22, 2026 | Dec 2027 | 111 | 22 |
+| v1.0.0 | Superseded | Jun 2026 | — | 106 | 22 |
 | v1.1.0 | Planned | Jul 2026 | Jun 2028 | ~120 | ~26 |
 | v2.0.0 | Planned | Q4 2026 | Jun 2029 | ~150 | ~30 |
 
@@ -2077,7 +1512,7 @@ The MVP demonstrates that knowledge can be managed as a **connected, versioned, 
 
 - ✅ Knowledge can be block-based, relational, and graph-navigable simultaneously
 - ✅ Version control principles (branches, snapshots, diffs) apply meaningfully to knowledge work
-- ✅ Local-first AI (Ollama) can provide intelligent retrieval without compromising privacy
+- ✅ Local-first AI (Inference Runtime) can provide intelligent retrieval without compromising privacy
 - ✅ A single knowledge model can span local and cloud deployments without friction
 - ✅ Workspace governance can be automated and measured
 - ✅ The foundation is solid for the multi-agent, autonomous knowledge future
@@ -2096,13 +1531,13 @@ The MVP demonstrates that knowledge can be managed as a **connected, versioned, 
 
 | Resource | Location | Description |
 |----------|----------|-------------|
-| **OpenAPI Specification (JSON)** | [`public/openapi.json`](gnovium-docs/public/openapi.json) | Complete 3.0.3 spec: 106 operations, 75 paths, 9 schemas, 3 security schemes |
-| **OpenAPI Specification (YAML)** | [`public/openapi.yaml`](gnovium-docs/public/openapi.yaml) | Same spec in YAML format |
-| **API Reference (Markdown)** | [`backend/API.md`](backend/API.md) | 1498-line detailed API reference with request/response examples |
-| **Error Catalog** | [`src/data/error-catalog.ts`](gnovium-docs/src/data/error-catalog.ts) | 17 standardized error codes with causes, resolutions, and JSON examples |
-| **Auth Guide** | [`src/data/auth-guide.ts`](gnovium-docs/src/data/auth-guide.ts) | OAuth2 PKCE, API Keys, PATs, Rate Limits, CORS |
-| **API Changelog** | [`/changelog`](gnovium-docs/src/app/changelog) | Full version history with migration paths |
-| **Documentation Site** | `gnovium-docs/` | Neo-brutalist Next.js docs with 6 themes, mobile support, search palette |
+| **OpenAPI Specification (JSON)** | [`public/openapi.json`](docs/public/openapi.json) | Complete 3.0.3 spec: 111 operations, 80 paths, 9 schemas, 3 security schemes |
+| **OpenAPI Specification (YAML)** | [`public/openapi.yaml`](docs/public/openapi.yaml) | Same spec in YAML format |
+| **API Reference (Markdown)** | [`backend/API.md`](backend/API.md) | 2152-line detailed API reference with request/response examples |
+| **Error Catalog** | [`src/data/error-catalog.ts`](docs/src/data/error-catalog.ts) | 17 standardized error codes with causes, resolutions, and JSON examples |
+| **Auth Guide** | [`src/data/auth-guide.ts`](docs/src/data/auth-guide.ts) | OAuth2 PKCE, API Keys, PATs, Rate Limits, CORS |
+| **API Changelog** | [`/changelog`](docs/src/app/changelog) | Full version history with migration paths |
+| **Documentation Site** | `docs/` | Neo-brutalist Next.js docs with 6 themes, mobile support, search palette |
 | **SQLite Schema** | [`backend/SQLITE_SCHEMA.sql`](backend/SQLITE_SCHEMA.sql) | Complete database schema for local mode |
 | **PostgreSQL Schema** | [`backend/POSTGRESQL_SCHEMA.sql`](backend/POSTGRESQL_SCHEMA.sql) | Complete database schema for cloud mode |
 
@@ -2167,7 +1602,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 Built with ❤️ by **[Gaurav Kaloliya](https://www.linkedin.com/in/gaurav-kaloliya-b44569417)**
 
-- **AI:** Powered by [Ollama](https://ollama.ai) — local LLM inference
+- **AI:** Powered by the Gnovium Inference Runtime — GPU-native local inference
 - **Docs:** Built with [Next.js](https://nextjs.org), [TailwindCSS](https://tailwindcss.com), [Framer Motion](https://www.framer.com/motion/)
 - **Backend:** Powered by [Flask](https://flask.palletsprojects.com), [SQLAlchemy](https://www.sqlalchemy.org)
 - **Deployment:** Hosted on [Vercel](https://vercel.com) (docs) and [Neon](https://neon.tech) (cloud DB)
@@ -2189,7 +1624,7 @@ Built with ❤️ by **[Gaurav Kaloliya](https://www.linkedin.com/in/gaurav-kalo
 ║                                                                      ║
 ║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   ║
 ║                                                                      ║
-║    106 ENDPOINTS · 71 ROUTES · 24 MODULES · 2 DEPLOYMENT MODES      ║
+║    111 ENDPOINTS · 80 ROUTES · 22 MODULES · 2 DEPLOYMENT MODES      ║
 ║                                                                      ║
 ║    Start local. Scale when you're ready.                             ║
 ║    No migration. No lock-in.                                         ║

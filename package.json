@@ -5,12 +5,25 @@
   "description": "Gnovium — Knowledge Operating System",
   "workspaces": [
     "electron",
-    "gnovium-docs",
-    "frontend"
+    "docs",
+    "frontend",
+    "landing",
+    "packages/*"
   ],
   "scripts": {
     "dev:electron": "npm run dev --workspace=electron",
-    "dev:docs": "npm run dev --workspace=gnovium-docs",
-    "build:docs": "npm run build --workspace=gnovium-docs"
+    "dev:docs": "npm run dev --workspace=docs",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:landing": "npm run dev --workspace=landing",
+    "dev:backend": "python3 backend/run.py",
+    "dev:proxy": "node tools/proxy.mjs",
+    "dev": "node tools/proxy.mjs",
+    "build:docs": "npm run build --workspace=docs",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:landing": "npm run build --workspace=landing",
+    "build": "npm run build:landing && npm run build:frontend && npm run build:docs",
+    "build:all": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
   }
 }

@@ -1,67 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd gnovium-docs && npm install",
-  "buildCommand": "cd gnovium-docs && npm run build",
-  "outputDirectory": "gnovium-docs/out",
-  "env": {
-    "GNOVIUM_MODE": "cloud",
-    "CORS_ORIGINS": "https://gnovium.com,https://www.gnovium.com,https://*.vercel.app,http://localhost:3000",
-    "ALLOWED_HOSTS": "gnovium.com,www.gnovium.com,api.gnovium.com,*.vercel.app,localhost,127.0.0.1",
-    "REQUIRE_REDIS": "false",
-    "AUTO_CREATE_TABLES": "false",
-    "AWS_REGION": "ap-south-1",
-    "S3_BUCKET": "gnovium",
-    "S3_PUBLIC_BASE_URL": "https://gnovium.s3.ap-south-1.amazonaws.com"
-  },
+  "installCommand": "cd landing && npm install",
+  "buildCommand": "cd landing && npm run build",
+  "outputDirectory": "landing/.next",
   "headers": [
     {
-      "source": "/api/v1/(.*)",
+      "source": "/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, Accept, Origin, X-Requested-With" }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, Accept, Origin, X-Requested-With" }
-      ]
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/v1/docs(?:/)?",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/api/v1/docs/(.*)",
-      "dest": "/$1"
-    },
-    {
-      "src": "/api/v1/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/health",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/",
-      "status": 308,
-      "headers": {
-        "Location": "/api/v1/docs"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
     }
   ]
 }

@@ -21,7 +21,7 @@ import * as shortcutsMod from './pages/shortcuts.js'
 const store = createStore()
 const pagesStore = createPagesStore(store)
 window.__pagesStore = pagesStore
-window.electron.getApiPort().then(p => { window.__apiPort = p }).catch(() => { window.__apiPort = 5001 })
+window.electron.getApiPort().then(p => { window.__apiPort = p }).catch(() => { window.__apiPort = 5000 })
 window.__autosaveInterval = store.state.autosaveInterval || 3000
 window.__restartAutosave = () => {
   window.__autosaveInterval = store.state.autosaveInterval || 3000

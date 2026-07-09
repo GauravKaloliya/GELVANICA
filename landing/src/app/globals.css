@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@source "../../../packages/shared/components/";
+@source "../../../packages/shared/index.ts";
+@import "../../../packages/shared/styles/base.css";
+
+/* ── Extreme smooth scroll ────────────────────── */
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Section scroll margin for fixed navbar */
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
+/* ── Scroll-snapping container ─────────────────── */
+.smooth-scroll-container {
+  scroll-snap-type: y proximity;
+  overflow-y: scroll;
+  height: 100vh;
+}
+
+.smooth-scroll-container > section {
+  scroll-snap-align: start;
+}
+
+/* ── Custom scrollbar ──────────────────────────── */
+html::-webkit-scrollbar {
+  width: 6px;
+}
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 0;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}

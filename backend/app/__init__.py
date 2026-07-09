@@ -5,7 +5,7 @@ from app.core.config import get_config
 from app.core.errors import ApiError
 from app.core.logging import configure_logging
 from app.core.response import error, ok
-from app.extensions import cache, cors, db, jwt, limiter, migrate
+from app.extensions import cache, cors, db, jwt, limiter
 import app.extensions as extensions
 from app.middleware.request_context import install_request_context
 from app.middleware.security import install_security_middleware
@@ -24,7 +24,6 @@ def create_app(config_object=None):
     import_module("app.models")
 
     db.init_app(app)
-    migrate.init_app(app, db)
     jwt.init_app(app)
     cors.init_app(app, origins=app.config["CORS_ORIGINS"], supports_credentials=True)
     install_request_context(app)

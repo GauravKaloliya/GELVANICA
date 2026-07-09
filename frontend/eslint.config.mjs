@@ -1,12 +1,17 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import noHardcodedUrlsPlugin from "../../scripts/eslint-rules/no-hardcoded-urls.mjs";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    plugins: {
+      "no-hardcoded-urls": noHardcodedUrlsPlugin,
+    },
     rules: {
+      "no-hardcoded-urls/no-hardcoded-urls": "warn",
       "react-hooks/set-state-in-effect": "off",
       "@typescript-eslint/no-explicit-any": "off",
     },

@@ -1,7 +1,7 @@
 # Gnovium API Reference
 
 > API version 1 — The backend engine for the knowledge operating system.
-> 110 routes across 21 modules, powering both **Local** (SQLite, offline-first desktop) and **Cloud** (PostgreSQL/NeonDB, multi-tenant SaaS) deployments with a single unified interface.
+> 111 endpoints across 22 modules, powering both **Local** (SQLite, offline-first desktop) and **Cloud** (PostgreSQL/NeonDB, multi-tenant SaaS) deployments with a single unified interface.
 
 ---
 
@@ -68,7 +68,7 @@ Every endpoint uses the same contract regardless of deployment mode. The applica
 ```
 ┌──────────────┐     ┌───────────────────┐     ┌──────────────────┐
 │  Electron    │     │  Cloud API        │     │  Local Flask API │
-│  Desktop App │     │  (api.gnovium.com)│     │  (localhost:5000)│
+│  Desktop App │     │  (api.gnovium.com)│     │  (localhost:5001)│
 ├──────────────┤     ├───────────────────┤     ├──────────────────┤
 │  1. Open     │────>│  2. Login page    │     │                  │
 │  browser     │     │  3. User signs in │     │                  │
@@ -91,7 +91,7 @@ The local Flask API cryptographically verifies the cloud-issued JWT using the **
 
 | Environment | Base URL | Mode | Database |
 |-------------|----------|------|----------|
-| **Local Development** | `http://localhost:5000` | `GNOVIUM_MODE=local` | SQLite |
+| **Local Development** | `http://localhost:5001` | `GNOVIUM_MODE=local` | SQLite |
 | **Cloud Production** | `https://api.gnovium.com` | `GNOVIUM_MODE=cloud` | NeonDB (PostgreSQL) |
 
 All API paths are prefixed with `/api/v1/`.
@@ -262,9 +262,9 @@ Identity and session management. **Only registered in cloud mode.** In local mod
 **Request:**
 ```json
 {
-  "email": "alice@example.com",
-  "password": "SecurePass123!",
-  "name": "Alice"
+  "email": "admin@gnovium.dev",
+  "password": "change-me-123",
+  "name": "Admin User"
 }
 ```
 
@@ -283,9 +283,9 @@ Identity and session management. **Only registered in cloud mode.** In local mod
       "refresh_token": "eyJ..."
     },
     "user": {
-      "id": "uuid-here",
-      "email": "alice@example.com",
-      "name": "Alice",
+      "id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
+      "email": "admin@gnovium.dev",
+      "name": "Admin User",
       "avatar_url": null
     }
   }
@@ -297,8 +297,8 @@ Identity and session management. **Only registered in cloud mode.** In local mod
 **Request:**
 ```json
 {
-  "email": "alice@example.com",
-  "password": "SecurePass123!"
+  "email": "admin@gnovium.dev",
+  "password": "change-me-123"
 }
 ```
 
@@ -306,7 +306,7 @@ Identity and session management. **Only registered in cloud mode.** In local mod
 
 #### `GET /auth/check-email`
 
-**Query:** `?email=alice@example.com`
+**Query:** `?email=admin@gnovium.dev`
 
 **Response `200`:**
 ```json
@@ -362,12 +362,12 @@ The refresh token's session is revoked server-side. Subsequent attempts to use t
 ```json
 {
   "data": {
-    "id": "uuid",
-    "email": "alice@example.com",
-    "name": "Alice",
-    "avatar_url": "https://api.dicebear.com/7.x/identicon/svg?seed=Alice",
-    "created_at": "2025-06-01T12:00:00Z",
-    "updated_at": "2025-06-15T08:30:00Z"
+    "id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
+    "email": "admin@gnovium.dev",
+    "name": "Admin User",
+    "avatar_url": "https://api.dicebear.com/7.x/identicon/svg?seed=Admin+User",
+    "created_at": "2026-06-07T12:00:00Z",
+    "updated_at": "2026-06-21T08:30:00Z"
   }
 }
 ```
@@ -377,7 +377,7 @@ The refresh token's session is revoked server-side. Subsequent attempts to use t
 **Request:**
 ```json
 {
-  "name": "Alice Smith",
+  "name": "Admin Updated",
   "avatar_url": "https://example.com/avatar.png"
 }
 ```
@@ -415,9 +415,9 @@ Top-level containers that group knowledge, entities, and collaborators.
 **Request:**
 ```json
 {
-  "name": "My Knowledge Base",
-  "description": "A workspace for my research notes",
-  "settings": { "theme": "dark" }
+  "name": "Knowledge OS",
+  "description": "Company workspace",
+  "settings": { "default_view": "graph" }
 }
 ```
 
@@ -435,14 +435,14 @@ Top-level containers that group knowledge, entities, and collaborators.
 ```json
 {
   "data": {
-    "id": "uuid",
-    "name": "My Knowledge Base",
-    "description": "A workspace for my research notes",
-    "owner_id": "uuid",
+    "id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+    "name": "Knowledge OS",
+    "description": "Company workspace",
+    "owner_id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
     "deployment_mode": "local",
-    "settings": { "theme": "dark" },
-    "created_at": "2025-06-01T12:00:00Z",
-    "updated_at": "2025-06-15T08:30:00Z"
+    "settings": { "default_view": "graph" },
+    "created_at": "2026-06-07T12:00:00Z",
+    "updated_at": "2026-06-21T08:30:00Z"
   }
 }
 ```
@@ -454,7 +454,7 @@ Note: `deployment_mode` is `"local"` for local mode and `"cloud"` for cloud mode
 **Request:**
 ```json
 {
-  "name": "Updated Name",
+  "name": "Knowledge OS Pro",
   "description": null
 }
 ```
@@ -475,7 +475,7 @@ Delegates to `DashboardService.overview()`. Returns raw response (unwrapped `dat
 ```json
 {
   "data": {
-    "workspace_id": "uuid",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
     "entity_count": 42,
     "block_count": 215,
     "relation_count": 18,
@@ -483,7 +483,7 @@ Delegates to `DashboardService.overview()`. Returns raw response (unwrapped `dat
     "archived_count": 5,
     "member_count": 1,
     "recent_entities": [
-      { "id": "uuid", "title": "Research Notes", "updated_at": "2025-06-15T08:30:00Z" }
+      { "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "title": "Research Notes", "updated_at": "2026-06-21T08:30:00Z" }
     ]
   }
 }
@@ -518,12 +518,12 @@ The fundamental unit of knowledge — pages, documents, databases, or any typed 
 **`POST /entities/`**
 ```json
 {
-  "workspace_id": "uuid",
-  "entity_type_id": "uuid",
-  "title": "My Document",
-  "icon": "📄",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e",
+  "title": "Research Notes",
+  "icon": "note",
   "cover_image": null,
-  "properties": { "Status": "Active", "Priority": "High" }
+  "properties": { "status": "active", "priority": "high" }
 }
 ```
 
@@ -532,9 +532,9 @@ The fundamental unit of knowledge — pages, documents, databases, or any typed 
 **`PATCH /entities/<id>`**
 ```json
 {
-  "title": "Updated Title",
-  "icon": "📝",
-  "is_archived": false
+  "title": "Research Notes v2",
+  "icon": "doc",
+  "properties": { "status": "review" }
 }
 ```
 
@@ -556,10 +556,10 @@ All fields are optional. Send only what changed.
 
 ```json
 {
-  "workspace_id": "uuid",
-  "entity_type_id": "uuid",
-  "title": "Sub-page",
-  "icon": null
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e",
+  "title": "Child Page",
+  "icon": "doc"
 }
 ```
 
@@ -575,10 +575,10 @@ All fields are optional. Send only what changed.
 **`POST /entities/types`**
 ```json
 {
-  "workspace_id": "uuid",
-  "name": "Meeting Notes",
-  "icon": "📝",
-  "config": { "allow_children": true }
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "name": "Document",
+  "icon": "doc",
+  "config": { "color": "blue" }
 }
 ```
 
@@ -589,11 +589,11 @@ All fields are optional. Send only what changed.
 **`POST /entities/properties`**
 ```json
 {
-  "workspace_id": "uuid",
-  "entity_type_id": null,
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e",
   "name": "Status",
   "property_type": "select",
-  "config": { "options": ["Active", "Review", "Done"] }
+  "config": { "options": ["active", "review", "archived"] }
 }
 ```
 
@@ -649,11 +649,11 @@ In **cloud mode**, blocks are mutable with versioning handled via changesets and
 **Request:**
 ```json
 {
-  "entity_id": "uuid",
+  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
   "parent_block_id": null,
-  "block_type": "text",
-  "position": 1000,
-  "content": { "text": "Hello, world!" }
+  "block_type": "paragraph",
+  "position": null,
+  "content": { "text": "This is a paragraph block." }
 }
 ```
 
@@ -690,8 +690,8 @@ In **cloud mode**, blocks are mutable with versioning handled via changesets and
 **Request:**
 ```json
 {
-  "content": { "text": "Updated content" },
-  "position": 2000
+  "block_type": "heading_2",
+  "content": { "text": "Overview" }
 }
 ```
 
@@ -713,11 +713,10 @@ Batch update block positions in a single call.
 **Request:**
 ```json
 {
-  "entity_id": "uuid",
+  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
   "blocks": [
-    { "id": "block-uuid-1", "position": 100 },
-    { "id": "block-uuid-2", "position": 200 },
-    { "id": "block-uuid-3", "position": 300 }
+    { "id": "4ef014a4-569d-4cf9-98fe-d2784860b263", "position": 100 },
+    { "id": "5a3978e0-dfeb-475d-911e-5451dd808dad", "position": 200 }
   ]
 }
 ```
@@ -756,11 +755,11 @@ Connect entities to form a knowledge graph.
 **Request:**
 ```json
 {
-  "workspace_id": "uuid",
-  "source_entity_id": "uuid",
-  "target_entity_id": "uuid",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "source_entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+  "target_entity_id": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b",
   "relation_type": "refers_to",
-  "metadata": { "reason": "mentioned in notes" }
+  "metadata": { "confidence": 0.95 }
 }
 ```
 
@@ -776,14 +775,14 @@ Connect entities to form a knowledge graph.
 ```json
 {
   "data": {
-    "id": "uuid",
-    "workspace_id": "uuid",
-    "source_entity_id": "uuid",
-    "target_entity_id": "uuid",
+    "id": "63ed9d0f-4a67-4cdf-8df5-ee166567f38a",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+    "source_entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+    "target_entity_id": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b",
     "relation_type": "refers_to",
     "relation_metadata": {},
     "created_by": null,
-    "created_at": "2025-06-15T08:30:00Z"
+    "created_at": "2026-06-21T08:30:00Z"
   }
 }
 ```
@@ -830,11 +829,11 @@ Threaded discussions on entities and blocks.
 **Request:**
 ```json
 {
-  "workspace_id": "uuid",
-  "entity_id": "uuid",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
   "block_id": null,
   "parent_comment_id": null,
-  "content": "Have you considered adding a diagram here?"
+  "content": "Looks good."
 }
 ```
 
@@ -854,7 +853,7 @@ At least one of `entity_id` or `block_id` must be provided.
 
 ```json
 {
-  "content": "Updated comment text"
+  "content": "Looks good after review."
 }
 ```
 
@@ -878,7 +877,7 @@ Lightweight labels for entities — simpler than relations but equally powerful.
 
 ```json
 {
-  "workspace_id": "uuid",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
   "name": "important",
   "color": "#ff4444"
 }
@@ -890,7 +889,7 @@ Apply a tag to an entity. No request body needed.
 
 **Response `201`:**
 ```json
-{ "data": { "tag_id": "uuid", "entity_id": "uuid", "created_at": "..." } }
+{ "data": { "tag_id": "c3d7e8f1-4a2b-4c5d-8e6f-7a8b9c0d1e2f", "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "created_at": "2026-06-21T08:30:00Z" } }
 ```
 
 #### `DELETE /tags/<tag_id>/entities/<entity_id>`
@@ -916,10 +915,10 @@ Git-inspired branching for fearless experimentation.
 
 ```json
 {
-  "workspace_id": "uuid",
-  "name": "feature/new-editor",
-  "parent_branch_id": "uuid",
-  "description": "Experimenting with a new block editor",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "parent_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
+  "name": "experiment",
+  "description": "Alternative architecture exploration",
   "is_default": false
 }
 ```
@@ -930,7 +929,7 @@ Merge the branch identified by `<id>` (source) into another branch.
 
 ```json
 {
-  "target_branch_id": "uuid"
+  "target_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1"
 }
 ```
 
@@ -940,14 +939,16 @@ Merge two branches by specifying both explicitly.
 
 ```json
 {
-  "source_branch_id": "uuid",
-  "target_branch_id": "uuid"
+  "source_branch_id": "b5a2bf83-1282-4df3-8cb3-1a22bcf291a1",
+  "target_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1"
 }
 ```
 
 ---
 
 ### Versions (Cloud-Only)
+
+> Architectural specification in [`gnovium_mvp_context.md#4--versioning-system`](../gnovium_mvp_context.md#4--versioning-system). This section documents the API endpoints only.
 
 Workspace versioning — snapshots, changesets, and entity history. **Only available in cloud mode.**
 
@@ -967,9 +968,9 @@ Workspace versioning — snapshots, changesets, and entity history. **Only avail
 
 ```json
 {
-  "branch_id": "uuid",
+  "branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
   "snapshot_id": null,
-  "message": "Added new sections to the research doc"
+  "message": "Capture entity edits"
 }
 ```
 
@@ -977,9 +978,9 @@ Workspace versioning — snapshots, changesets, and entity history. **Only avail
 
 ```json
 {
-  "branch_id": "uuid",
-  "name": "Pre-migration backup",
-  "description": "Snapshot before restructuring"
+  "branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
+  "name": "Before launch",
+  "description": "Stable state before production launch"
 }
 ```
 
@@ -989,7 +990,7 @@ Take a point-in-time snapshot of a single entity.
 
 ```json
 {
-  "changeset_id": null
+  "changeset_id": "0b7c95b2-8eb6-4ca4-aa04-420fd68cbb0c"
 }
 ```
 
@@ -1012,9 +1013,9 @@ Restore an entity to a previous version. No request body required — the target
 ```json
 {
   "data": {
-    "entity_id": "uuid",
-    "restored_version_id": "uuid",
-    "restored_at": "2025-06-15T08:30:00Z",
+    "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+    "restored_version_id": "70fdad5c-2e3b-49a2-9146-fbd84d61f27a",
+    "restored_at": "2026-06-21T08:30:00Z",
     "blocks_restored": 12
   }
 }
@@ -1033,16 +1034,16 @@ Visual comparison between versions, snapshots, and branches. **Only available in
 **Request — compare two versions/snapshots:**
 ```json
 {
-  "left_version_id": "uuid",
-  "right_version_id": "uuid"
+  "left_version_id": "109518f4-4e1b-43b2-9640-f8da24e0e1d5",
+  "right_version_id": "36fa4408-9cf7-41a8-920e-adc42c91a1d9"
 }
 ```
 
 Or compare branches:
 ```json
 {
-  "left_branch_id": "uuid",
-  "right_branch_id": "uuid"
+  "left_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
+  "right_branch_id": "0b7c95b2-8eb6-4ca4-aa04-420fd68cbb0c"
 }
 ```
 
@@ -1053,24 +1054,24 @@ Or compare branches:
 {
   "data": [
     {
-      "type": "modified",
-      "entity_id": "uuid",
-      "block_id": "uuid",
-      "field": "content",
-      "before": { "text": "Original text" },
-      "after": { "text": "Modified text" }
-    },
-    {
       "type": "added",
-      "entity_id": "uuid",
-      "block_id": "uuid",
-      "after": { "text": "New block content" }
+      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+      "block_id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
+      "after": { "text": "New section" }
     },
     {
       "type": "removed",
-      "entity_id": "uuid",
-      "block_id": "uuid",
-      "before": { "text": "Deleted block content" }
+      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+      "block_id": "5a3978e0-dfeb-475d-911e-5451dd808dad",
+      "before": { "text": "Old section" }
+    },
+    {
+      "type": "modified",
+      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+      "block_id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
+      "field": "content",
+      "before": { "text": "Before" },
+      "after": { "text": "After" }
     }
   ]
 }
@@ -1104,7 +1105,7 @@ Full-text, semantic, and hybrid search across workspace content.
 | `keyword` | LIKE-based text match on `search_documents` title and content |
 | `full_text` | FTS5 on materialized `search_documents_fts` (page-level) |
 | `hybrid` | Merged block-level (`blocks_fts`) + page-level (`search_documents_fts`) results with ranking (default) |
-| `semantic` | Embedding-based vector similarity — requires Ollama/pgvector |
+| `semantic` | Embedding-based vector similarity — requires configured inference runtime / pgvector |
 
 **Local mode** uses SQLite FTS5 with two search indexes:
 - **`blocks_fts`** — real-time block-level search, auto-synced via triggers on the `blocks` table
@@ -1119,22 +1120,22 @@ The hybrid mode queries both indexes and merges results with score ranking.
 {
   "data": [
     {
-      "id": "uuid",
-      "entity_id": "uuid",
-      "block_id": "uuid-or-null",
-      "title": "Authentication Flow",
-      "content": "...",
-      "match_type": "block",
-      "score": 0.87
+      "id": "c7ad2e49-6322-4214-8cbd-8ec8a1dcdb8f",
+      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+      "block_id": null,
+      "title": "Research Notes",
+      "content": "Authentication strategy notes",
+      "match_type": "page",
+      "score": 0.95
     },
     {
-      "id": "uuid",
-      "entity_id": "uuid",
-      "block_id": null,
-      "title": "Meeting Notes",
-      "content": "...",
-      "match_type": "page",
-      "score": 0.62
+      "id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
+      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+      "block_id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
+      "title": "Authentication Flow",
+      "content": "The system uses JWT tokens...",
+      "match_type": "block",
+      "score": 0.87
     }
   ]
 }
@@ -1165,8 +1166,8 @@ Ask questions about your workspace and get answers grounded in your knowledge.
 **Request:**
 ```json
 {
-  "workspace_id": "uuid",
-  "question": "What are the key architectural decisions in Project Alpha?",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "question": "Summarize the architecture of Research Notes",
   "limit": 8
 }
 ```
@@ -1177,12 +1178,71 @@ Ask questions about your workspace and get answers grounded in your knowledge.
 | `question` | ✅ | — | Natural language question (min 1 char) |
 | `limit` | — | 8 | Number of context documents to retrieve (1–20) |
 
-**How it works:**
+**How it works — Safety-First Multi-Agent Pipeline:**
 
-1. The question is used to semantically search the workspace (hybrid mode)
-2. Relevant documents are assembled as context
-3. Ollama (local) or a cloud LLM generates an answer grounded in that context
-4. Sources are returned alongside the answer for verification
+```
+Question
+   │
+   ▼
+┌──────────────────────────────────────────────────┐
+│ Supervisor Agent                                 │
+│  • Routes the task to the appropriate planner    │
+│  • Decides local vs cloud execution              │
+└──────────────────────┬───────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────┐
+│ Planner Agent                                    │
+│  • Breaks down complex questions into sub-tasks  │
+│  • Coordinates Worker Agents                     │
+└──────────────────────┬───────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────┐
+│ Worker Agents (parallel execution)               │
+│                                                   │
+│  Knowledge Agent: semantic + graph-aware search   │
+│  Editor Agent: entity/block lookups (via tools)   │
+│  Governance Agent: health context if needed       │
+└──────────────────────┬───────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────┐
+│ Safety Layer (6-stage)                           │
+│  1. Policy Validation — matches agent action     │
+│     against workspace policies                   │
+│  2. Permission Validation — RBAC + ownership     │
+│  3. Simulation/Dry-Run — previews outcome        │
+│     without committing                           │
+│  4. Diff Generation — shows exact changeset      │
+│  5. User Approval — required for destructive     │
+│     writes; read-only tools (search, graph       │
+│     queries) bypass this stage                   │
+│  6. Execution — approved changes committed       │
+└──────────────────────┬───────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────┐
+│ Inference Runtime                                 │
+│  • Generates final answer grounded in context     │
+│  • Practical MVP backends: llama.cpp, ONNX       │
+│    Runtime, TensorRT-LLM provide working AI      │
+│    day one; custom GPU-native runtime is the      │
+│    long-term strategic differentiator            │
+└──────────────────────┬───────────────────────────┘
+                       │
+                       ▼
+                  Answer + Sources
+```
+
+**Retrieval is graph-aware.** The retriever combines semantic vector search with graph traversal — finding related entities via typed relations (`refers_to`, `depends_on`, `part_of`, etc.) to enrich the context assembly. This means questions like *"What depends on Project Alpha?"* naturally pull in connected knowledge.
+
+**Mode-specific execution:**
+
+| Mode | Inference | Agents | Storage |
+|------|-----------|--------|---------|
+| **Local** | Gnovium GPU-native runtime (CUDA, on-device) — practical MVP backends (llama.cpp, ONNX Runtime, TensorRT-LLM) supported day one | All agents run locally | SQLite + local vector store |
+| **Cloud** | Cloud inference runtime (managed GPU) | Agents can coordinate across users | PostgreSQL + pgvector |
 
 **Response `200`:**
 ```json
@@ -1197,7 +1257,7 @@ Ask questions about your workspace and get answers grounded in your knowledge.
 }
 ```
 
-> **Note:** Each source `content` is truncated to 2000 characters. In local mode, Ollama must be running. In cloud mode, a cloud LLM provider is used.
+> **Note:** Each source `content` is truncated to 2000 characters. The configured inference runtime is used for answer generation (see mode table above).
 
 ---
 
@@ -1251,12 +1311,12 @@ Upload a file using multipart form data.
 ```json
 {
   "data": {
-    "id": "uuid",
+    "id": "f5da7c75-283d-47b7-82bd-3f2dfb8d1b01",
     "file_name": "diagram.png",
     "mime_type": "image/png",
     "file_size": 204800,
-    "public_url": "/uploads/workspaces_uuid_abc123.png",
-    "object_key": "workspaces/uuid/abc123.png",
+    "public_url": "/uploads/workspaces_50e50f55_diagram.png",
+    "object_key": "workspaces/50e50f55/diagram.png",
     "deduplicated": false
   }
 }
@@ -1266,12 +1326,12 @@ Upload a file using multipart form data.
 ```json
 {
   "data": {
-    "id": "uuid-of-existing",
+    "id": "f5da7c75-283d-47b7-82bd-3f2dfb8d1b01",
     "file_name": "diagram.png",
     "mime_type": "image/png",
     "file_size": 204800,
-    "public_url": "/uploads/workspaces_uuid_existing.png",
-    "object_key": "workspaces/uuid/existing.png",
+    "public_url": "/uploads/workspaces_50e50f55_diagram.png",
+    "object_key": "workspaces/50e50f55/diagram.png",
     "deduplicated": true
   }
 }
@@ -1306,12 +1366,12 @@ Register file metadata without uploading (e.g. for pre-uploaded cloud files).
 
 ```json
 {
-  "workspace_id": "uuid",
-  "file_name": "report.pdf",
-  "mime_type": "application/pdf",
-  "file_size": 1048576,
-  "object_key": "uploads/report.pdf",
-  "public_url": null
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "file_name": "diagram.png",
+  "mime_type": "image/png",
+  "file_size": 204800,
+  "object_key": "uploads/diagram.png",
+  "public_url": "https://cdn.gnovium.com/uploads/diagram.png"
 }
 ```
 
@@ -1321,8 +1381,8 @@ Get a presigned URL for direct browser-to-S3 upload. Returns `404` in local mode
 
 ```json
 {
-  "object_key": "uploads/my-file.pdf",
-  "content_type": "application/pdf"
+  "object_key": "uploads/diagram.png",
+  "content_type": "image/png"
 }
 ```
 
@@ -1331,8 +1391,8 @@ Get a presigned URL for direct browser-to-S3 upload. Returns `404` in local mode
 {
   "data": {
     "enabled": true,
-    "upload_url": "https://gnovium.s3.amazonaws.com/uploads/my-file.pdf?X-Amz-Algorithm=...&X-Amz-Signature=...",
-    "object_key": "uploads/my-file.pdf"
+    "upload_url": "https://s3.amazonaws.com/gnovium/uploads/diagram.png?AWSAccessKeyId=...&Signature=...",
+    "object_key": "uploads/diagram.png"
   }
 }
 ```
@@ -1356,7 +1416,7 @@ Find all active `File` records with zero active `EntityFile` links and hard-dele
 **Request:**
 ```json
 {
-  "workspace_id": "uuid"
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579"
 }
 ```
 Omitting `workspace_id` cleans up orphans across all workspaces.
@@ -1374,7 +1434,7 @@ Omitting `workspace_id` cleans up orphans across all workspaces.
 
 ### Graph
 
-The visual knowledge graph — materialized, queryable, traversable.
+The visual knowledge graph — materialized, queryable, traversable. Graph materialization uses incremental/cached updates — full rebuilds occur only on first materialization or schema changes; subsequent requests apply incremental diffs.
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -1398,19 +1458,19 @@ Returns the latest materialized graph snapshot with nodes and edges. Returns `40
 ```json
 {
   "data": {
-    "id": "uuid",
-    "workspace_id": "uuid",
+    "id": "c61ba51e-5e52-4f68-8b35-4c74f6928d06",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
     "graph_snapshot": {
       "nodes": [
-        { "id": "uuid", "title": "Page 1", "type": "uuid", "icon": null }
+        { "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "title": "Research Notes", "type": "8cb385bc-223d-4c3e-8c38-dfa22026d36e", "icon": null }
       ],
       "edges": [
-        { "id": "uuid", "source": "uuid", "target": "uuid", "type": "refers_to" }
+        { "id": "63ed9d0f-4a67-4cdf-8df5-ee166567f38a", "source": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "target": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b", "type": "refers_to" }
       ],
-      "generated_at": "2025-06-15T08:30:00Z"
+      "generated_at": "2026-06-21T08:30:00Z"
     },
     "version_hash": "sha256-hex",
-    "generated_at": "2025-06-15T08:30:00Z"
+    "generated_at": "2026-06-21T08:30:00Z"
   }
 }
 ```
@@ -1421,7 +1481,7 @@ Trigger a fresh materialization of the graph from current entities and relations
 
 ```json
 {
-  "workspace_id": "uuid"
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579"
 }
 ```
 
@@ -1434,10 +1494,10 @@ Filtered graph query.
 **Request:**
 ```json
 {
-  "workspace_id": "uuid",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
   "relation_types": ["refers_to", "depends_on"],
-  "entity_type_ids": ["uuid", "uuid"],
-  "limit": 200
+  "entity_type_ids": ["8cb385bc-223d-4c3e-8c38-dfa22026d36e"],
+  "limit": 100
 }
 ```
 
@@ -1447,7 +1507,7 @@ All filter fields are optional — omit to get the full graph.
 ```json
 {
   "data": {
-    "workspace_id": "uuid",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
     "nodes": [ ... ],
     "edges": [ ... ],
     "node_count": 42,
@@ -1463,8 +1523,8 @@ Breadth-first traversal from a center node.
 **Request:**
 ```json
 {
-  "workspace_id": "uuid",
-  "center_node": "uuid",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "center_node": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
   "depth": 2,
   "relation_types": ["refers_to"]
 }
@@ -1481,9 +1541,9 @@ Find the shortest path between two entities.
 **Request:**
 ```json
 {
-  "workspace_id": "uuid",
-  "source_entity_id": "uuid",
-  "target_entity_id": "uuid"
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "source_entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+  "target_entity_id": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b"
 }
 ```
 
@@ -1493,7 +1553,7 @@ Find the shortest path between two entities.
 
 ### Governance
 
-Workspace health — detect duplicates, orphans, stale content, and calculate a health score.
+Workspace health — detect duplicates, orphans, stale content, and calculate a health score. All governance analysis runs as background jobs with tiered processing: cheap checks (duplicate title detection) execute inline; expensive analysis (full content similarity, stale detection) is delegated to async job workers.
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -1516,8 +1576,8 @@ Workspace health — detect duplicates, orphans, stale content, and calculate a 
 ```json
 {
   "data": {
-    "id": "uuid",
-    "workspace_id": "uuid",
+    "id": "9cbef023-ffaa-45cc-ba1e-faef266bc39e",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
     "health_score": 82,
     "duplicate_count": 2,
     "orphan_count": 5,
@@ -1531,7 +1591,7 @@ Workspace health — detect duplicates, orphans, stale content, and calculate a 
       "stale": [ ... ],
       "entity_count": 42
     },
-    "created_at": "2025-06-15T08:30:00Z"
+    "created_at": "2026-06-21T08:30:00Z"
   }
 }
 ```
@@ -1583,7 +1643,7 @@ At-a-glance workspace overview.
 ```json
 {
   "data": {
-    "workspace_id": "uuid",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
     "entity_count": 42,
     "block_count": 215,
     "relation_count": 18,
@@ -1591,7 +1651,7 @@ At-a-glance workspace overview.
     "member_count": 3,
     "archived_count": 5,
     "recent_entities": [
-      { "id": "uuid", "title": "Research Notes", "updated_at": "2025-06-15T08:30:00Z" }
+      { "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "title": "Research Notes", "updated_at": "2026-06-21T08:30:00Z" }
     ]
   }
 }
@@ -1616,12 +1676,12 @@ User notifications for workspace events.
 **Request:**
 ```json
 {
-  "workspace_id": "uuid",
-  "user_id": "uuid",
-  "entity_id": null,
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+  "user_id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
+  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
   "type": "mention",
-  "title": "Alice mentioned you in Research Notes",
-  "message": "She asked for your feedback on the architecture section."
+  "title": "Mentioned in Research Notes",
+  "message": "You were mentioned in a comment."
 }
 ```
 
@@ -1649,8 +1709,8 @@ Asynchronous job tracking for long-running operations. **Only available in cloud
 ```json
 {
   "workspace_id": null,
-  "job_type": "graph_materialization",
-  "payload": { "workspace_id": "uuid" }
+  "job_type": "embedding_refresh",
+  "payload": { "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3" }
 }
 ```
 
@@ -1658,7 +1718,7 @@ Asynchronous job tracking for long-running operations. **Only available in cloud
 
 ```json
 {
-  "result": { "nodes_count": 42, "edges_count": 18 }
+  "result": { "processed": 24, "failed": 0 }
 }
 ```
 
@@ -1666,7 +1726,7 @@ Asynchronous job tracking for long-running operations. **Only available in cloud
 
 ### Sync (Cloud-Only)
 
-Offline sync operations — queue, ingest, and acknowledge changes. **Only available in cloud mode.**
+Offline sync operations — queue, ingest, and acknowledge changes. **Only available in cloud mode.** Uses a Git-style operation log (ordered append-only changesets with server-side conflict resolution) rather than CRDTs — chosen for simplicity and predictable merge semantics in a workspace-oriented data model.
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -1679,12 +1739,12 @@ Offline sync operations — queue, ingest, and acknowledge changes. **Only avail
 
 ```json
 {
-  "workspace_id": "uuid",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
   "operation_type": "entity_update",
   "entity_type": "entity",
-  "entity_id": null,
-  "payload": { "title": "Updated Offline" },
-  "device_id": "laptop-alice",
+  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+  "payload": { "title": "Research Notes v2" },
+  "device_id": "web-01",
   "client_clock": 42
 }
 ```
@@ -1718,14 +1778,14 @@ Audit trail of workspace events.
 {
   "data": [
     {
-      "id": "uuid",
-      "workspace_id": "uuid",
-      "user_id": "uuid",
-      "entity_id": "uuid",
+      "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
+      "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+      "user_id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
+      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
       "block_id": null,
       "action": "entity.create",
-      "details": { "title": "Research Notes", "entity_type_id": "uuid" },
-      "created_at": "2025-06-15T08:30:00Z"
+      "details": { "title": "Research Notes", "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e" },
+      "created_at": "2026-06-21T08:30:00Z"
     }
   ],
   "meta": {
@@ -1755,7 +1815,7 @@ Export and import workspace data for migration and safekeeping.
 
 ```json
 {
-  "workspace_id": "uuid"
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579"
 }
 ```
 
@@ -1763,8 +1823,8 @@ Export and import workspace data for migration and safekeeping.
 ```json
 {
   "data": {
-    "workspace_id": "uuid",
-    "exported_at": "2025-06-15T08:30:00Z",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
+    "exported_at": "2026-06-21T12:30:00Z",
     "entity_types": [ ... ],
     "entities": [ ... ],
     "blocks": [ ... ],
@@ -1787,7 +1847,7 @@ Same payload as `/backups/export` but writes the JSON to `instance/backups/works
 ```json
 {
   "data": {
-    "path": "/path/to/instance/backups/workspace_uuid_20250615_083000.json"
+    "path": "/path/to/instance/backups/workspace_50e50f55_20260621_123000.json"
   }
 }
 ```
@@ -1798,7 +1858,7 @@ Useful for automated local backups or pre-migration snapshots.
 
 ```json
 {
-  "workspace_id": "uuid",
+  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
   "entity_types": [ ... ],
   "entities": [ ... ],
   "blocks": [ ... ],
@@ -1814,7 +1874,7 @@ Useful for automated local backups or pre-migration snapshots.
 ```json
 {
   "data": {
-    "workspace_id": "uuid",
+    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
     "imported": {
       "entity_types": 3,
       "entities": 15,
@@ -1842,6 +1902,7 @@ Confirmation with counts of imported items.
 
 | Module | Routes | Available |
 |--------|:------:|-----------|
+| System | 1 | Both |
 | Auth | 8 | Cloud only |
 | Workspaces | 6 | Both |
 | Entities | 15 | Both (versions endpoint cloud-only) |
@@ -1863,7 +1924,7 @@ Confirmation with counts of imported items.
 | Sync | 4 | Cloud only |
 | Activity | 1 | Both |
 | Backups | 3 | Both |
-| **Total** | **110** | **84 shared + 26 cloud-only** |
+| **Total** | **111** | **83 shared + 28 cloud-only** |
 
 ### Essential Endpoints
 
@@ -1909,7 +1970,7 @@ POST   /entities/<id>/restore  # restores if within retention window
 **Auth flow (cloud → local/desktop):**
 ```
 POST https://api.gnovium.com/auth/register  →  access_token + refresh_token
-     ↳ Pass access_token as Bearer token to localhost:5000
+     ↳ Pass access_token as Bearer token to localhost:5001
      ↳ Local Flask verifies JWT cryptographically — no network call
 ```
 
@@ -2098,5 +2159,5 @@ Ensure `.env`, `.env.local`, and `.env.cloud` all define the same `JWT_SECRET_KE
 
 ---
 
-*Gnovium API — v1 — 110 routes — Built for connected, versioned, evolvable knowledge.*
+*Gnovium API — v1 — 111 endpoints — Built for connected, versioned, evolvable knowledge.*
 *Dual-mode: SQLite (local desktop) / PostgreSQL (cloud SaaS) — one contract, any deployment.*

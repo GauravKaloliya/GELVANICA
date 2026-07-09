@@ -291,6 +291,7 @@ CREATE TABLE search_documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    block_id UUID REFERENCES blocks(id) ON DELETE CASCADE,
     title TEXT,
     content TEXT,
     content_hash TEXT NOT NULL DEFAULT '',

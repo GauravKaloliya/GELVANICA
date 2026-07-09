@@ -17,6 +17,15 @@ export interface ProfileData {
   previous_avatars: string[];
 }
 
+contextBridge.exposeInMainWorld("electronErrorReporter", {
+  reportError(error: { message: string; stack?: string; source?: string; lineno?: number; colno?: number }): void {
+    ipcRenderer.send("renderer-error", error);
+  },
+  reportUnhandledRejection(error: { message: string; stack?: string }): void {
+    ipcRenderer.send("renderer-unhandled-rejection", error);
+  },
+});
+
 contextBridge.exposeInMainWorld("electron", {
   getApiPort(): Promise<number> {
     return ipcRenderer.invoke("getApiPort");
@@ -67,6 +76,10 @@ contextBridge.exposeInMainWorld("electron", {
 
 declare global {
   interface Window {
+    electronErrorReporter: {
+      reportError: (error: { message: string; stack?: string; source?: string; lineno?: number; colno?: number }) => void;
+      reportUnhandledRejection: (error: { message: string; stack?: string }) => void;
+    };
     electron: {
       getApiPort: () => Promise<number>;
       getAppVersion: () => Promise<string>;

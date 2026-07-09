@@ -4997,7 +4997,8 @@ button, .btn, [role="button"] {
 
 .right-panel-input:focus { outline: none; border-color: var(--accent) !important; }
 
-.right-panel-btn:hover { opacity: 0.9; }
+.right-panel-btn:hover {
+  opacity: 0.9;
   color: var(--foreground);
   background: var(--hover-bg);
   font-weight: 600;

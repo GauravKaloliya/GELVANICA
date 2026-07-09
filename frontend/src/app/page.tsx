@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Network, History, FilePlus, Search, Sparkles, BookOpen, ExternalLink, Plus, Upload } from "lucide-react"
 import { getAvatarUrl } from "@/lib/avatar"
+import { docsUrl, Routes } from "@gnovium/shared"
 import { motion } from "framer-motion"
 import ParticleGraph from "./components/ParticleGraph"
 
@@ -34,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/signin")
+      router.push(Routes.frontend.signIn.build({}))
     }
   }, [isLoading, isAuthenticated, router])
 
@@ -199,7 +200,7 @@ export default function Home() {
                 </button>
               </li>
               <li>
-                <a href="https://api.gnovium.com/docs" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 flex items-center gap-1.5">
+                <a href={docsUrl()} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 flex items-center gap-1.5">
                   <BookOpen size={12} strokeWidth={2.5} />
                   <span>View Documentation</span>
                   <ExternalLink size={10} className="opacity-60" />

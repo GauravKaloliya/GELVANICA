@@ -2,28 +2,67 @@ import { app, BrowserWindow, ipcMain, nativeImage, dialog } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import { FlaskManager } from "../src/flask-manager";
+import { initCrashReporter } from "../src/crash-reporter";
+import { initRendererErrorHandler } from "../src/error-boundary";
+import { execFileSync } from "child_process";
 
 const isDev = !app.isPackaged;
+const VITE_DEV_SERVER_URL = "http://localhost:5173";
 const AUTH_URL = "https://gnovium.com";
 
-const iconPath = path.join(__dirname, "../renderer/icon.png");
+initCrashReporter();
+initRendererErrorHandler();
+
+// ── Path resolution ──
+// __dirname = dist/main/main/ in both dev and prod.
+// Dev:  ../../../renderer/ = projectRoot/electron/renderer/
+// Prod: ../../renderer/    = asar/dist/renderer/
+function resolveRenderer(...segments: string[]): string {
+  return path.join(__dirname, isDev ? "../../../renderer" : "../../renderer", ...segments);
+}
+
+const iconPath = resolveRenderer("gnovium-logo.jpeg");
 
 app.setName("Gnovium");
 
-// (reload handled by chokidar in dev script)
+// ── Python auto-detection ──
+function findPython(): string {
+  const candidates = ["python3", "python"];
+  for (const cmd of candidates) {
+    try {
+      const out = execFileSync(cmd, ["--version"], { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] });
+      console.log(`[Python] Found ${cmd}: ${out.trim()}`);
+      return cmd;
+    } catch {
+      continue;
+    }
+  }
+  // Try resolving absolute path via which
+  try {
+    const absPath = execFileSync("which", ["python3"], { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    if (absPath) {
+      console.log(`[Python] Resolved absolute path: ${absPath}`);
+      return absPath;
+    }
+  } catch {
+    // fall through
+  }
+  console.warn("[Python] Falling back to 'python3'");
+  return "python3";
+}
 
 // ─────────────────────────────────────────────
 // Flask backend manager
 // ─────────────────────────────────────────────
 
 const backendDir = isDev
-  ? path.resolve(__dirname, "../../..", "backend")
+  ? path.resolve(__dirname, "../../../../backend")
   : path.resolve(process.resourcesPath, "backend");
 
 const flaskManager = new FlaskManager({
   backendDir,
   port: 5000,
-  pythonPath: isDev ? "python" : undefined,
+  pythonPath: isDev ? findPython() : undefined,
 });
 
 // ─────────────────────────────────────────────
@@ -62,7 +101,6 @@ function clearAuthData(): void {
   try {
     fs.unlinkSync(authFilePath());
   } catch {
-    // file didn't exist — that's fine
   }
 }
 
@@ -109,7 +147,6 @@ let loadingWindow: BrowserWindow | null = null;
 let authWindow: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
 
-/** Show the loading/splash screen while Flask starts up. */
 function createLoadingWindow(): void {
   const { height: screenH } = require("electron").screen.getPrimaryDisplay().workAreaSize;
 
@@ -127,9 +164,10 @@ function createLoadingWindow(): void {
     show: false,
     icon: iconPath,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      sandbox: false,
+      preload: path.join(__dirname, "../../preload/loading.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
     },
   });
 
@@ -137,11 +175,9 @@ function createLoadingWindow(): void {
     loadingWindow?.show();
   });
 
-  const loadingPath = path.join(__dirname, "../renderer/loading.html");
-  loadingWindow.loadFile(loadingPath);
+  loadingWindow.loadFile(resolveRenderer("loading.html"));
 }
 
-/** Open a browser window to the web sign-in page for Electron auth. */
 function createAuthWindow(): Promise<ElectronAuthData> {
   return new Promise((resolve, reject) => {
     const { height: screenH } = require("electron").screen.getPrimaryDisplay().workAreaSize;
@@ -175,7 +211,6 @@ function createAuthWindow(): Promise<ElectronAuthData> {
       authWindow = null;
     });
 
-    // Intercept navigation to auth callback URL
     authWindow.webContents.on("did-finish-load", () => {
       const url = authWindow?.webContents.getURL();
       if (!url?.includes("/auth/electron/callback")) return;
@@ -220,7 +255,6 @@ function createAuthWindow(): Promise<ElectronAuthData> {
   });
 }
 
-/** Create the main application window. */
 function createMainWindow(): void {
   const { width: screenW, height: screenH } = require("electron").screen.getPrimaryDisplay().workAreaSize;
 
@@ -237,14 +271,13 @@ function createMainWindow(): void {
     show: false,
     icon: iconPath,
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.js"),
+      preload: path.join(__dirname, "../../preload/index.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
     },
   });
 
-  // Center horizontally
   mainWindow.setPosition(Math.round((screenW - 1200) / 2), 0);
 
   mainWindow.once("ready-to-show", () => {
@@ -259,8 +292,11 @@ function createMainWindow(): void {
     mainWindow = null;
   });
 
-  const uiPath = path.join(__dirname, "../renderer/index.html");
-  mainWindow.loadFile(uiPath);
+  if (isDev) {
+    mainWindow.loadURL(VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(resolveRenderer("index.html"));
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -333,7 +369,6 @@ ipcMain.handle("saveProfile", (_event, data: { name?: string; avatarPath?: strin
   }
   writeProfileData(profile);
 
-  // Also update auth.json user fields if available
   try {
     const auth = readAuthData();
     if (auth) {
@@ -401,14 +436,12 @@ ipcMain.handle("getCloudApiUrl", () => {
 // ─────────────────────────────────────────────
 
 app.whenReady().then(async () => {
-  if (process.platform === "darwin") {
+  if (process.platform === "darwin" && iconPath) {
     app.dock.setIcon(nativeImage.createFromPath(iconPath));
   }
 
-  // 1. Show loading screen immediately
   createLoadingWindow();
 
-  // 2. Start Flask backend with progress updates
   try {
     sendLoadingProgress(20, "Starting backend engine…");
 
@@ -431,7 +464,6 @@ app.whenReady().then(async () => {
     await new Promise((r) => setTimeout(r, 3000));
   }
 
-  // 3. Check auth — if not authenticated, open web sign-in
   const existingAuth = readAuthData();
   if (!existingAuth) {
     try {
@@ -442,7 +474,6 @@ app.whenReady().then(async () => {
     }
   }
 
-  // 4. Create the main app window
   createMainWindow();
 
   app.on("activate", () => {
@@ -481,12 +512,13 @@ async function shutdown(): Promise<void> {
 // ─────────────────────────────────────────────
 
 if (isDev) {
-  try {
-    const { installExtension, REACT_DEVELOPER_TOOLS } = require("electron-devtools-installer");
-    installExtension(REACT_DEVELOPER_TOOLS)
-      .then((name: string) => console.log(`[DevTools] Installed: ${name}`))
-      .catch((err: unknown) => console.warn("[DevTools] Install failed:", err));
-  } catch {
-    // electron-devtools-installer not available — that's fine
-  }
+  (async () => {
+    try {
+      const { default: installExtension, REACT_DEVELOPER_TOOLS } = await import("electron-devtools-installer");
+      installExtension(REACT_DEVELOPER_TOOLS)
+        .then((name: string) => console.log(`[DevTools] Installed: ${name}`))
+        .catch((err: unknown) => console.warn("[DevTools] Install failed:", err));
+    } catch {
+    }
+  })();
 }

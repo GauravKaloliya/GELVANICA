@@ -15,6 +15,28 @@ rootkey.csv
 node_modules/
 npm-debug.log*
 
+# Next.js
+.next/
+out/
+
+# Electron
+electron/dist/
+electron/out/
+electron/build/
+electron/main/index.js*
+electron/main/index.d.ts*
+electron/preload/index.js*
+electron/preload/index.d.ts*
+electron/preload/loading.js*
+electron/preload/loading.d.ts*
+electron/src/*.js*
+electron/src/*.d.ts*
+electron/vite.config.js*
+electron/*.d.ts*
+
+# Secrets
+client_secret_*.apps.googleusercontent.com.json
+
 # Electron
 electron/dist/
 electron/out/

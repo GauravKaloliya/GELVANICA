@@ -8,6 +8,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader, Upload, Trash2, Sparkles, Eye, EyeOff, Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { Routes } from "@gnovium/shared";
+import gnoviumLogo from "@gnovium/shared/assets/logo/logo.png";
 import ParticleGraph from "../components/ParticleGraph";
 
 const containerVariants = {
@@ -326,7 +328,7 @@ export default function SignUpPage() {
             className="relative h-14 w-14 overflow-hidden rounded-none border-2 border-[var(--foreground)] bg-[var(--card-bg)] shadow-[4px_4px_0px_0px_var(--shadow-color)] mb-5 cursor-pointer transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_var(--shadow-color)]"
           >
             <Image
-              src="/logo/gnovium.jpeg"
+              src={gnoviumLogo}
               alt="Gnovium logo"
               fill
               sizes="56px"
@@ -590,7 +592,7 @@ export default function SignUpPage() {
           <p className="mt-8 text-center text-xs font-mono text-[var(--muted)]">
             Already have an account?{" "}
             <Link
-              href="/signin"
+               href={Routes.frontend.signIn.build({})}
               className="font-black text-[var(--foreground)] border-b-2 border-[var(--foreground)] pb-0.5 hover:opacity-80 transition-opacity"
             >
               Sign in

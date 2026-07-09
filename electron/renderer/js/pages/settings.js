@@ -96,7 +96,7 @@ export function render(store) {
     <div class="settings-founder-section">
       <div class="settings-founder-content">
         <div class="settings-founder-avatar">
-          <img src="logo/Gaurav Kaloliya.jpeg" alt="Gaurav Kaloliya" />
+          <img src="logo/founder.jpeg" alt="Gaurav Kaloliya" />
         </div>
         <div class="settings-founder-info">
           <div class="settings-founder-name">CREATED BY</div>

@@ -41,7 +41,7 @@ const stats = [
 
 export default function PositioningStats() {
   return (
-    <section className="relative min-h-screen flex items-center py-16">
+    <section aria-label="Key metrics" className="relative min-h-screen flex items-center py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <RevealSection>
         <motion.div
@@ -74,11 +74,14 @@ export default function PositioningStats() {
 
           <motion.div
             variants={containerVariants}
+            role="list"
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
           >
             {stats.map((s) => (
               <motion.div
                 key={s.label}
+                role="listitem"
+                aria-label={`${s.label} - ${s.sub}`}
                 variants={cardVariants}
                 className="flex flex-col items-center justify-center gap-1.5 py-2 px-3 text-center"
               >

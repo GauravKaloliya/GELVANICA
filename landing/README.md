@@ -139,7 +139,7 @@ npm run build:all
 
 - **Vercel**: Configured via `vercel.json` (clean URLs, security headers)
 - **Docker**: `Dockerfile` at root builds standalone output
-- **Proxy**: Served at `/` through `tools/proxy.mjs` (port 3000) alongside frontend, docs, and backend
+- **Proxy**: Served at `/` through `tools/proxy.mjs` (port 3000) alongside cloud-web, docs, and backend
 
 ---
 
@@ -148,5 +148,5 @@ npm run build:all
 - [Root README](../README.md) — Full project overview, architecture, API docs
 - [Shared Package](../packages/shared/README.md) — UniversalNavbar, base.css design system
 - [Docs](../docs/README.md) — API documentation portal
-- [Frontend](../frontend/README.md) — Web dashboard (auth gateway)
+- [Cloud Web](../cloud-web/README.md) — Web dashboard (auth gateway)
 - [Backend](../backend/README.md) — Flask API (111 endpoints, 22 modules)

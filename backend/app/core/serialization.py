@@ -2,7 +2,10 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
+import structlog
 from sqlalchemy import inspect as sa_inspect
+
+log = structlog.get_logger(__name__)
 
 
 def to_json(value):
@@ -12,6 +15,12 @@ def to_json(value):
         return str(value)
     if isinstance(value, Decimal):
         return float(value)
+    if isinstance(value, bytes):
+        return value.decode("utf-8")
+    if isinstance(value, (set, frozenset)):
+        return [to_json(item) for item in value]
+    if isinstance(value, tuple):
+        return [to_json(item) for item in value]
     if isinstance(value, list):
         return [to_json(item) for item in value]
     if isinstance(value, dict):
@@ -19,12 +28,18 @@ def to_json(value):
     return value
 
 
+_ATTR_TO_RESPONSE = {
+    "relation_metadata": "metadata",
+    "merge_metadata": "metadata",
+}
+
+
 def model_to_dict(model, exclude=None):
     """Serialize a SQLAlchemy model instance (or plain dict) to a plain dict.
 
-    Uses the ORM mapper's column_attrs so the Python attribute name is always
-    used — avoiding the 'metadata' key collision where a DB column named
-    'metadata' would clash with SQLAlchemy's own MetaData object.
+    Uses the ORM mapper's column_attrs. Attribute names are mapped to
+    response keys via ``_ATTR_TO_RESPONSE`` so the API output matches the spec
+    (e.g. ``relation_metadata`` → ``metadata``).
     """
     exclude = set(exclude or [])
     if isinstance(model, dict):
@@ -33,14 +48,19 @@ def model_to_dict(model, exclude=None):
     mapper = sa_inspect(type(model))
     for attr in mapper.column_attrs:
         key = attr.key
-        if key in exclude:
-            continue
         col_name = attr.columns[0].name
-        if col_name in exclude:
+        if key in exclude or col_name in exclude:
             continue
+        response_key = _ATTR_TO_RESPONSE.get(key, key)
         try:
             value = getattr(model, key)
-            result[key] = to_json(value)
-        except Exception:
-            result[key] = None
+            result[response_key] = to_json(value)
+        except AttributeError:
+            log.warning(
+                "model_serialization_failed",
+                response_key=response_key,
+                model_type=type(model).__name__,
+                exc_info=True,
+            )
+            result[response_key] = None
     return result

@@ -118,11 +118,13 @@ export const Routes = {
   },
   cloudWeb: {
     home: defineRoute('/'),
-    signIn: defineRoute('/signin'),
-    signUp: defineRoute('/signup'),
+    auth: defineRoute('/auth'),
+    signIn: defineRoute('/auth/sign-in'),
+    signUp: defineRoute('/auth/sign-up'),
     workspace: defineRoute('/'),
     workspaceDetail: defineRoute<{ id: string }>('/workspaces/:id'),
     entityDetail: defineRoute<{ workspaceId: string; entityId: string }>('/workspaces/:workspaceId/entities/:entityId'),
+    graph: defineRoute('/graph'),
   },
   docs: {
     home: defineRoute('/'),

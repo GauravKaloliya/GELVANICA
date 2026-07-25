@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -15,7 +15,6 @@ interface SearchPaletteProps {
 export default function SearchPalette({ onClose }: SearchPaletteProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Endpoint[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -23,24 +22,16 @@ export default function SearchPalette({ onClose }: SearchPaletteProps) {
     inputRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setSelectedIndex(0);
-      return;
-    }
-
+  const results = useMemo<Endpoint[]>(() => {
+    if (!query.trim()) return [];
     const q = query.toLowerCase();
-    const filtered = ENDPOINTS.filter(
+    return ENDPOINTS.filter(
       (ep) =>
         ep.path.toLowerCase().includes(q) ||
         ep.summary.toLowerCase().includes(q) ||
         ep.module.toLowerCase().includes(q) ||
         ep.description.toLowerCase().includes(q)
     );
-
-    setResults(filtered);
-    setSelectedIndex(0);
   }, [query]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -117,7 +108,7 @@ export default function SearchPalette({ onClose }: SearchPaletteProps) {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
             onKeyDown={handleKeyDown}
             placeholder="Search endpoints, modules, descriptions..."
             className="h-12 w-full bg-transparent px-3 text-sm text-[var(--foreground)] outline-none focus:outline-none focus-visible:outline-none border-0 placeholder:text-[var(--muted)]/40 font-mono font-bold"

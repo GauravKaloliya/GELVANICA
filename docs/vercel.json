@@ -1,9 +1,22 @@
 {
-  "rootDirectory": "docs",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd .. && npm install",
-  "buildCommand": "cp -r ../backend/app api/app && npm run build",
+  "buildCommand": "cp -r ../backend/app api/app && cp ../backend/requirements.txt api/requirements.txt && cp ../backend/POSTGRESQL_SCHEMA.sql api/POSTGRESQL_SCHEMA.sql && npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
+  "functions": {
+    "api/index.py": {
+      "runtime": "@vercel/python",
+      "maxDuration": 30,
+      "includeFiles": "api/**"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/v1/(?!docs)(.*)",
+      "dest": "/api/index.py"
+    }
+  ],
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [

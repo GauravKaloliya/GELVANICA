@@ -1,6 +1,6 @@
 # Gnovium Documentation Portal
 
-> **111 endpoints · 80 routes · 22 modules — documented, demonstrable, deployable.**
+> **114 endpoints · 83 routes · 22 modules — documented, demonstrable, deployable.**
 
 A neo-brutalist documentation site for the Gnovium Knowledge OS API. Built as a static Next.js 16 app with zero runtime API dependencies — every endpoint, error code, changelog entry, and auth guide is compiled at build time from TypeScript data modules.
 
@@ -58,95 +58,6 @@ The `basePath: /api/v1/docs` in `next.config.ts` ensures asset URLs are correct 
 
 ---
 
-## Project Structure
-
-```
-docs/
-├── .env                      # ApiPlayground API base URL
-├── .env.local                # NEXT_PUBLIC_BASE_PATH=/api/v1/docs
-├── .env.production           # Production overrides
-├── .gitignore
-├── next.config.ts            # basePath via env, standalone output, unoptimized images
-├── next-env.d.ts             # Auto-generated Next.js type declarations
-├── eslint.config.mjs         # ESLint flat config (9.x)
-├── postcss.config.mjs        # Tailwind v4 PostCSS plugin
-├── package.json              # Scripts: build triggers OpenAPI gen first
-├── tsconfig.json             # TypeScript strict, @/ path alias
-│
-├── scripts/
-│   └── generate-openapi.ts   # Builds openapi.json + openapi.yaml from TS endpoint data
-│
-├── public/
-│   ├── openapi.json          # Auto-generated OpenAPI 3.0.3 spec (111 ops, 80 paths)
-│   ├── openapi.yaml          # YAML equivalent
-│   ├── api-version.json      # Version manifest (v1.0.1)
-│   ├── favicon.ico           # Site favicon
-│   ├── images/
-│   │   └── founder.png       # Founder photo
-│   └── logo/
-│       └── gnovium.jpeg      # Brand logo
-│
-└── src/
-    ├── app/
-    │   ├── globals.css       # Imports: tailwindcss + @gnovium/shared/styles/base.css
-    │   ├── layout.tsx        # Root layout + metadata + theme init script
-    │   ├── page.tsx          # Main docs page (dual desktop/mobile render trees)
-    │   ├── not-found.tsx     # 404 page
-    │   ├── changelog/page.tsx    # Version changelog (v0.5.0 → v4.0.0)
-    │   ├── download/page.tsx     # OpenAPI spec download page
-    │   └── error-catalog/
-    │       └── page.tsx      # Error catalog (17 standardized codes)
-    │
-    ├── components/           # 15 shared + app-specific components
-    │   ├── ThemeProvider.tsx      # 6-theme context
-    │   ├── Sidebar.tsx           # Desktop module navigation tree
-    │   ├── SearchPalette.tsx     # Cmd+K modal search across all docs
-    │   ├── ApiPlayground.tsx     # Interactive "Send Request" panel
-    │   ├── Navigation.tsx        # Wraps UniversalNavbar (docs variant) + API status
-    │   ├── Footer.tsx            # Site footer with links
-    │   ├── Breadcrumbs.tsx       # Breadcrumb trail
-    │   ├── PageWrapper.tsx       # Shared page layout wrapper
-    │   ├── ErrorBoundary.tsx     # React error boundary with fallback UI
-    │   ├── MobileDocs.tsx        # Mobile accordion + tab navigation
-    │   ├── ParticleGraph.tsx     # Canvas-based animated graph background
-    │   ├── SchemaTree.tsx        # JSON schema tree viewer
-    │   ├── BackToTop.tsx         # Scroll-to-top FAB
-    │   ├── SkipToContent.tsx     # Accessibility skip link
-    │   └── Tooltip.tsx           # Hover tooltip
-    │
-    └── data/
-        ├── index.ts              # ENDPOINTS[] + MODULES[] — combines all module files
-        ├── types.ts              # Endpoint, Module, ChangelogEntry, ErrorEntry types
-        ├── common.ts             # Shared schemas, base URLs, headers
-        ├── icons.tsx             # Module icon components (lucide-react wrappers)
-        ├── auth-guide.ts         # Auth modes, OAuth2 PKCE, API keys, PATs
-        ├── changelog.ts          # Full changelog data (v0.5.0 → v4.0.0)
-        ├── error-catalog.ts      # 17 error codes with descriptions, causes, fixes
-        └── modules/              # 22 module files
-            ├── system.ts         #   System (health)
-            ├── auth.ts           #   Auth (register, login, OAuth, tokens)
-            ├── workspaces.ts     #   Workspaces (CRUD + stats)
-            ├── entities.ts       #   Entities (pages, documents, types, properties)
-            ├── tags.ts           #   Tags
-            ├── blocks.ts         #   Blocks (content fragments)
-            ├── relations.ts      #   Relations (knowledge graph edges)
-            ├── comments.ts       #   Comments (threaded discussions)
-            ├── branches.ts       #   Branches (Git-inspired)
-            ├── versions.ts       #   Versions (changesets + snapshots)
-            ├── diffs.ts          #   Diffs (visual comparison)
-            ├── search.ts         #   Search (full-text, semantic, hybrid)
-            ├── ai.ts             #   AI (Inference Runtime queries)
-            ├── files.ts          #   Files (upload, download, presign)
-            ├── graph.ts          #   Graph (materialize, query, traverse)
-            ├── sync.ts           #   Sync (offline operations)
-            ├── activity.ts       #   Activity (audit trail)
-            ├── governance.ts     #   Governance (health, duplicates, orphans)
-            ├── notifications.ts  #   Notifications
-            ├── jobs.ts           #   Jobs (async operations)
-            ├── dashboard.ts      #   Dashboard (overview stats)
-            └── backups.ts        #   Backups (export/import)
-```
-
 ---
 
 ## Architecture
@@ -157,7 +68,7 @@ The docs navbar uses `UniversalNavbar` from `@gnovium/shared/components/Universa
 
 - Logo + "GNOVIUM DOCS" badge
 - Creator credit: "Created by Gaurav Kaloliya"
-- API health indicator: "API Healthy 3/106"
+- API health indicator: "API Healthy 3/114"
 - Star, Download, and Search buttons (via `DocsRightSlot`)
 - Theme toggle
 - No nav items (the docs sidebar handles navigation)
@@ -226,7 +137,7 @@ docs/src/app/globals.css (4 lines)
 
 ---
 
-## 22 Modules · 111 Endpoints
+## 22 Modules · 114 Endpoints
 
 | Module | Endpoints | Deployment |
 |--------|-----------|------------|
@@ -239,20 +150,20 @@ docs/src/app/globals.css (4 lines)
 | Relations | 8 | Both |
 | Comments | 5 | Both |
 | Branches | 6 | Both |
-| Versions | 9 | Cloud only |
-| Diffs | 1 | Cloud only |
-| Search | 1 | Both |
-| AI | 1 | Both |
-| Files | 9 | Both |
+| Versions | 9 | Both |
+| Diffs | 1 | Both |
+| Search | 1 | Pending |
+| AI | 1 | Pending |
+| Files | 9 | Both (presign cloud-only) |
 | Graph | 5 | Both |
-| Sync | 4 | Cloud only |
+| Sync | 7 | Both |
 | Activity | 1 | Both |
-| Governance | 5 | Both |
+| Governance | 5 | Pending |
 | Notifications | 3 | Both |
 | Jobs | 4 | Cloud only |
 | Dashboard | 1 | Both |
 | Backups | 3 | Both |
-| **Total** | **111** | **83 both + 28 cloud-only** |
+| **Total** | **114** | **95 both + 12 cloud-only + 7 pending** |
 
 ---
 
@@ -273,7 +184,7 @@ npm run generate:openapi
 ```
 
 The spec includes:
-- **111 operations** across **80 paths**
+- **114 operations** across **83 paths**
 - **9 shared schemas** (Pagination, Error, User, Workspace, etc.)
 - **3 security schemes** (Access Token, Refresh Token, API Key)
 
@@ -333,6 +244,6 @@ npm run build -w docs
 
 - [Root README](../README.md) — Full project overview, architecture, API docs
 - [Shared Package](../packages/shared/README.md) — UniversalNavbar, base.css design system
-- [Frontend](../frontend/README.md) — Web dashboard (auth gateway)
+- [Cloud Web](../cloud-web/README.md) — Web dashboard (auth gateway)
 - [Landing](../landing/README.md) — Marketing landing page
-- [Backend](../backend/README.md) — Flask API (111 endpoints, 22 modules)
+- [Backend](../backend/README.md) — Flask API (114 endpoints, 22 modules)

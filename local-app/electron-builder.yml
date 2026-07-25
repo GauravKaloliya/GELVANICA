@@ -1,66 +1,75 @@
-appId: com.gnovium.app
+appId: com.gnovium.local-app
 productName: Gnovium
-copyright: Copyright © 2025 Gnovium
-
 directories:
   buildResources: build
-  output: out
+  output: dist
 
 files:
-  - dist/**/*
-  - "!node_modules/**/*"
+  - out/**/*
+  - resources/**/*
+  - "!**/*.map"
 
 extraMetadata:
-  main: dist/main/index.js
+  main: ./out/main/index.js
+
+asar: true
+asarUnpack:
+  - node_modules/better-sqlite3/**/*
+  - node_modules/@electron-toolkit/**/*
 
 mac:
   category: public.app-category.productivity
-  entitlementsInherit: build/entitlements.mac.plist
-  hardenedRuntime: true
-  gatekeeperAssess: false
-  notarize: false
+  icon: resources/icon.icns
   target:
     - target: dmg
-      arch:
-        - universal
-    - target: zip
-      arch:
-        - arm64
+      arch: [universal]
+    - zip
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: true
+  artifactName: '${productName}-${version}-mac.${ext}'
 
 win:
+  icon: resources/icon.ico
   target:
     - target: nsis
-      arch:
-        - x64
-  icon: build/icon.ico
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  artifactName: '${productName}-${version}-win.${ext}'
 
 linux:
+  icon: resources/icons
   target:
     - target: AppImage
-      arch:
-        - x64
+      arch: [x64]
     - target: deb
-      arch:
-        - x64
-  category: Office
+      arch: [x64]
+    - target: rpm
+      arch: [x64]
+  category: Utility
+  artifactName: '${productName}-${version}-linux.${ext}'
 
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Gnovium
+  uninstallDisplayName: Gnovium
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
 
-dmg:
-  contents:
-    - x: 130
-      y: 220
-    - x: 410
-      y: 220
-      type: link
-      path: /Applications
+fileAssociations:
+  - ext: gnovium
+    name: GNOVIUM Knowledge Base
+    description: GNOVIUM exported knowledge base
+    mimeType: application/json
+    role: Editor
 
-# Flask backend resources — PyInstaller output will go here
-extraResources:
-  - from: ../backend/dist/flask_app
-    to: backend
-    filter:
-      - "**/*"
+publish:
+  provider: github
+  owner: GauravKaloliya
+  repo: GNOVIUM
+  channel: latest

@@ -1,2163 +1,1915 @@
-# Gnovium API Reference
+# GNOVIUM KNOWLEDGE OS — COMPLETE API REFERENCE
 
-> API version 1 — The backend engine for the knowledge operating system.
-> 111 endpoints across 22 modules, powering both **Local** (SQLite, offline-first desktop) and **Cloud** (PostgreSQL/NeonDB, multi-tenant SaaS) deployments with a single unified interface.
-
----
-
-## Table of Contents
-
-- [Architecture](#architecture)
-- [Base URL & Environments](#base-url--environments)
-- [Authentication](#authentication)
-- [Standard Response Envelope](#standard-response-envelope)
-- [Error Handling](#error-handling)
-- [Rate Limiting](#rate-limiting)
-- [API Modules](#api-modules)
-  - [Auth (Cloud-Only)](#auth-cloud-only)
-  - [Workspaces](#workspaces)
-  - [Entities](#entities)
-  - [Blocks](#blocks)
-  - [Relations](#relations)
-  - [Comments](#comments)
-  - [Tags](#tags)
-  - [Branches](#branches)
-  - [Versions (Cloud-Only)](#versions-cloud-only)
-  - [Diffs (Cloud-Only)](#diffs-cloud-only)
-  - [Search](#search)
-  - [AI Assistant](#ai-assistant)
-  - [Files](#files)
-  - [Graph](#graph)
-  - [Governance](#governance)
-  - [Dashboard](#dashboard)
-  - [Notifications](#notifications)
-  - [Jobs (Cloud-Only)](#jobs-cloud-only)
-  - [Sync (Cloud-Only)](#sync-cloud-only)
-  - [Activity](#activity)
-  - [Backups](#backups)
-- [Quick Reference](#quick-reference)
-- [Best Practices](#best-practices)
-- [Appendix: Schema Reference](#appendix-schema-reference)
+> **Version:** 1.0.0  
+> **Base URL:** `/api/v1`  
+> **Deployment Modes:** `local` (SQLite) | `cloud` (PostgreSQL)  
+> **Auth:** JWT Bearer tokens (access + refresh)  
+> **Total Endpoints:** 221
 
 ---
 
-## Architecture
+## TABLE OF CONTENTS
 
-### Two Modes, One API
-
-Every endpoint uses the same contract regardless of deployment mode. The application code detects the mode at startup and adapts automatically.
-
-> **Local mode seed data:** On first startup, SQLite is seeded with a default workspace (`00000000-0000-0000-0000-000000000001`), entity type "Page" (`00000000-0000-0000-0000-000000000002`), and branch "main" (`00000000-0000-0000-0000-000000000003`). These fixed UUIDs make local development predictable.
-
-| Aspect | Local Mode | Cloud Mode |
-|--------|------------|------------|
-| **Database** | SQLite (`backend/data/local.db`, WAL mode) | PostgreSQL / NeonDB |
-| **Auth** | JWT verified against shared secret | JWT verified + full auth blueprint |
-| **Schema** | `db.create_all()` + `SQLITE_SCHEMA.sql` (FTS5, triggers, indexes, seed data) | Alembic migrations auto-generated from `domain.py` models (`POSTGRESQL_SCHEMA.sql` is reference only) |
-| **File storage** | Local filesystem (`instance/uploads/`) — extension/MIME validation, SHA-256 dedup, storage quota (500 MB default), orphan cleanup | S3 (AWS) |
-| **Rate limiting** | In-memory (1,000 req/min) | Redis-backed (200 req/min) |
-| **Cache** | SimpleCache | Redis |
-| **Search** | SQLite FTS5 (full-text + keyword) | PostgreSQL tsvector + pg_trgm + pgvector |
-| **Blocks** | Append-only (composite PK: `id + branch_id + created_at`) | Mutable with entity/block versioning |
-| **User identity** | JWT identity stored as text ref (no FK) | FK-constrained to `users` table |
-| **Sync/Jobs** | Not available | Full async job + sync engine |
-| **Versions/Diffs** | Not available | Full changeset + snapshot versioning |
-
-### Auth Flow (Desktop App)
-
-```
-┌──────────────┐     ┌───────────────────┐     ┌──────────────────┐
-│  Electron    │     │  Cloud API        │     │  Local Flask API │
-│  Desktop App │     │  (api.gnovium.com)│     │  (localhost:5001)│
-├──────────────┤     ├───────────────────┤     ├──────────────────┤
-│  1. Open     │────>│  2. Login page    │     │                  │
-│  browser     │     │  3. User signs in │     │                  │
-│              │<────│  4. Returns JWT   │     │                  │
-│  5. Store    │     │                   │     │                  │
-│  JWT locally │     │                   │     │                  │
-│  6. API call │─────────────────────────────────>│  7. Verifies   │
-│  + Bearer    │                                  │  JWT locally   │
-│  token       │                                  │                │
-│              │<─────────────────────────────────│  8. Returns    │
-│              │                                  │  response      │
-└──────────────┘                                  └──────────────────┘
-```
-
-The local Flask API cryptographically verifies the cloud-issued JWT using the **shared `JWT_SECRET_KEY`**, requiring zero network calls for auth validation. The same token works across web, mobile, and desktop.
-
----
-
-## Base URL & Environments
-
-| Environment | Base URL | Mode | Database |
-|-------------|----------|------|----------|
-| **Local Development** | `http://localhost:5001` | `GNOVIUM_MODE=local` | SQLite |
-| **Cloud Production** | `https://api.gnovium.com` | `GNOVIUM_MODE=cloud` | NeonDB (PostgreSQL) |
-
-All API paths are prefixed with `/api/v1/`.
-
-```
-GET  /api/v1/workspaces/
-POST /api/v1/ai/query
-```
-
-One endpoint lives outside the versioned prefix:
-
-| Endpoint | Purpose | Response |
-|----------|---------|----------|
-| `GET /health` | Liveness check | `{"status": "healthy"}` |
+1. [Architecture Overview](#1-architecture-overview)
+2. [Deployment Modes](#2-deployment-modes)
+3. [Authentication & Authorization](#3-authentication--authorization)
+4. [API Endpoints Reference](#4-api-endpoints-reference)
+   - 4.1 [Auth](#41-auth)
+   - 4.2 [Workspaces](#42-workspaces)
+   - 4.3 [Workspace Members](#43-workspace-members)
+   - 4.4 [Entities](#44-entities)
+   - 4.5 [Entity Types](#45-entity-types)
+   - 4.6 [Blocks](#46-blocks)
+   - 4.7 [Branches](#47-branches)
+   - 4.8 [Versions / Changesets / Snapshots](#48-versions--changesets--snapshots)
+   - 4.9 [Diffs](#49-diffs)
+   - 4.10 [Relations](#410-relations)
+   - 4.11 [Tags](#411-tags)
+   - 4.12 [Properties](#412-properties)
+   - 4.13 [Files](#413-files)
+   - 4.14 [Search](#414-search)
+   - 4.15 [Graph](#415-graph)
+   - 4.16 [Backups & Export](#416-backups--export)
+   - 4.17 [Sync](#417-sync)
+   - 4.18 [Activity](#418-activity)
+   - 4.19 [Comments](#419-comments)
+   - 4.20 [Notifications](#420-notifications)
+   - 4.21 [Settings](#421-settings)
+   - 4.22 [Dashboard](#422-dashboard)
+   - 4.23 [AI](#423-ai)
+   - 4.24 [Admin](#424-admin)
+   - 4.25 [Jobs](#425-jobs)
+   - 4.26 [Governance](#426-governance)
+   - 4.27 [Docs](#427-docs)
+   - 4.28 [Root Endpoints](#428-root-endpoints)
+5. [Request/Response Format](#5-requestresponse-format)
+6. [Error Codes](#6-error-codes)
+7. [Rate Limiting](#7-rate-limiting)
+8. [Data Models — Domain (PostgreSQL)](#8-data-models--domain-postgresql)
+9. [Data Models — Local (SQLite)](#9-data-models--local-sqlite)
+10. [SQL Schemas](#10-sql-schemas)
+11. [Pydantic/Marshmallow Schemas](#11-pydanticmarshmallow-schemas)
+12. [Service Layer](#12-service-layer)
+13. [Repository Layer](#13-repository-layer)
+14. [Configuration Reference](#14-configuration-reference)
+15. [Middleware & Security](#15-middleware--security)
+16. [Monitoring & Metrics](#16-monitoring--metrics)
+17. [File Storage Architecture](#17-file-storage-architecture)
+18. [Sync Mechanism](#18-sync-mechanism)
+19. [Background Jobs & Processing](#19-background-jobs--processing)
+20. [Testing](#20-testing)
+21. [Scripts & Utilities](#21-scripts--utilities)
 
 ---
 
-## Authentication
-
-### JWT Token-Based Auth
-
-Gnovium uses **JWT access + refresh token** authentication. Tokens are issued by the **cloud API** and verified by **any instance** (cloud, local desktop, mobile) via a shared `JWT_SECRET_KEY`.
-
-#### Getting Tokens (Cloud API only)
+## 1. Architecture Overview
 
 ```
-POST /api/v1/auth/register   →  { access_token, refresh_token, user }
-POST /api/v1/auth/login      →  { access_token, refresh_token, user }
+┌─────────────────────────────────────────────────────────────┐
+│                    Flask Application                         │
+│  ┌─────────┐ ┌────────────┐ ┌──────────────────────────┐   │
+│  │  Core   │ │ Middleware  │ │     API v1 Blueprints    │   │
+│  │ Config  │ │ - Security │ │  (28 sub-blueprints)     │   │
+│  │ Errors  │ │ - Request  │ │                          │   │
+│  │ Logging │ │   Context  │ │  /auth, /workspaces,     │   │
+│  │ Metrics │ └────────────┘ │  /admin, /docs           │   │
+│  └─────────┘                └──────────┬───────────────┘   │
+│       │                                │                    │
+│       ▼                                ▼                    │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │                   Services                         │     │
+│  │  27 service classes + 3 processing modules         │     │
+│  └───────────────────────┬──────────────────────────┘     │
+│                          │                                │
+│                          ▼                                │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │              Repositories (DAO Layer)               │     │
+│  │  BaseCRUDRepository, DomainRepository,             │     │
+│  │  LocalRepository, Mixins                           │     │
+│  └───────────────────────┬──────────────────────────┘     │
+│                          │                                │
+│                          ▼                                │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │               SQLAlchemy Models                     │     │
+│  │  Domain (29 tables)  │  Local (29 tables)           │     │
+│  └────────────────────────────────────────────────────┘     │
+│              │                    │                         │
+│              ▼                    ▼                         │
+│        PostgreSQL              SQLite                       │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-#### Using Tokens
+### Key File Structure
 
-**Access token** goes in the `Authorization` header:
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-```
-
-**Refresh token** replaces the access token in the `Authorization` header when calling `/auth/refresh` or `/auth/logout`:
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-```
-
-#### Token Lifecycle
-
-| Token | Lifespan | Usage |
-|-------|----------|-------|
-| Access Token | 30 minutes | All authenticated requests |
-| Refresh Token | 14 days | Obtain new access tokens |
-
-#### Security Notes
-
-- Tokens expire silently — if you get a 401, call `/auth/refresh`
-- Logout revokes the refresh token server-side
-- In cloud mode, cookies are `Secure` + `HttpOnly` + `SameSite=Lax`
-- The same `JWT_SECRET_KEY` must be set in `.env` (base), `.env.local`, and `.env.cloud`
-- Public routes (no auth): `/auth/register`, `/auth/login`, `/auth/check-email`, `/auth/google`, `/health`
-- Refresh-token routes: `/auth/refresh` (send refresh token via `Authorization: Bearer`), `/auth/logout` (send refresh token via `Authorization: Bearer`)
-- All other routes require a valid JWT **access token** in the `Authorization: Bearer <token>` header
+| Path | Purpose |
+|------|---------|
+| `run.py` | Local mode entry point (Flask dev server, port 5000) |
+| `wsgi.py` | Cloud/WSGI entry point (setdefault GNOVIUM_MODE) |
+| `worker.py` | Background worker entry point |
+| `scheduler.py` | Background scheduler entry point |
+| `app/__init__.py` | Flask app factory: extensions, routes, error handlers, schema init |
+| `app/extensions.py` | Flask extensions: db, jwt, cors, limiter, cache, redis |
+| `app/core/config.py` | Config classes: Config, LocalConfig, CloudConfig, TestingConfig |
+| `app/core/constants.py` | Allowed extensions/MIME types, rate limits, thresholds |
+| `app/core/errors.py` | 20+ error code constants + 14 ApiError subclasses |
+| `app/core/response.py` | Response helpers: ok, ok_list, error, error_response |
+| `app/core/sanitization.py` | sanitize_html, sanitize_text, sanitize_filename, sanitize_url |
+| `app/core/validation.py` | load_schema with sanitization |
+| `app/core/serialization.py` | to_json, model_to_dict |
+| `app/core/logging.py` | structlog configuration with sensitive data redaction |
+| `app/core/security_logger.py` | SecurityLogger: auth failure, rate limit, CSRF, suspicious req |
+| `app/core/circuit_breaker.py` | CircuitBreaker with HALF_OPEN/CLOSED/OPEN states |
+| `app/core/schema_setup.py` | execute_pg_schema, execute_sqlite_schema |
+| `app/middleware/security.py` | Security middleware: CSP, HSTS, XSS, CORS hardening |
+| `app/middleware/request_context.py` | Request ID, timing, metrics recording |
+| `app/monitoring.py` | MetricsCollector: Prometheus export, request tracking |
+| `SQLITE_SCHEMA.sql` | Complete SQLite schema (29 tables, FTS5, triggers, seed data) |
+| `POSTGRESQL_SCHEMA.sql` | Complete PostgreSQL schema (29 tables, extensions, triggers) |
 
 ---
 
-## Standard Response Envelope
+## 2. Deployment Modes
 
-All timestamps are **ISO 8601 UTC** (e.g. `2025-06-15T08:30:00Z`).
+### Local Mode (`GNOVIUM_MODE=local`)
+- **Database:** SQLite via `SQLITE_SCHEMA.sql`
+- **Auth:** Local JWT (`LOCAL_AUTH_ENABLED=true`)
+- **File Storage:** Local filesystem via `LocalProvider`
+- **Port:** `5000` (default)
+- **Testing:** Uses SQLite in-memory
 
-### Success
+### Cloud Mode (`GNOVIUM_MODE=cloud`)
+- **Database:** PostgreSQL via `POSTGRESQL_SCHEMA.sql`
+- **Auth:** Full auth stack (Google OAuth, password, JWT)
+- **File Storage:** AWS S3 via `S3Provider`
+- **Port:** `5000` (via `wsgi.py`)
+- **Features:** Workspace members, comments, jobs, governance, admin
+
+### Mode Selection
+```python
+# app/core/config.py
+# 1. Load base .env
+# 2. Check GNOVIUM_MODE
+# 3. Load .env.cloud or .env.local on top
+# 4. get_config() returns CloudConfig or LocalConfig
+```
+
+### Conditional Model Loading (`app/models/__init__.py`)
+- `cloud` mode → imports from `app.models.domain` (all 29 tables)
+- `local` mode → imports from `app.models.local` (25 tables + 4 cloud-only stubs)
+- Cloud-only models get `_CloudOnlyStub` metaclass that raises `NotImplementedError` on `.query`
+- Stub classes: `BranchMerge`, `Comment`, `CommentReaction`, `FileVariant`, `GovernanceReport`, `Invite`, `Job`, `MergeConflict`, `WorkspaceMember`
+
+---
+
+## 3. Authentication & Authorization
+
+### 3.1 JWT Token System
+
+| Token | Duration | Storage | Purpose |
+|-------|----------|---------|---------|
+| Access Token | 30 min (configurable) | `Authorization: Bearer <token>` | API auth |
+| Refresh Token | 30 days (configurable) | `refresh_jti` in DB | Token refresh |
+
+### 3.2 Endpoint Security Decorators
+
+| Decorator | Source | Behavior |
+|-----------|--------|----------|
+| `@secured` | `app/services/security.py` | Wraps `@jwt_required()`, handles JWT errors |
+| `@cloud_only` | `app/api/v1/helpers.py` | Returns 400 `cloud_only` in local mode |
+| `@require_local_auth` | `app/api/v1/auth/routes.py` | Returns 400 if `LOCAL_AUTH_ENABLED=False` |
+| `@require_admin` | `app/api/v1/admin/routes.py` | Checks admin/owner role in at least 1 workspace |
+| `check_workspace_access(ws_id)` | `app/api/v1/helpers.py` | Validates user owns workspace (local) or is member (cloud) |
+| `check_workspace_role(ws_id, roles)` | `app/api/v1/helpers.py` | Cloud only: checks minimum role level |
+| `_require_settings_access(ws_id)` | `app/api/v1/settings/routes.py` | Access check + cloud admin |
+| `_require_member(ws_id, roles)` | `app/api/v1/workspace_members/routes.py` | Cloud-only membership + optional role check |
+| `_require_admin(ws_id)` | `app/api/v1/properties/routes.py` | Cloud-only admin/owner role |
+| `transactional` | `app/services/decorators.py` | Wraps function in DB transaction (commit/rollback) |
+| `feature_flag(flag)` | `app/services/decorators.py` | Returns 501 if `FEATURE_{flag}_ENABLED` is false |
+| `@limiter.limit(...)` | Flask-Limiter | Rate limiting on each endpoint |
+
+### 3.3 JWT Callbacks (`app/__init__.py`)
+
+| Callback | Handler |
+|----------|---------|
+| `token_in_blocklist_loader` | Checks `SessionRepository.find_by_any_jti(jti)` and `revoked_at` |
+| `user_lookup_loader` | Loads user via `UserRepository().get(identity)` |
+| `expired_token_loader` | Returns 401 `token_expired` |
+| `invalid_token_loader` | Returns 401 `invalid_token` |
+| `unauthorized_loader` | Returns 401 `unauthorized` |
+| `revoked_token_loader` | Returns 401 `token_revoked` |
+
+### 3.4 Brute Force Protection (`app/services/auth_service.py`)
+
+| Mechanism | Details |
+|-----------|---------|
+| Max attempts | 5 (`MAX_LOGIN_ATTEMPTS`) |
+| Window | 300 seconds (`LOGIN_WINDOW_SECONDS`) |
+| Storage | In-memory dict (module-level) |
+| Lockout error | `AccountLockedError` (code: `account_locked`) |
+| Attempt tracking | `_get_login_attempts()`, `_record_login_attempt()`, `_clear_login_attempts()` |
+
+### 3.5 Password Policy
+
+| Rule | Detail |
+|------|--------|
+| Min length | 8 characters |
+| Max length | 128 characters |
+| Uppercase | Required (`(?=.*[A-Z])`) |
+| Lowercase | Required (`(?=.*[a-z])`) |
+| Digit | Required (`(?=.*\d)`) |
+| Special char | Required (`(?=.*[@$!%*?&])`) |
+| Allowed chars | `[A-Za-z\d@$!%*?&]` |
+
+### 3.6 OAuth 2.0 Auth Code Flow
+
+Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth://` schemes):
+
+1. `POST /auth/authorize` — Generate one-time code (valid 5 min)
+2. `GET /auth/authorize?redirect_uri=...` — Web view redirect
+3. `POST /auth/exchange` — Exchange code for JWT tokens
+4. Code validation: single-use, expiry, redirect_uri match
+
+### 3.7 Session Management
+
+| Feature | Implementation |
+|---------|---------------|
+| Token storage | `sessions` table with `jti`, `refresh_jti`, `revoked_at` |
+| Refresh | Issues new access token, revokes old refresh token |
+| Logout | Revokes current session (`revoked_at = now()`) |
+| Cleanup | `_cleanup_expired_sessions` (scheduled task) |
+
+---
+
+## 4. API Endpoints Reference
+
+> **URL Prefix:** All endpoints under `/api/v1/...` (exceptions: `/health`, `/metrics` at root; `/admin/...` under `/api/v1/admin`; `/docs` under `/api/v1/docs`)  
+> **Response Format:** `{"data": ...}` on success, `{"error": {"code": ..., "message": ...}}` on error  
+> **Pagination:** `?page=1&per_page=30` (max `per_page`: 100)  
+> **Response meta:** `{"page": int, "per_page": int, "total": int, "pages": int}`  
+> **Table shorthand:** All table sections use shorthand rate limits: `STANDARD` = `RATE_LIMIT_STANDARD` (120/min), `STRICT` = `RATE_LIMIT_STRICT` (30/min), `DESTRUCTIVE` = `RATE_LIMIT_DESTRUCTIVE` (10/min), `LENIENT` = `RATE_LIMIT_LENIENT` (300/min), `AUTH_WRITE` = `RATE_LIMIT_AUTH_WRITE` (5/min), `FILE_UPLOAD` = `RATE_LIMIT_FILE_UPLOAD` (10/min), `FILE_DOWNLOAD` = `RATE_LIMIT_FILE_DOWNLOAD` (60/min), `PASSWORD_RESET` = `RATE_LIMIT_PASSWORD_RESET` (3/min)  
+> **`secured`:** The `secured` decorator (from `app/services/security.py`) wraps `@jwt_required()` with error handling, used on all authenticated endpoints unless noted otherwise
+
+---
+
+### 4.1 Auth
+
+**Blueprint:** `auth` | **Prefix:** `/auth` | **Permission:** Varies per endpoint
+
+| Method | Path | Decorators | Body/Params | Permission | Notes |
+|--------|------|------------|-------------|------------|-------|
+| POST | `/auth/register` | `AUTH_WRITE`, `require_local_auth` | `RegisterSchema` | Public (local auth gate) | Creates user + JWT |
+| POST | `/auth/login` | `AUTH_WRITE`, `require_local_auth` | `LoginSchema` | Public (local auth gate) | Brute-force protected |
+| GET | `/auth/check-email` | `STRICT`, `secured` | Query: `email` | `@secured` | Returns `{available: bool}` |
+| POST | `/auth/google` | `AUTH_WRITE`, `cloud_only` | `GoogleLoginSchema` | `@cloud_only` | Google OAuth |
+| POST | `/auth/refresh` | `STANDARD` | Cookie: refresh token | Public (cookie) | Proxies to cloud in local mode |
+| POST | `/auth/logout` | `STANDARD` | — | Public (cookie) | Proxies to cloud in local mode |
+| GET | `/auth/me` | `STANDARD` | — | Manual `_verify_jwt()` | User profile |
+| PATCH | `/auth/me` | `STRICT` | `UserUpdateSchema` | Manual `_verify_jwt()` | Update name/avatar |
+| POST | `/auth/change-password` | `STRICT`, `secured`, `cloud_only` | `ChangePasswordSchema` | `@secured` + `@cloud_only` | — |
+| POST | `/auth/forgot-password` | `PASSWORD_RESET`, `require_local_auth` | `ForgotPasswordSchema` | Public | Proxied to cloud |
+| POST | `/auth/reset-password` | `PASSWORD_RESET`, `require_local_auth` | `ResetPasswordSchema` | Public | Proxied to cloud |
+| POST | `/auth/exchange-code` | `DESTRUCTIVE`, `cloud_only`, `secured` | — | `@secured` + `@cloud_only` | Generates one-time code |
+| POST | `/auth/authorize` | `AUTH_WRITE`, `secured`, `require_local_auth` | `AuthorizeSchema` | `@secured` + local auth gate | OAuth code flow |
+| GET | `/auth/authorize` | `STANDARD` | Query: `redirect_uri`, `state?`, `workspace_id?` | Public | 302 redirect to web app |
+| POST | `/auth/profile-changed` | `STANDARD`, `secured`, `require_local_auth` | `ProfileChangedSchema` | `@secured` + local auth gate | Desktop polling |
+| POST | `/auth/exchange` | `DESTRUCTIVE`, `require_local_auth` | `ExchangeCodeSchema` | Public (local auth gate) | Code-for-tokens |
+
+**Proxy Helper:** `proxy_to_cloud(method, path, json_data=None)` — validates against `ALLOWED_CLOUD_HOSTS`, forwards request. Used by: `refresh`, `logout`, `forgot_password`, `reset_password`, `exchange_code`.
+
+---
+
+### 4.2 Workspaces
+
+**Blueprint:** `workspaces` | **Prefix:** `/workspaces` | **Permission:** Authenticated for list/create; `check_workspace_access` + role check for others
+
+| Method | Path | Decorators | Body/Params | Permission | Notes |
+|--------|------|------------|-------------|------------|-------|
+| GET | `/workspaces/` | `STANDARD`, `secured` | `search?`, `page?`, `per_page?` | Authenticated | Lists by membership |
+| POST | `/workspaces/` | `STRICT`, `secured` | `WorkspaceCreateSchema` | Authenticated | — |
+| GET | `/workspaces/<ws>` | `STANDARD`, `secured` | — | `check_workspace_access` | — |
+| PATCH | `/workspaces/<ws>` | `STRICT`, `secured` | `WorkspaceUpdateSchema` (partial) | `check_workspace_access` + admin/owner | — |
+| DELETE | `/workspaces/<ws>` | `DESTRUCTIVE`, `secured` | — | `check_workspace_access` + admin/owner | — |
+| POST | `/workspaces/<ws>/restore` | `STRICT`, `secured` | — | `check_workspace_access` + owner | — |
+| GET | `/workspaces/<ws>/stats` | `STANDARD`, `secured` | — | `check_workspace_access` | Entity/block/relation/file counts |
+
+---
+
+### 4.3 Workspace Members
+
+**Blueprint:** `workspace_members` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `_require_member` (varies by role)
+
+| Method | Path | Decorators | Body/Params | Permission | Notes |
+|--------|------|------------|-------------|------------|-------|
+| GET | `/workspaces/<ws>/members` | `STANDARD`, `secured`, `cloud_only` | `search?`, `page?`, `per_page?` | `_require_member` | List members |
+| GET | `/workspaces/<ws>/members/<user_id>` | `STANDARD`, `secured`, `cloud_only` | — | `_require_member` | Get member |
+| POST | `/workspaces/<ws>/members/invite` | `STRICT`, `secured`, `cloud_only` | `WorkspaceMemberInviteSchema` | Owner/admin | Invite by email |
+| PATCH | `/workspaces/<ws>/members/<user_id>` | `STRICT`, `secured`, `cloud_only` | `WorkspaceMemberUpdateSchema` | Owner only | Update role |
+| DELETE | `/workspaces/<ws>/members/<user_id>` | `STRICT`, `secured`, `cloud_only` | — | Owner/admin | Remove member |
+
+---
+
+### 4.4 Entities
+
+**Blueprint:** `entities` | **Prefix:** `/workspaces` | **Permission:** All endpoints use `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params | Permission | Notes |
+|--------|------|------------|-------------|------------|-------|
+| GET | `/workspaces/<ws>/entities/` | `STANDARD`, `secured` | `type`/`entity_type_id`, `search`, `tags`, `deleted`, `sort`, `order`, `page`, `per_page` | `check_workspace_access` | Paginated list |
+| POST | `/workspaces/<ws>/entities/` | `STRICT`, `secured` | `EntityCreateSchema` | `check_workspace_access` | Creates + property values, parent relation, event, search doc |
+| GET | `/workspaces/<ws>/entities/<entity_id>` | `STANDARD`, `secured` | — | `check_workspace_access` | — |
+| PATCH | `/workspaces/<ws>/entities/<entity_id>` | `STRICT`, `secured` | `EntityUpdateSchema` (partial) | `check_workspace_access` | — |
+| DELETE | `/workspaces/<ws>/entities/<entity_id>` | `STRICT`, `secured` | — | `check_workspace_access` | Soft-delete cascade: blocks, values, tags, files, comments, notifications, search, relations |
+| DELETE | `/workspaces/<ws>/entities/<entity_id>/permanent` | `DESTRUCTIVE`, `secured` | — | `check_workspace_access` | Hard delete (must be soft-deleted first) |
+| POST | `/workspaces/<ws>/entities/<entity_id>/restore` | `STRICT`, `secured` | — | `check_workspace_access` | Cascade-restore related records |
+| POST | `/workspaces/<ws>/entities/<entity_id>/archive` | `STRICT`, `secured` | — | `check_workspace_access` | Toggle archive flag |
+| POST | `/workspaces/<ws>/entities/<entity_id>/duplicate` | `STRICT`, `secured` | — | `check_workspace_access` | Deep copy with "Copy" suffix |
+| GET | `/workspaces/<ws>/entities/<entity_id>/children` | `STANDARD`, `secured` | `page?`, `per_page?` | `check_workspace_access` | List children |
+| POST | `/workspaces/<ws>/entities/<entity_id>/children` | `STRICT`, `secured` | `EntityCreateSchema` (with `parent_id`) | `check_workspace_access` | Create child |
+| GET | `/workspaces/<ws>/entities/<entity_id>/versions` | `STANDARD`, `secured` | `page?`, `per_page?` | `check_workspace_access` | List entity versions |
+| GET | `/workspaces/<ws>/entities/properties` | `STANDARD`, `secured` | `page?`, `per_page?` | `check_workspace_access` | Alias for `/properties/` list (no admin gate) |
+| POST | `/workspaces/<ws>/entities/properties` | `STRICT`, `secured` | `PropertyCreateSchema` | `check_workspace_access` | Alias for `/properties/` create (no `_require_admin`) |
+
+---
+
+### 4.5 Entity Types
+
+**Blueprint:** `entities` | **Prefix:** `/workspaces` | **Permission:** All endpoints use `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params | Notes |
+|--------|------|------------|-------------|-------|
+| POST | `/workspaces/<ws>/entities/types` | `STRICT`, `secured` | `EntityTypeCreateSchema` | Create |
+| GET | `/workspaces/<ws>/entities/types` | `STANDARD`, `secured` | `page?`, `per_page?` | List |
+| GET | `/workspaces/<ws>/entities/types/<type_id>` | `STANDARD`, `secured` | — | Get |
+| PATCH | `/workspaces/<ws>/entities/types/<type_id>` | `STRICT`, `secured` | `EntityTypeUpdateSchema` (partial) | Update |
+| DELETE | `/workspaces/<ws>/entities/types/<type_id>` | `STRICT`, `secured` | — | Delete |
+
+---
+
+### 4.6 Blocks
+
+**Blueprint:** `blocks` | **Prefix:** `/workspaces` | **Permission:** All endpoints use `check_workspace_access` (via entity)
+
+| Method | Path | Decorators | Body/Params | Notes |
+|--------|------|------------|-------------|-------|
+| GET | `/workspaces/<ws>/blocks/` | `STANDARD`, `secured` | Query: `entity_id` (required), `page?`, `per_page?` | List blocks |
+| POST | `/workspaces/<ws>/blocks/` | `STRICT`, `secured` | `BlockCreateSchema` | Sanitizes content, auto-position, event, search |
+| GET | `/workspaces/<ws>/blocks/<block_id>` | `STANDARD`, `secured` | — | Get block |
+| PATCH | `/workspaces/<ws>/blocks/<block_id>` | `STRICT`, `secured` | `BlockUpdateSchema` (partial) | Circular ref check, versioning, event, search |
+| POST | `/workspaces/<ws>/blocks/<block_id>/move` | `STRICT`, `secured` | `MoveBlockSchema` | Circular ref check, reindex old+new entity |
+| DELETE | `/workspaces/<ws>/blocks/<block_id>` | `STRICT`, `secured` | — | Soft-delete, event, search |
+| POST | `/workspaces/<ws>/blocks/reorder` | `STRICT`, `secured` | `{entity_id, blocks: [{id, position}]}` | Batch reorder |
+| POST | `/workspaces/<ws>/blocks/<block_id>/restore` | `STRICT`, `secured` | — | Sets `is_deleted=False` |
+| GET | `/workspaces/<ws>/blocks/entity/<entity_id>` | `STANDARD`, `secured` | — | 308 redirect to `/blocks/?entity_id=` |
+
+**Block Types (21):** `text`, `heading`, `bulleted_list`, `numbered_list`, `to-do`, `toggle`, `code`, `quote`, `callout`, `divider`, `image`, `video`, `file`, `bookmark`, `equation`, `table_of_contents`, `column_list`, `column`, `breadcrumb`, `heading1`, `heading2`, `heading3`
+
+---
+
+### 4.7 Branches
+
+**Blueprint:** `branches` | **Prefix:** `/workspaces` | **Permission:** All endpoints use `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params | Notes |
+|--------|------|------------|-------------|-------|
+| GET | `/workspaces/<ws>/branches` | `STANDARD`, `secured` | `page?`, `per_page?` | List branches |
+| POST | `/workspaces/<ws>/branches` | `STRICT`, `secured` | `BranchCreateSchema` | Create branch |
+| GET | `/workspaces/<ws>/branches/<branch_id>` | `STANDARD`, `secured` | — | Get branch |
+| PATCH | `/workspaces/<ws>/branches/<branch_id>` | `STRICT`, `secured` | `BranchUpdateSchema` | Update |
+| DELETE | `/workspaces/<ws>/branches/<branch_id>` | `DESTRUCTIVE`, `secured` | — | Delete |
+| POST | `/workspaces/<ws>/branches/<branch_id>/restore` | `STRICT`, `secured` | — | Restore |
+| POST | `/workspaces/<ws>/branches/<branch_id>/merge` | `DESTRUCTIVE`, `secured` | `{target_branch_id}` | Cloud-only (stub in local) |
+| POST | `/workspaces/<ws>/branches/merge` | `DESTRUCTIVE`, `secured` | `MergeBranchSchema` | Merge by source+target IDs |
+| GET | `/workspaces/<ws>/branches/merge-conflicts` | `STANDARD`, `secured` | `merge_id?`, `page?`, `per_page?` | Cloud-only |
+| PATCH | `/workspaces/<ws>/branches/merge-conflicts/<conflict_id>/resolve` | `STRICT`, `secured` | `{resolution: "source"\|"target"\|"manual", merged_content?}` | Cloud-only |
+
+---
+
+### 4.8 Versions / Changesets / Snapshots
+
+**Blueprint:** `versions` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+#### Changesets
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/versions/changesets` | `STANDARD`, `secured` | `branch_id?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/versions/changesets` | `STRICT`, `secured` | `ChangesetCreateSchema` |
+| GET | `/workspaces/<ws>/versions/changesets/<cs_id>` | `STANDARD`, `secured` | — |
+| DELETE | `/workspaces/<ws>/versions/changesets/<cs_id>` | `DESTRUCTIVE`, `secured` | — |
+
+#### Snapshots
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/versions/snapshots` | `STANDARD`, `secured` | `branch_id?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/versions/snapshots` | `STRICT`, `secured` | `SnapshotCreateSchema` |
+| GET | `/workspaces/<ws>/versions/snapshots/<snap_id>` | `STANDARD`, `secured` | — |
+| DELETE | `/workspaces/<ws>/versions/snapshots/<snap_id>` | `DESTRUCTIVE`, `secured` | — |
+| POST | `/workspaces/<ws>/versions/entities/<entity_id>/snapshot` | `STRICT`, `secured` | `EntitySnapshotSchema` |
+
+#### Entity & Block Versions
+
+| Method | Path | Decorators | Params |
+|--------|------|------------|--------|
+| GET | `/workspaces/<ws>/versions/entities/<entity_id>` | `STANDARD`, `secured` | `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/versions/blocks/<block_id>` | `STANDARD`, `secured` | `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/versions/compare` | `STANDARD`, `secured` | `left_version_id`, `right_version_id` |
+| POST | `/workspaces/<ws>/versions/<version_id>/restore` | `DESTRUCTIVE`, `secured` | — |
+
+---
+
+### 4.9 Diffs
+
+**Blueprint:** `diffs` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Params | Body |
+|--------|------|------------|--------|------|
+| GET | `/workspaces/<ws>/diffs/compare` | `STANDARD`, `secured` | `left_version_id`/`right_version_id` or `left_snapshot_id`/`right_snapshot_id` or `left_branch_id`/`right_branch_id` or `entity_id` | — |
+| POST | `/workspaces/<ws>/diffs/blocks` | `STRICT`, `secured` | — | `left_block_id`+`right_block_id` or `left_version_id`+`right_version_id` |
+
+**Schema:** `DiffQuerySchema` — validates version/snapshot mutual exclusivity
+
+---
+
+### 4.10 Relations
+
+**Blueprint:** `relations` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/relations/` | `STANDARD`, `secured` | `entity_id?`, `target_id?`, `type?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/relations/` | `STRICT`, `secured` | `RelationCreateSchema` |
+| GET | `/workspaces/<ws>/relations/<relation_id>` | `STANDARD`, `secured` | — |
+| PATCH | `/workspaces/<ws>/relations/<relation_id>` | `STRICT`, `secured` | `RelationUpdateSchema` (partial) |
+| DELETE | `/workspaces/<ws>/relations/<relation_id>` | `STRICT`, `secured` | — |
+| POST | `/workspaces/<ws>/relations/<relation_id>/restore` | `STRICT`, `secured` | — |
+| GET | `/workspaces/<ws>/relations/entity/<entity_id>` | `STANDARD`, `secured` | `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/relations/backlinks/<entity_id>` | `STANDARD`, `secured` | `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/relations/neighbors/<entity_id>` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/relations/path` | `STANDARD`, `secured` | `source_entity_id`, `target_entity_id` |
+| POST | `/workspaces/<ws>/relations/batch` | `STRICT`, `secured` | Body: list of relation objects |
+
+**Validation:** `no_self_relation` (source != target), `generated_by IN ('manual', 'ai')`
+
+---
+
+### 4.11 Tags
+
+**Blueprint:** `tags` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/tags/` | `STANDARD`, `secured` | `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/tags/` | `STRICT`, `secured` | `TagCreateSchema` |
+| GET | `/workspaces/<ws>/tags/<tag_id>` | `STANDARD`, `secured` | — |
+| PATCH | `/workspaces/<ws>/tags/<tag_id>` | `STRICT`, `secured` | `TagUpdateSchema` (partial) |
+| DELETE | `/workspaces/<ws>/tags/<tag_id>` | `STRICT`, `secured` | — |
+| POST | `/workspaces/<ws>/tags/<tag_id>/restore` | `STRICT`, `secured` | — |
+| POST | `/workspaces/<ws>/tags/<tag_id>/entities/<entity_id>` | `STRICT`, `secured` | — (tag_entity) |
+| DELETE | `/workspaces/<ws>/tags/<tag_id>/entities/<entity_id>` | `STRICT`, `secured` | — (untag_entity) |
+
+---
+
+### 4.12 Properties
+
+**Blueprint:** `properties` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access` + `_require_admin` (POST/PATCH/DELETE/restore)
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/properties/` | `STANDARD`, `secured` | `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/properties/` | `STRICT`, `secured` | `PropertyCreateSchema` — Admin only |
+| GET | `/workspaces/<ws>/properties/<property_id>` | `STANDARD`, `secured` | — |
+| PATCH | `/workspaces/<ws>/properties/<property_id>` | `STRICT`, `secured` | `PropertyUpdateSchema` (partial) — Admin only |
+| DELETE | `/workspaces/<ws>/properties/<property_id>` | `STRICT`, `secured` | — Admin only |
+| POST | `/workspaces/<ws>/properties/<property_id>/restore` | `STRICT`, `secured` | — Admin only |
+
+**Property Types:** `text`, `number`, `date`, `select`, `multi_select`, `checkbox`, `url`, `email`, `phone`, `rich_text`, `boolean`, `entity_ref`
+
+**Alias:** `POST + GET /workspaces/<ws>/entities/properties` also exist (same schemas, but POST lacks `_require_admin` check).
+
+---
+
+### 4.13 Files
+
+**Blueprint:** `files` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Params/Body | Notes |
+|--------|------|------------|-------------|-------|
+| GET | `/workspaces/<ws>/files` | `STANDARD`, `secured` | `uploaded_by?`, `page?`, `per_page?` | List files |
+| POST | `/workspaces/<ws>/files/upload` | `FILE_UPLOAD`, `secured` | Multipart `file` | Local upload with validation |
+| POST | `/workspaces/<ws>/files` | `STRICT`, `secured` | `FileCreateSchema` | Create metadata only |
+| GET | `/workspaces/<ws>/files/<file_id>` | `STANDARD`, `secured` | — | Get file metadata |
+| GET | `/workspaces/<ws>/files/<file_id>/download` | `FILE_DOWNLOAD`, `secured` | — | Presigned URL or local path |
+| GET | `/workspaces/<ws>/files/<file_id>/thumbnail` | `STANDARD`, `secured` | — | Variant serving |
+| GET | `/workspaces/<ws>/files/<file_id>/preview` | `STANDARD`, `secured` | — | Variant serving |
+| GET | `/workspaces/<ws>/files/<file_id>/optimized` | `STANDARD`, `secured` | — | Variant serving |
+| DELETE | `/workspaces/<ws>/files/<file_id>` | `STRICT`, `secured` | — | Soft-delete |
+| GET | `/workspaces/<ws>/files/<file_id>/variants/<variant_type>` | `STANDARD`, `secured` | — | Get variant |
+| GET | `/workspaces/<ws>/files/<file_id>/variants` | `STANDARD`, `secured` | — | List variants |
+| POST | `/workspaces/<ws>/files/<file_id>/entities/<entity_id>` | `STRICT`, `secured` | `{block_id?}` | Link file to entity |
+| DELETE | `/workspaces/<ws>/files/<file_id>/entities/<entity_id>` | `STRICT`, `secured` | — | Unlink file |
+| POST | `/workspaces/<ws>/files/presign` | `STRICT`, `secured` | `PresignUploadSchema` | Cloud presigned URL |
+| POST | `/workspaces/<ws>/files/presign-multipart` | `FILE_UPLOAD`, `secured` | `PresignMultipartSchema` | Cloud multipart start |
+| POST | `/workspaces/<ws>/files/presign-multipart/complete` | `STRICT`, `secured` | `PresignMultipartCompleteSchema` | Cloud multipart complete |
+| POST | `/workspaces/<ws>/files/<file_id>/confirm` | `STRICT`, `secured` | — | Confirm cloud upload |
+| POST | `/workspaces/<ws>/files/quarantine/<file_id>/resolve` | `STRICT`, `secured` | `QuarantineResolveSchema` | Cloud quarantine |
+| POST | `/workspaces/<ws>/files/cleanup-orphans` | `STRICT`, `secured` | — | Remove orphan files |
+| POST | `/workspaces/<ws>/files/cleanup-quarantine` | `STRICT`, `secured` | — | Cloud cleanup |
+| POST | `/workspaces/<ws>/files/cleanup-deleted` | `STRICT`, `secured` | — | Cloud cleanup |
+| GET | `/workspaces/<ws>/files/storage-info` | `STANDARD`, `secured` | — | Storage usage stats |
+
+**File Validation:**
+- Extension checked against `ALLOWED_EXTENSIONS` (safe set — no executables)
+- MIME type checked against `ALLOWED_MIMETYPES`
+- Magic bytes validated against `MAGIC_BYTE_MAP`
+- Malware scan via `_scan_file_for_malware()` (clamscan)
+- Content hash deduplication (SHA-256)
+- Storage quota check
+
+**Variant Types:** `thumbnail` (≤256px), `preview` (≤1024px), `optimized`
+
+---
+
+### 4.14 Search
+
+**Blueprint:** `search` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Params |
+|--------|------|------------|--------|
+| GET | `/workspaces/<ws>/search` | `STANDARD`, `secured` | `q` (required), `entity_type_id?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/search/rebuild-index` | `STRICT`, `secured` | — |
+| GET | `/workspaces/<ws>/search/history` | `STANDARD`, `secured` | `page?`, `per_page?` (stub — empty) |
+| GET | `/workspaces/<ws>/search/suggest` | `STANDARD`, `secured` | `q` (required) |
+
+**Search Architecture:**
+- **Local mode:** SQLite FTS5 on `blocks_fts` + `search_documents_fts` virtual tables
+- **Cloud mode:** PostgreSQL `tsvector` on `search_documents.search_vector` with GIN index
+- **Rebuild:** Repopulates FTS tables (SQLite) or updates tsvector columns (PostgreSQL)
+- **Deduplication:** Results grouped by entity_id
+
+---
+
+### 4.15 Graph
+
+**Blueprint:** `graph` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Params/Body |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/graph/` | `STANDARD`, `secured` | `entity_id?`, `depth?`, `filter_type?`, `include_tags?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/graph/materialize` | `STRICT`, `secured` | — |
+| POST | `/workspaces/<ws>/graph/query` | `STRICT`, `secured` | `{relation_types?}, {entity_type_ids?}, {limit?}` |
+| POST | `/workspaces/<ws>/graph/cleanup` | `STRICT`, `secured` | `{keep?}` (default 10, max 100) |
+| POST | `/workspaces/<ws>/graph/traverse` | `STRICT`, `secured` | `{center_node, depth? (max 5), relation_types?}` |
+| POST | `/workspaces/<ws>/graph/paths` | `STRICT`, `secured` | `{source_id, target_id}` |
+| GET | `/workspaces/<ws>/graph/search` | `STANDARD`, `secured` | `q`, `type?` |
+
+**BFS Parameters:** `GRAPH_MAX_ITERATIONS = 10000`, `GRAPH_DEFAULT_DEPTH = 2`
+
+---
+
+### 4.16 Backups & Export
+
+**Blueprint:** `backups` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params | Description |
+|--------|------|------------|-------------|-------------|
+| GET | `/workspaces/<ws>/backups` | `STANDARD`, `secured` | `page?`, `per_page?` | List backup files |
+| POST | `/workspaces/<ws>/backups/export` | `STRICT`, `secured` | — | Export workspace JSON |
+| POST | `/workspaces/<ws>/backups/create` | `DESTRUCTIVE`, `secured` | — | Create encrypted .gnv backup |
+| POST | `/workspaces/<ws>/backups/<path:filename>/restore` | `DESTRUCTIVE`, `secured` | — | Restore from .gnv or .json |
+| POST | `/workspaces/<ws>/backups/export-to-disk` | `STRICT`, `secured` | — | Write JSON to disk |
+| POST | `/workspaces/<ws>/backups/import` | `DESTRUCTIVE`, `secured` | JSON body | Import workspace data |
+| POST | `/workspaces/<ws>/backups/export-markdown` | `STRICT`, `secured` | — | Export as markdown files |
+| POST | `/workspaces/<ws>/backups/export-zip` | `STRICT`, `secured` | — | Export as ZIP archive |
+| POST | `/workspaces/<ws>/backups/export-html` | `STRICT`, `secured` | `{entity_id}` | Export entity as HTML |
+| POST | `/workspaces/<ws>/backups/export-pdf` | `STRICT`, `secured` | `{entity_id, block_id?}` | Export as PDF |
+| POST | `/workspaces/<ws>/backups/export-zip-encrypted` | `STRICT`, `secured` | — | Export encrypted .gnv |
+| POST | `/workspaces/<ws>/backups/import-zip` | `DESTRUCTIVE`, `secured` | Multipart `file` (.gnv) | Import encrypted backup |
+| GET | `/workspaces/<ws>/backups/download-zip/<path:filename>` | `STRICT`, `secured` | — | Download ZIP file |
+
+**Export Formats:**
+- **JSON:** Full workspace serialization (all tables)
+- **Markdown:** Per-entity markdown files with YAML front-matter
+- **HTML:** Standalone HTML page with inline CSS
+- **PDF:** Via wkhtmltopdf/chromium/WeasyPrint fallback
+- **ZIP:** Bundled markdown + assets
+- **Encrypted .gnv:** AES encrypted ZIP with HMAC verification
+
+---
+
+### 4.17 Sync
+
+**Blueprint:** `sync` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body | Description |
+|--------|------|------------|------|-------------|
+| GET | `/workspaces/<ws>/sync` | `STANDARD`, `secured` | `pending?`, `page?`, `per_page?` | List sync operations |
+| POST | `/workspaces/<ws>/sync` | `STRICT`, `secured` | `SyncOperationCreateSchema` | Create sync operation |
+| GET | `/workspaces/<ws>/sync/<op_id>` | `STANDARD`, `secured` | — | Get sync operation |
+| POST | `/workspaces/<ws>/sync/<op_id>/ack` | `STRICT`, `secured` | — | Acknowledge (mark synced) |
+| POST | `/workspaces/<ws>/sync/diff` | `STRICT`, `secured` | `{export_data}` | Diff local vs remote |
+| POST | `/workspaces/<ws>/sync/apply-diff` | `STRICT`, `secured` | `{diff}` | Apply diff to local |
+| POST | `/workspaces/<ws>/sync/sync-from-export` | `STRICT`, `secured` | `{export_data}` | Full import from export |
+| POST | `/workspaces/<ws>/sync/push` | `STRICT`, `secured` | `{changes, device_id}` | Push changes to cloud |
+| POST | `/workspaces/<ws>/sync/pull` | `STANDARD`, `secured` | — | Pull pending operations |
+| POST | `/workspaces/<ws>/sync/full-sync` | `STRICT`, `secured` | `{export_data?}` | Bidirectional full sync |
+| GET | `/workspaces/<ws>/sync/status` | `STANDARD`, `secured` | — | Sync status |
+| GET | `/workspaces/<ws>/sync/changes` | `STANDARD`, `secured` | — | Local diff |
+| POST | `/workspaces/<ws>/sync/conflicts/<conflict_id>/resolve` | `STRICT`, `secured` | `{resolution, merged_content}` | Resolve conflict |
+| POST | `/workspaces/<ws>/sync/resolve-conflict` | `STRICT`, `secured` | `{conflict_id, resolution, merged_content}` | Alternative resolve |
+
+**Conflict Detection:** Tombstone checks, staleness checks (client_clock vs updated_at), field-level conflict detection.
+
+**Sync Fields:**
+- `entity_types`: name, description, icon, color, config
+- `tags`: name, color, description
+- `properties`: name, type, description, required, options, metadata
+- `entities`: name, entity_type_id, icon, cover_image, is_archived, metadata
+- `relations`: source_id, target_id, type, properties
+- `blocks`: entity_id, type, content, parent_block_id, position, branch_id, metadata
+- `comments`: entity_id, content, block_id, parent_id
+
+---
+
+### 4.18 Activity
+
+**Blueprint:** `activity` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Params |
+|--------|------|------------|--------|
+| GET | `/workspaces/<ws>/activity` | `STANDARD`, `secured` | `entity_id?`, `action?`, `user_id?`, `start_date?`, `end_date?`, `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/activity/events` | `STANDARD`, `secured` | `entity_id?`, `changeset_id?`, `page?`, `per_page?` |
+
+---
+
+### 4.19 Comments
+
+**Blueprint:** `comments` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/comments/` | `STANDARD`, `secured`, `cloud_only` | `entity_id?`, `parent_id?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/comments/` | `STRICT`, `secured`, `cloud_only` | `CommentCreateSchema` |
+| GET | `/workspaces/<ws>/comments/<comment_id>` | `STANDARD`, `secured`, `cloud_only` | — |
+| PATCH | `/workspaces/<ws>/comments/<comment_id>` | `STRICT`, `secured`, `cloud_only` | `CommentUpdateSchema` |
+| DELETE | `/workspaces/<ws>/comments/<comment_id>` | `STRICT`, `secured`, `cloud_only` | — |
+| POST | `/workspaces/<ws>/comments/<comment_id>/restore` | `STRICT`, `secured`, `cloud_only` | — |
+
+---
+
+### 4.20 Notifications
+
+**Blueprint:** `notifications` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/notifications` | `STANDARD`, `secured` | `unread_only?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/notifications` | `STRICT`, `secured` | `NotificationCreateSchema` |
+| GET | `/workspaces/<ws>/notifications/<notification_id>` | `STANDARD`, `secured` | — |
+| POST | `/workspaces/<ws>/notifications/<notification_id>/read` | `STRICT`, `secured` | — |
+| PATCH | `/workspaces/<ws>/notifications/<notification_id>` | `STRICT`, `secured` | — (delegates to mark_read) |
+| POST | `/workspaces/<ws>/notifications/<notification_id>/dismiss` | `STRICT`, `secured` | — |
+| POST | `/workspaces/<ws>/notifications/read-all` | `STRICT`, `secured` | — |
+| GET | `/workspaces/<ws>/notifications/unread-count` | `LENIENT`, `secured` | — |
+
+**Notification Types:** `mention`, `comment`, `update`, `entity_update`, `invite`, `relation_created`, `backup_complete`, `sync_conflict`, `system`, `share`, `version_created`, `export_complete`, `import_complete`, `governance_report_ready`, `system_alert`
+
+---
+
+### 4.21 Settings
+
+**Blueprint:** `settings` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access` (GET no admin check); PUT/reset use `_require_settings_access`, PATCH uses inline admin check
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/settings/<category>` | `STANDARD`, `secured` | — |
+| PUT | `/workspaces/<ws>/settings/<category>` | `STRICT`, `secured` | JSON body (merge) |
+| PATCH | `/workspaces/<ws>/settings` | `STRICT`, `secured` | JSON body (multi-category) |
+| GET | `/workspaces/<ws>/settings` | `STANDARD`, `secured` | `flat?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/settings/reset` | `STRICT`, `secured` | `{category}` or `"all"` |
+
+**Valid Categories (10):** `general`, `editor`, `appearance`, `ai`, `performance`, `backups`, `privacy`, `sync`, `keyboard_shortcuts`, `advanced`
+
+**Settings Security:** Uses marshmallow schema with `unknown = RAISE` to reject unknown fields. Admin role required in cloud mode.
+
+---
+
+### 4.22 Dashboard
+
+**Blueprint:** `dashboard` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Description |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/dashboard/overview` | `LENIENT`, `secured` | Entity/block/relation counts + recent entities |
+| GET | `/workspaces/<ws>/dashboard/storage` | `STANDARD`, `secured` | File count, total size, entity count |
+
+**Cache:** TTLCache with 60-second TTL, 100 max entries
+
+---
+
+### 4.23 AI
+
+**Blueprint:** `ai` | **Prefix:** `/workspaces` | **All 501 Not Implemented** — all endpoints return 501 regardless of mode
+
+| Method | Path | Decorators |
+|--------|------|------------|
+| POST | `/workspaces/<ws>/ai/query` | `STRICT`, `secured` |
+| POST | `/workspaces/<ws>/ai/suggest-relations` | `STRICT`, `secured` |
+| POST | `/workspaces/<ws>/ai/summarize` | `STRICT`, `secured` |
+| POST | `/workspaces/<ws>/ai/chat` | `STRICT`, `secured` |
+| POST | `/workspaces/<ws>/ai/complete` | `STRICT`, `secured` |
+| POST | `/workspaces/<ws>/ai/embed` | `STRICT`, `secured` |
+| POST | `/workspaces/<ws>/ai/semantic-search` | `STRICT`, `secured` |
+
+---
+
+### 4.24 Admin
+
+**Blueprint:** `admin` | **Prefix:** `/admin` | **Cloud only** | **Permission:** `@require_admin` + `@cloud_only`
+
+| Method | Path | Decorators | Body |
+|--------|------|------------|------|
+| GET | `/admin/users` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | `search?`, `page?`, `per_page?` |
+| GET | `/admin/users/<user_id>` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | — |
+| PATCH | `/admin/users/<user_id>` | `STRICT`, `secured`, `require_admin`, `cloud_only` | `UserUpdateSchema` |
+| DELETE | `/admin/users/<user_id>` | `DESTRUCTIVE`, `secured`, `require_admin`, `cloud_only` | — |
+| GET | `/admin/system/status` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | 501 |
+| GET | `/admin/system/logs` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | 501 |
+| POST | `/admin/system/cleanup` | `DESTRUCTIVE`, `secured`, `require_admin`, `cloud_only` | 501 |
+
+---
+
+### 4.25 Jobs
+
+**Blueprint:** `jobs` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/jobs` | `STANDARD`, `secured`, `cloud_only` | `status?`, `type?`, `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/jobs/<job_id>` | `STANDARD`, `secured`, `cloud_only` | — |
+| POST | `/workspaces/<ws>/jobs` | `STRICT`, `secured`, `cloud_only` | `JobCreateSchema` |
+| POST | `/workspaces/<ws>/jobs/<job_id>/running` | `STRICT`, `secured`, `cloud_only` | — |
+| POST | `/workspaces/<ws>/jobs/<job_id>/completed` | `STRICT`, `secured`, `cloud_only` | `{result}` |
+| POST | `/workspaces/<ws>/jobs/<job_id>/fail` | `STRICT`, `secured`, `cloud_only` | `{error}` |
+| POST | `/workspaces/<ws>/jobs/<job_id>/cancel` | `STRICT`, `secured`, `cloud_only` | — |
+
+**Job Statuses:** `pending`, `running`, `completed`, `failed`, `cancelled`, `dead_letter`
+**Job Priorities:** `critical`, `high`, `medium`, `low`
+
+---
+
+### 4.26 Governance
+
+**Blueprint:** `governance` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `check_workspace_access`
+
+| Method | Path | Decorators | Body/Params |
+|--------|------|------------|-------------|
+| GET | `/workspaces/<ws>/governance/reports` | `STANDARD`, `secured`, `cloud_only` | `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/governance/health` | `STANDARD`, `secured`, `cloud_only` | — |
+| GET | `/workspaces/<ws>/governance/duplicates` | `STANDARD`, `secured`, `cloud_only` | — |
+| GET | `/workspaces/<ws>/governance/orphans` | `STANDARD`, `secured`, `cloud_only` | — |
+| GET | `/workspaces/<ws>/governance/stale` | `STANDARD`, `secured`, `cloud_only` | — |
+| POST | `/workspaces/<ws>/governance/health-score` | `STRICT`, `secured`, `cloud_only` | — |
+| POST | `/workspaces/<ws>/governance/reports` | `STRICT`, `secured`, `cloud_only` | `GovernanceReportCreateSchema` |
+| GET | `/workspaces/<ws>/governance/reports/<report_id>` | `STANDARD`, `secured`, `cloud_only` | — |
+
+**Health Score:** Calculates duplicates, orphans, stale entities (90 days). Score = 100 − penalties. Persists to `governance_reports`.
+
+---
+
+### 4.27 Docs
+
+**Blueprint:** `docs` | **Prefix:** `/docs` | **Permission:** Public
+
+| Method | Path | Decorators | Description |
+|--------|------|------------|-------------|
+| GET | `/docs/` | `STANDARD` (public) | Returns full API documentation JSON with 208+ endpoints |
+
+---
+
+### 4.28 Root Endpoints
+
+**Defined in:** `app/__init__.py`
+
+| Method | Path | Decorators | Permission | Description |
+|--------|------|------------|------------|-------------|
+| GET | `/metrics` | `STANDARD` | Public | Prometheus metrics (text/plain) |
+| GET | `/health` | `STANDARD` | Public | Health check (DB, Redis, pool status) |
+
+---
+
+## 5. Request/Response Format
+
+### Success Responses
 
 ```json
-{
-  "data": { ... },
-  "meta": {
-    "page": 1,
-    "per_page": 20,
-    "total": 42,
-    "pages": 3
-  }
-}
+// Single item
+{"data": {...}}
+
+// List with pagination
+{"data": [...], "meta": {"page": 1, "per_page": 30, "total": 100, "pages": 4}}
+
+// No content
+{"data": null}
 ```
 
-| Field | Present | Description |
-|-------|---------|-------------|
-| `data` | Always | The response payload — object, array, or scalar |
-| `meta` | Paginated only | Pagination metadata |
-
-### Error
+### Error Responses
 
 ```json
 {
   "error": {
-    "code": "not_found",
-    "message": "Entity not found",
-    "details": { "entity_id": "abc-123" }
+    "code": "validation_error",
+    "message": "Validation failed",
+    "details": {"email": ["Not a valid email address"]},
+    "request_id": "abc-123-def"
   }
 }
 ```
-
-| Field | Present | Description |
-|-------|---------|-------------|
-| `code` | Always | Machine-readable error code |
-| `message` | Always | Human-readable description |
-| `details` | Sometimes | Additional context — e.g. for `validation_error`: `{"field": "email", "error": "must be a valid email address"}` |
-
----
-
-## Error Handling
-
-### HTTP Status Codes
-
-| Code | Meaning |
-|------|---------|
-| `200` | Success |
-| `201` | Created |
-| `400` | Bad Request — malformed input or missing required fields |
-| `401` | Unauthorized — missing or expired token |
-| `403` | Forbidden — you don't own this resource |
-| `404` | Not Found — resource doesn't exist |
-| `409` | Conflict — duplicate or state conflict |
-| `422` | Validation Error — schema validation failed |
-| `429` | Too Many Requests — rate limit exceeded |
-| `500` | Internal Server Error — something went wrong |
-
-### Error Codes
-
-| Code | Meaning |
-|------|---------|
-| `not_found` | Resource doesn't exist |
-| `validation_error` | Input failed schema validation |
-| `unauthorized` | Invalid or missing credentials |
-| `forbidden` | Not authorized for this resource |
-| `bad_request` | General request error |
-| `rate_limit_exceeded` | Slow down |
-| `internal_error` | Unexpected server error |
-
----
-
-## Rate Limiting
-
-| Mode | Default Limit | Storage |
-|------|---------------|---------|
-| **Local** | 1,000 requests/min | In-memory |
-| **Cloud** | 200 requests/min | Redis / Upstash |
-
-Rate-limited requests return `429 Too Many Requests` with a `Retry-After` header.
-
----
-
-## API Modules
-
-### Auth (Cloud-Only)
-
-Identity and session management. **Only registered in cloud mode.** In local mode, tokens are verified using the shared `JWT_SECRET_KEY` but no auth endpoints are served.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/auth/register` | — | Create a new account |
-| POST | `/auth/login` | — | Sign in with email + password |
-| GET | `/auth/check-email` | — | Check if email is available |
-| POST | `/auth/refresh` | Refresh | Get a new access token |
-| POST | `/auth/google` | — | Sign in with Google OAuth |
-| POST | `/auth/logout` | Refresh | Revoke the current session |
-| GET | `/auth/me` | Access | Get the authenticated user |
-| PATCH | `/auth/me` | Access | Update your profile |
-
-#### `POST /auth/register`
-
-**Request:**
-```json
-{
-  "email": "admin@gnovium.dev",
-  "password": "change-me-123",
-  "name": "Admin User"
-}
-```
-
-| Field | Required | Notes |
-|-------|----------|-------|
-| `email` | ✅ | Must be a valid email, unique per instance |
-| `password` | ✅ | Minimum 8 characters |
-| `name` | — | Display name |
-
-**Response `201`:**
-```json
-{
-  "data": {
-    "tokens": {
-      "access_token": "eyJ...",
-      "refresh_token": "eyJ..."
-    },
-    "user": {
-      "id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
-      "email": "admin@gnovium.dev",
-      "name": "Admin User",
-      "avatar_url": null
-    }
-  }
-}
-```
-
-#### `POST /auth/login`
-
-**Request:**
-```json
-{
-  "email": "admin@gnovium.dev",
-  "password": "change-me-123"
-}
-```
-
-**Response `200`:** Same token envelope as register.
-
-#### `GET /auth/check-email`
-
-**Query:** `?email=admin@gnovium.dev`
-
-**Response `200`:**
-```json
-{ "data": { "available": true } }
-```
-
-#### `POST /auth/refresh`
-
-**Headers:** `Authorization: Bearer <refresh_token>`
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "access_token": "eyJ..."
-  }
-}
-```
-
-> Note: Only a new `access_token` is returned — the existing refresh token is reused.
-
-#### `POST /auth/google`
-
-**Request:**
-```json
-{
-  "credential": "google-oauth-credential-token"
-}
-```
-
-**Response `200`:** Same token envelope as login.
-
-#### `POST /auth/logout`
-
-Revoke the current session. Requires a refresh token.
-
-**Headers:** `Authorization: Bearer <refresh_token>`
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "revoked": true
-  }
-}
-```
-
-The refresh token's session is revoked server-side. Subsequent attempts to use the same refresh token will be rejected.
-
-#### `GET /auth/me`
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
-    "email": "admin@gnovium.dev",
-    "name": "Admin User",
-    "avatar_url": "https://api.dicebear.com/7.x/identicon/svg?seed=Admin+User",
-    "created_at": "2026-06-07T12:00:00Z",
-    "updated_at": "2026-06-21T08:30:00Z"
-  }
-}
-```
-
-#### `PATCH /auth/me`
-
-**Request:**
-```json
-{
-  "name": "Admin Updated",
-  "avatar_url": "https://example.com/avatar.png"
-}
-```
-
-**Response `200`:** Updated user object.
-
----
-
-### Workspaces
-
-Top-level containers that group knowledge, entities, and collaborators.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/workspaces/` | Access | List your workspaces |
-| POST | `/workspaces/` | Access | Create a workspace |
-| GET | `/workspaces/<id>` | Access | Get workspace details |
-| PATCH | `/workspaces/<id>` | Access | Update workspace |
-| DELETE | `/workspaces/<id>` | Access | Delete workspace permanently |
-| GET | `/workspaces/<id>/stats` | Access | Workspace overview statistics |
-
-#### `GET /workspaces/`
-
-**Query Parameters:**
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `page` | int | 1 | Page number |
-| `per_page` | int | 25 | Items per page (max 100) |
-
-**Response `200`:** Paginated list of workspace objects.
-
-#### `POST /workspaces/`
-
-**Request:**
-```json
-{
-  "name": "Knowledge OS",
-  "description": "Company workspace",
-  "settings": { "default_view": "graph" }
-}
-```
-
-| Field | Required | Notes |
-|-------|----------|-------|
-| `name` | ✅ | Workspace display name (1-160 chars) |
-| `description` | — | Brief description |
-| `settings` | — | Arbitrary key-value config dict |
-
-**Response `201`:** Created workspace object with `id`.
-
-#### `GET /workspaces/<id>`
-
-**Response `200:`**
-```json
-{
-  "data": {
-    "id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "name": "Knowledge OS",
-    "description": "Company workspace",
-    "owner_id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
-    "deployment_mode": "local",
-    "settings": { "default_view": "graph" },
-    "created_at": "2026-06-07T12:00:00Z",
-    "updated_at": "2026-06-21T08:30:00Z"
-  }
-}
-```
-
-Note: `deployment_mode` is `"local"` for local mode and `"cloud"` for cloud mode.
-
-#### `PATCH /workspaces/<id>`
-
-**Request:**
-```json
-{
-  "name": "Knowledge OS Pro",
-  "description": null
-}
-```
-
-Setting `description` to `null` clears it.
-
-**`settings`:** Replaces the entire settings dict — any omitted keys are lost. Set a key to `null` to clear it.
-
-#### `DELETE /workspaces/<id>`
-
-Delete the workspace permanently. All associated entities, blocks, relations, tags, files, comments, and notifications are deleted.
-
-#### `GET /workspaces/<id>/stats`
-
-Delegates to `DashboardService.overview()`. Returns raw response (unwrapped `data`).
-
-**Response `200:**
-```json
-{
-  "data": {
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "entity_count": 42,
-    "block_count": 215,
-    "relation_count": 18,
-    "comment_count": 7,
-    "archived_count": 5,
-    "member_count": 1,
-    "recent_entities": [
-      { "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "title": "Research Notes", "updated_at": "2026-06-21T08:30:00Z" }
-    ]
-  }
-}
-```
-
----
-
-### Entities
-
-The fundamental unit of knowledge — pages, documents, databases, or any typed object.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/entities/` | Access | List entities |
-| POST | `/entities/` | Access | Create an entity |
-| GET | `/entities/<id>` | Access | Get entity details |
-| PATCH | `/entities/<id>` | Access | Update entity |
-| DELETE | `/entities/<id>` | Access | Delete entity permanently |
-| POST | `/entities/<id>/restore` | Access | Restore a deleted entity |
-| POST | `/entities/<id>/archive` | Access | Archive (hide without deleting) |
-| POST | `/entities/<id>/duplicate` | Access | Duplicate entity + contents |
-| GET | `/entities/<id>/children` | Access | List child entities |
-| POST | `/entities/<id>/children` | Access | Create a child entity |
-| GET | `/entities/<id>/versions` | Access | **Cloud-only.** List version history |
-| POST | `/entities/types` | Access | Create an entity type |
-| GET | `/entities/types` | Access | List entity types |
-| POST | `/entities/properties` | Access | Create a custom property |
-| GET | `/entities/properties` | Access | List custom properties |
-
-#### Core CRUD
-
-**`POST /entities/`**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e",
-  "title": "Research Notes",
-  "icon": "note",
-  "cover_image": null,
-  "properties": { "status": "active", "priority": "high" }
-}
-```
-
-**Response `201`:** Returns the created entity with its `id`.
-
-**`PATCH /entities/<id>`**
-```json
-{
-  "title": "Research Notes v2",
-  "icon": "doc",
-  "properties": { "status": "review" }
-}
-```
-
-All fields are optional. Send only what changed.
-
-**`DELETE /entities/<id>`** — Delete the entity permanently. Cascades to all blocks, property values, relations, tags, file links, comments, embeddings, and notifications.
-
-**`POST /entities/<id>/restore`** — Undo the deletion and restore the entity with all its associated data.
-
-**`POST /entities/<id>/archive`** — Mark as archived (doesn't delete, just hides from default views).
-
-**`POST /entities/<id>/duplicate`** — Deep copy of the entity and its blocks. Returns `201`.
-
-#### Children
-
-**`GET /entities/<id>/children`** — Paginated list of child entities.
-
-**`POST /entities/<id>/children`** — Create a child entity under this parent. `workspace_id` and `entity_type_id` are both required in the body — they are NOT inferred from the parent.
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e",
-  "title": "Child Page",
-  "icon": "doc"
-}
-```
-
-**Error responses:**
-
-| Status | Reason |
-|--------|--------|
-| `400` | `workspace_id` missing |
-| `400` | `entity_type_id` missing |
-
-#### Entity Types
-
-**`POST /entities/types`**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "name": "Document",
-  "icon": "doc",
-  "config": { "color": "blue" }
-}
-```
-
-**`GET /entities/types`** — List entity types. Optional filter: `?workspace_id=uuid`.
-
-#### Custom Properties
-
-**`POST /entities/properties`**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e",
-  "name": "Status",
-  "property_type": "select",
-  "config": { "options": ["active", "review", "archived"] }
-}
-```
-
-| `property_type` | Description |
-|----------------|-------------|
-| `text` | Free-form text |
-| `number` | Numeric value |
-| `select` | Single-select from options |
-| `multi_select` | Multiple selections |
-| `date` | Date value |
-| `boolean` | True/false |
-| `url` | URL link |
-
-**`GET /entities/properties`** — List custom properties. Optional filter: `?workspace_id=uuid`.
-
-#### Entity Versions
-
-**`GET /entities/<id>/versions`** — **Cloud-only.** Returns 404 in local mode.
-Paginated list of entity version history.
-
----
-
-### Blocks
-
-The building blocks of entity content — text, headings, lists, code, and more.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/blocks/` | Access | List blocks for an entity |
-| POST | `/blocks/` | Access | Create a block |
-| GET | `/blocks/<id>` | Access | Get block details |
-| PATCH | `/blocks/<id>` | Access | Update block content |
-| POST | `/blocks/<id>/move` | Access | Move block to new parent/position |
-| DELETE | `/blocks/<id>` | Access | Delete block permanently |
-| POST | `/blocks/reorder` | Access | Batch reorder blocks |
-| GET | `/blocks/entity/<entity_id>` | Access | List blocks for an entity (shorthand) |
-
-#### Append-Only Design (Local Mode)
-
-In **local mode**, blocks use an **append-only** storage pattern:
-- Every update creates a **new row** with the same `id` but a new `created_at`
-- Composite primary key: `(id, branch_id, created_at)`
-- No separate entity_versions or block_versions tables needed
-- Full edit history is preserved natively
-- `GET /blocks/?entity_id=<id>` returns only **current (non-deleted) blocks** — finds the latest row per block id, then filters out deleted ones
-- Deleting a block creates a new row with `is_deleted=True` as the latest version, which excludes the block from all current views
-- Historical versions remain in the database; use `GET /blocks/<id>` (returns latest) or query the table directly for audit trails
-
-In **cloud mode**, blocks are mutable with versioning handled via changesets and snapshots.
-
-#### `POST /blocks/`
-
-**Request:**
-```json
-{
-  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "parent_block_id": null,
-  "block_type": "paragraph",
-  "position": null,
-  "content": { "text": "This is a paragraph block." }
-}
-```
-
-| Field | Required | Notes |
-|-------|----------|-------|
-| `entity_id` | ✅ | Parent entity |
-| `parent_block_id` | — | For nested blocks |
-| `block_type` | ✅ | See block types below |
-| `position` | — | Sort order (float, defaults to next available) |
-| `content` | — | JSON object with block-type-specific data |
-
-**Block types:** `text`, `heading_1`, `heading_2`, `heading_3`, `bulleted_list`, `numbered_list`, `to_do`, `code`, `quote`, `callout`, `image`, `divider`, `table`
-
-**`content` structure by block type:**
-
-| Block Type | Content Shape |
-|-----------|--------------|
-| `text` | `{"text": "..."}` |
-| `heading_1` | `{"text": "..."}` |
-| `heading_2` | `{"text": "..."}` |
-| `heading_3` | `{"text": "..."}` |
-| `bulleted_list` | `{"text": "..."}` |
-| `numbered_list` | `{"text": "..."}` |
-| `to_do` | `{"text": "...", "checked": false}` |
-| `code` | `{"text": "...", "language": "python"}` |
-| `quote` | `{"text": "..."}` |
-| `callout` | `{"text": "...", "icon": "💡"}` |
-| `image` | `{"url": "...", "alt": "..."}` |
-| `divider` | `{}` |
-| `table` | `{"rows": [...], "columns": [...]}` |
-
-#### `PATCH /blocks/<id>`
-
-**Request:**
-```json
-{
-  "block_type": "heading_2",
-  "content": { "text": "Overview" }
-}
-```
-
-#### `POST /blocks/reorder`
-
-Batch update block positions in a single call.
-
-**Response `200`:**
-```json
-{
-  "data": [
-    { "id": "block-uuid-1", "position": 100, ... },
-    { "id": "block-uuid-2", "position": 200, ... },
-    { "id": "block-uuid-3", "position": 300, ... }
-  ]
-}
-```
-
-**Request:**
-```json
-{
-  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "blocks": [
-    { "id": "4ef014a4-569d-4cf9-98fe-d2784860b263", "position": 100 },
-    { "id": "5a3978e0-dfeb-475d-911e-5451dd808dad", "position": 200 }
-  ]
-}
-```
-
-#### `POST /blocks/<id>/move`
-
-Move a block to a different parent or position.
-
-**Request:**
-```json
-{
-  "parent_block_id": "uuid-or-null",
-  "position": 500
-}
-```
-
----
-
-### Relations
-
-Connect entities to form a knowledge graph.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/relations/` | Access | List relations |
-| POST | `/relations/` | Access | Create a relation |
-| GET | `/relations/<id>` | Access | Get relation details |
-| DELETE | `/relations/<id>` | Access | Delete relation permanently |
-| GET | `/relations/entity/<entity_id>` | Access | Get outgoing relations |
-| GET | `/relations/backlinks/<entity_id>` | Access | Get incoming relations (backlinks) |
-| GET | `/relations/neighbors/<entity_id>` | Access | Get graph neighbors |
-| GET | `/relations/path` | Access | Find shortest path between entities |
-
-#### `POST /relations/`
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "source_entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "target_entity_id": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b",
-  "relation_type": "refers_to",
-  "metadata": { "confidence": 0.95 }
-}
-```
-
-| Field | Required | Notes |
-|-------|----------|-------|
-| `workspace_id` | ✅ | |
-| `source_entity_id` | ✅ | Origin entity |
-| `target_entity_id` | ✅ | Destination entity |
-| `relation_type` | ✅ | Any string — `refers_to`, `depends_on`, `part_of`, `related_to`, `implements`, `extends`, or custom |
-| `metadata` | — | Arbitrary JSON dict |
-
-**Response `201`:**
-```json
-{
-  "data": {
-    "id": "63ed9d0f-4a67-4cdf-8df5-ee166567f38a",
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "source_entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-    "target_entity_id": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b",
-    "relation_type": "refers_to",
-    "relation_metadata": {},
-    "created_by": null,
-    "created_at": "2026-06-21T08:30:00Z"
-  }
-}
-```
-
-#### `GET /relations/entity/<entity_id>`
-
-Returns all relations where this entity is the **source**. Response is a plain array of relation objects wrapped in `{"data": [...]}`.
-
-#### `GET /relations/backlinks/<entity_id>`
-
-Returns all relations where this entity is the **target** — the "who links to me" view. Response is a plain array wrapped in `{"data": [...]}`.
-
-#### `GET /relations/neighbors/<entity_id>`
-
-Returns all connected entities with their relation types — used by the graph renderer. Response wrapped in `{"data": {...}}`.
-
-#### `GET /relations/path`
-
-**Query Parameters:**
-
-| Param | Required | Description |
-|-------|----------|-------------|
-| `source_entity_id` | ✅ | Start entity |
-| `target_entity_id` | ✅ | End entity |
-
-Finds the shortest path between two entities in the relation graph.
-
----
-
-### Comments
-
-Threaded discussions on entities and blocks.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/comments/` | Access | List comments |
-| POST | `/comments/` | Access | Create a comment |
-| GET | `/comments/<id>` | Access | Get comment |
-| PATCH | `/comments/<id>` | Access | Update comment |
-| DELETE | `/comments/<id>` | Access | Delete comment permanently |
-
-#### `POST /comments/`
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "block_id": null,
-  "parent_comment_id": null,
-  "content": "Looks good."
-}
-```
-
-| Field | Required | Notes |
-|-------|----------|-------|
-| `workspace_id` | ✅ | Must match the entity's workspace |
-| `entity_id` | — | Attach to an entity |
-| `block_id` | — | Attach to a specific block |
-| `parent_comment_id` | — | Reply to an existing comment |
-| `content` | ✅ | Minimum 1 character |
-
-At least one of `entity_id` or `block_id` must be provided.
-
-**Response `201`:** Created comment object with `id`.
-
-#### `PATCH /comments/<id>`
-
-```json
-{
-  "content": "Looks good after review."
-}
-```
-
----
-
-### Tags
-
-Lightweight labels for entities — simpler than relations but equally powerful.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/tags/` | Access | List tags |
-| POST | `/tags/` | Access | Create a tag |
-| GET | `/tags/<id>` | Access | Get tag details |
-| PATCH | `/tags/<id>` | Access | Update tag |
-| DELETE | `/tags/<id>` | Access | Delete tag |
-| POST | `/tags/<tag_id>/entities/<entity_id>` | Access | Tag an entity |
-| DELETE | `/tags/<tag_id>/entities/<entity_id>` | Access | Untag an entity |
-
-#### `POST /tags/`
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "name": "important",
-  "color": "#ff4444"
-}
-```
-
-#### `POST /tags/<tag_id>/entities/<entity_id>`
-
-Apply a tag to an entity. No request body needed.
-
-**Response `201`:**
-```json
-{ "data": { "tag_id": "c3d7e8f1-4a2b-4c5d-8e6f-7a8b9c0d1e2f", "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "created_at": "2026-06-21T08:30:00Z" } }
-```
-
-#### `DELETE /tags/<tag_id>/entities/<entity_id>`
-
-Remove a tag from an entity.
-
----
-
-### Branches
-
-Git-inspired branching for fearless experimentation.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/branches/` | Access | List branches |
-| POST | `/branches/` | Access | Create a branch |
-| GET | `/branches/<id>` | Access | Get branch details |
-| DELETE | `/branches/<id>` | Access | Delete branch |
-| POST | `/branches/<id>/merge` | Access | Merge into another branch |
-| POST | `/branches/merge` | Access | Merge two branches by ID |
-
-#### `POST /branches/`
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "parent_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
-  "name": "experiment",
-  "description": "Alternative architecture exploration",
-  "is_default": false
-}
-```
-
-#### `POST /branches/<id>/merge`
-
-Merge the branch identified by `<id>` (source) into another branch.
-
-```json
-{
-  "target_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1"
-}
-```
-
-#### `POST /branches/merge`
-
-Merge two branches by specifying both explicitly.
-
-```json
-{
-  "source_branch_id": "b5a2bf83-1282-4df3-8cb3-1a22bcf291a1",
-  "target_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1"
-}
-```
-
----
-
-### Versions (Cloud-Only)
-
-> Architectural specification in [`gnovium_mvp_context.md#4--versioning-system`](../gnovium_mvp_context.md#4--versioning-system). This section documents the API endpoints only.
-
-Workspace versioning — snapshots, changesets, and entity history. **Only available in cloud mode.**
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/versions/changesets` | Access | List changesets |
-| POST | `/versions/changesets` | Access | Create a changeset |
-| GET | `/versions/snapshots` | Access | List snapshots |
-| POST | `/versions/snapshots` | Access | Create a snapshot |
-| POST | `/versions/entities/<entity_id>/snapshot` | Access | Snapshot a single entity |
-| GET | `/versions/entities/<entity_id>` | Access | List entity versions |
-| GET | `/versions/blocks/<block_id>` | Access | List block versions |
-| GET | `/versions/compare` | Access | Compare two versions |
-| POST | `/versions/restore/<version_id>` | Access | Restore an entity to a version |
-
-#### `POST /versions/changesets`
-
-```json
-{
-  "branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
-  "snapshot_id": null,
-  "message": "Capture entity edits"
-}
-```
-
-#### `POST /versions/snapshots`
-
-```json
-{
-  "branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
-  "name": "Before launch",
-  "description": "Stable state before production launch"
-}
-```
-
-#### `POST /versions/entities/<entity_id>/snapshot`
-
-Take a point-in-time snapshot of a single entity.
-
-```json
-{
-  "changeset_id": "0b7c95b2-8eb6-4ca4-aa04-420fd68cbb0c"
-}
-```
-
-#### `GET /versions/compare`
-
-**Query Parameters:**
-
-| Param | Required | Description |
-|-------|----------|-------------|
-| `left_version_id` | ✅ | Earlier version |
-| `right_version_id` | ✅ | Later version |
-
-**Response:** Structured diff showing added, removed, and changed blocks.
-
-#### `POST /versions/restore/<version_id>`
-
-Restore an entity to a previous version. No request body required — the target entity is identified from the version record.
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-    "restored_version_id": "70fdad5c-2e3b-49a2-9146-fbd84d61f27a",
-    "restored_at": "2026-06-21T08:30:00Z",
-    "blocks_restored": 12
-  }
-}
-```
-
----
-
-### Diffs (Cloud-Only)
-
-Visual comparison between versions, snapshots, and branches. **Only available in cloud mode.**
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/diffs/compare` | Access | Compare two snapshots or branches |
-
-**Request — compare two versions/snapshots:**
-```json
-{
-  "left_version_id": "109518f4-4e1b-43b2-9640-f8da24e0e1d5",
-  "right_version_id": "36fa4408-9cf7-41a8-920e-adc42c91a1d9"
-}
-```
-
-Or compare branches:
-```json
-{
-  "left_branch_id": "2a49ccf9-f02e-4b68-8de9-b1d6837130a1",
-  "right_branch_id": "0b7c95b2-8eb6-4ca4-aa04-420fd68cbb0c"
-}
-```
-
-`left_version_id`/`right_version_id` and `left_snapshot_id`/`right_snapshot_id` are interchangeable (snapshot IDs resolve to version IDs internally).
-
-**Response `200`:**
-```json
-{
-  "data": [
-    {
-      "type": "added",
-      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-      "block_id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
-      "after": { "text": "New section" }
-    },
-    {
-      "type": "removed",
-      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-      "block_id": "5a3978e0-dfeb-475d-911e-5451dd808dad",
-      "before": { "text": "Old section" }
-    },
-    {
-      "type": "modified",
-      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-      "block_id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
-      "field": "content",
-      "before": { "text": "Before" },
-      "after": { "text": "After" }
-    }
-  ]
-}
-```
-
-No `meta` envelope — the response is a plain array wrapped in `{"data": [...]}`.
-
----
-
-### Search
-
-Full-text, semantic, and hybrid search across workspace content.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/search/` | Access | Search workspace content |
-
-**Query Parameters:**
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `workspace_id` | UUID | — | ✅ **Required.** Scope search to a workspace |
-| `q` | string | — | ✅ **Required.** Search query (minimum 1 char) |
-| `mode` | enum | `hybrid` | `keyword` · `full_text` · `hybrid` · `semantic` |
-| `limit` | int | `20` | Results per page (1–50) |
-
-**Search modes:**
-
-| Mode | Description |
-|------|-------------|
-| `keyword` | LIKE-based text match on `search_documents` title and content |
-| `full_text` | FTS5 on materialized `search_documents_fts` (page-level) |
-| `hybrid` | Merged block-level (`blocks_fts`) + page-level (`search_documents_fts`) results with ranking (default) |
-| `semantic` | Embedding-based vector similarity — requires configured inference runtime / pgvector |
-
-**Local mode** uses SQLite FTS5 with two search indexes:
-- **`blocks_fts`** — real-time block-level search, auto-synced via triggers on the `blocks` table
-- **`search_documents_fts`** — materialized page-level index, one row per entity, rebuilt by `BlockService` after each block change via `SearchService.rebuild_entity_index()`
-
-The hybrid mode queries both indexes and merges results with score ranking.
-
-**Cloud mode** uses PostgreSQL `tsvector` with `pg_trgm` for fuzzy matching and `pgvector` for semantic search.
-
-**Response `200` (hybrid mode):**
-```json
-{
-  "data": [
-    {
-      "id": "c7ad2e49-6322-4214-8cbd-8ec8a1dcdb8f",
-      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-      "block_id": null,
-      "title": "Research Notes",
-      "content": "Authentication strategy notes",
-      "match_type": "page",
-      "score": 0.95
-    },
-    {
-      "id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
-      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-      "block_id": "4ef014a4-569d-4cf9-98fe-d2784860b263",
-      "title": "Authentication Flow",
-      "content": "The system uses JWT tokens...",
-      "match_type": "block",
-      "score": 0.87
-    }
-  ]
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Result ID (block ID for `block` matches, search_document ID for `page` matches) |
-| `entity_id` | string | Parent entity UUID |
-| `block_id` | string or null | Block UUID for `block` matches, `null` for `page` matches |
-| `title` | string | Entity title |
-| `content` | string | Block content (JSON) for `block` matches; concatenated block text for `page` matches |
-| `match_type` | enum | `"block"` (real-time block FTS) or `"page"` (materialized entity-level) |
-| `score` | float | Relevance score 0.0–1.0 |
-
-> The response wraps in `{"data": [ ... ]}` — no `meta` envelope since pagination is controlled via the `limit` parameter only.
-
----
-
-### AI Assistant
-
-Ask questions about your workspace and get answers grounded in your knowledge.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/ai/query` | Access | Ask a question about workspace content |
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "question": "Summarize the architecture of Research Notes",
-  "limit": 8
-}
-```
-
-| Field | Required | Default | Description |
-|-------|----------|---------|-------------|
-| `workspace_id` | ✅ | — | Scope to this workspace |
-| `question` | ✅ | — | Natural language question (min 1 char) |
-| `limit` | — | 8 | Number of context documents to retrieve (1–20) |
-
-**How it works — Safety-First Multi-Agent Pipeline:**
-
-```
-Question
-   │
-   ▼
-┌──────────────────────────────────────────────────┐
-│ Supervisor Agent                                 │
-│  • Routes the task to the appropriate planner    │
-│  • Decides local vs cloud execution              │
-└──────────────────────┬───────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────┐
-│ Planner Agent                                    │
-│  • Breaks down complex questions into sub-tasks  │
-│  • Coordinates Worker Agents                     │
-└──────────────────────┬───────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────┐
-│ Worker Agents (parallel execution)               │
-│                                                   │
-│  Knowledge Agent: semantic + graph-aware search   │
-│  Editor Agent: entity/block lookups (via tools)   │
-│  Governance Agent: health context if needed       │
-└──────────────────────┬───────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────┐
-│ Safety Layer (6-stage)                           │
-│  1. Policy Validation — matches agent action     │
-│     against workspace policies                   │
-│  2. Permission Validation — RBAC + ownership     │
-│  3. Simulation/Dry-Run — previews outcome        │
-│     without committing                           │
-│  4. Diff Generation — shows exact changeset      │
-│  5. User Approval — required for destructive     │
-│     writes; read-only tools (search, graph       │
-│     queries) bypass this stage                   │
-│  6. Execution — approved changes committed       │
-└──────────────────────┬───────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────┐
-│ Inference Runtime                                 │
-│  • Generates final answer grounded in context     │
-│  • Practical MVP backends: llama.cpp, ONNX       │
-│    Runtime, TensorRT-LLM provide working AI      │
-│    day one; custom GPU-native runtime is the      │
-│    long-term strategic differentiator            │
-└──────────────────────┬───────────────────────────┘
-                       │
-                       ▼
-                  Answer + Sources
-```
-
-**Retrieval is graph-aware.** The retriever combines semantic vector search with graph traversal — finding related entities via typed relations (`refers_to`, `depends_on`, `part_of`, etc.) to enrich the context assembly. This means questions like *"What depends on Project Alpha?"* naturally pull in connected knowledge.
-
-**Mode-specific execution:**
-
-| Mode | Inference | Agents | Storage |
-|------|-----------|--------|---------|
-| **Local** | Gnovium GPU-native runtime (CUDA, on-device) — practical MVP backends (llama.cpp, ONNX Runtime, TensorRT-LLM) supported day one | All agents run locally | SQLite + local vector store |
-| **Cloud** | Cloud inference runtime (managed GPU) | Agents can coordinate across users | PostgreSQL + pgvector |
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "answer": "Project Alpha uses a microservices architecture with…",
-    "sources": [
-      { "title": "Architecture Overview", "content": "..." },
-      { "title": "Project Alpha README", "content": "..." }
-    ]
-  }
-}
-```
-
-> **Note:** Each source `content` is truncated to 2000 characters. The configured inference runtime is used for answer generation (see mode table above).
-
----
-
-### Files
-
-Upload, manage, and link files to entities.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/files/` | Access | List files |
-| POST | `/files/upload` | Access | Upload a file (multipart) |
-| POST | `/files/` | Access | Register file metadata |
-| GET | `/files/<id>` | Access | Get file details |
-| GET | `/files/<id>/download` | Access | Download file content |
-| DELETE | `/files/<id>` | Access | Delete file permanently (removes from disk) |
-| POST | `/files/presign` | Access | **Cloud-only.** Get a presigned S3 upload URL |
-| POST | `/files/<file_id>/entities/<entity_id>` | Access | Link file to entity |
-| POST | `/files/cleanup-orphans` | Access | Remove unlinked file records from disk |
-
-#### Upload Pipeline
-
-```
-POST /files/upload
-  → 1. Validate extension & MIME type (allowlist)
-  → 2. Read bytes, compute SHA-256 hash
-  → 3. Check storage quota (500 MB default)
-  → 4. Dedup: skip save if same hash + workspace exists
-  → 5. Save to disk (local) or S3 (cloud)
-  → 6. Create File record in database
-```
-
-**Validation allowlists:**
-
-| Scope | Entries |
-|-------|---------|
-| Extensions | `jpg`, `jpeg`, `png`, `gif`, `webp`, `svg`, `pdf`, `doc`, `docx`, `txt`, `md`, `json`, `csv`, `mp4`, `mp3`, `zip` and ~30 more |
-| MIME types | `image/jpeg`, `image/png`, `application/pdf`, `text/plain`, `video/mp4`, `audio/mpeg` and ~15 more |
-
-#### `POST /files/upload`
-
-Upload a file using multipart form data.
-
-**Form fields:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | binary | ✅ | The file to upload |
-| `workspace_id` | string | ✅ | Target workspace |
-
-**Response `201` (new upload):**
-```json
-{
-  "data": {
-    "id": "f5da7c75-283d-47b7-82bd-3f2dfb8d1b01",
-    "file_name": "diagram.png",
-    "mime_type": "image/png",
-    "file_size": 204800,
-    "public_url": "/uploads/workspaces_50e50f55_diagram.png",
-    "object_key": "workspaces/50e50f55/diagram.png",
-    "deduplicated": false
-  }
-}
-```
-
-**Response `200` (duplicate detected):**
-```json
-{
-  "data": {
-    "id": "f5da7c75-283d-47b7-82bd-3f2dfb8d1b01",
-    "file_name": "diagram.png",
-    "mime_type": "image/png",
-    "file_size": 204800,
-    "public_url": "/uploads/workspaces_50e50f55_diagram.png",
-    "object_key": "workspaces/50e50f55/diagram.png",
-    "deduplicated": true
-  }
-}
-```
-
-When a file with the same `content_hash` already exists in the workspace, the existing record is returned and no new bytes are stored.
-
-**Error responses:**
-
-| Status | Reason |
-|--------|--------|
-| `400` | Unsupported file extension or MIME type |
-| `400` | Storage quota exceeded |
-| `400` | `file` or `workspace_id` missing |
-
-#### `GET /files/<id>/download`
-
-Serve the file content directly.
-
-- **Local mode:** Streams from `instance/uploads/` via `send_from_directory`
-- **Cloud mode:** Redirects to the S3 `public_url`
-
-**Response `200`:** Binary file stream with original filename and `Content-Type`.
-
-#### `DELETE /files/<id>`
-
-Delete the file record permanently and **remove the bytes from disk** (local mode). Returns `200` with the deleted record.
-
-#### `POST /files/`
-
-Register file metadata without uploading (e.g. for pre-uploaded cloud files).
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "file_name": "diagram.png",
-  "mime_type": "image/png",
-  "file_size": 204800,
-  "object_key": "uploads/diagram.png",
-  "public_url": "https://cdn.gnovium.com/uploads/diagram.png"
-}
-```
-
-#### `POST /files/presign` (Cloud-Only)
-
-Get a presigned URL for direct browser-to-S3 upload. Returns `404` in local mode.
-
-```json
-{
-  "object_key": "uploads/diagram.png",
-  "content_type": "image/png"
-}
-```
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "enabled": true,
-    "upload_url": "https://s3.amazonaws.com/gnovium/uploads/diagram.png?AWSAccessKeyId=...&Signature=...",
-    "object_key": "uploads/diagram.png"
-  }
-}
-```
-
-#### `POST /files/<file_id>/entities/<entity_id>`
-
-Attach an existing file to an entity.
-
-```json
-{
-  "block_id": null
-}
-```
-
-Optionally link to a specific block within the entity.
-
-#### `POST /files/cleanup-orphans`
-
-Find all active `File` records with zero active `EntityFile` links and hard-delete them (DB record + disk bytes removed).
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579"
-}
-```
-Omitting `workspace_id` cleans up orphans across all workspaces.
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "deleted": 5
-  }
-}
-```
-
----
-
-### Graph
-
-The visual knowledge graph — materialized, queryable, traversable. Graph materialization uses incremental/cached updates — full rebuilds occur only on first materialization or schema changes; subsequent requests apply incremental diffs.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/graph/` | Access | Get the latest materialized graph |
-| POST | `/graph/materialize` | Access | Materialize the graph snapshot |
-| POST | `/graph/query` | Access | Query graph nodes and edges |
-| POST | `/graph/traverse` | Access | BFS traversal from a center node |
-| POST | `/graph/paths` | Access | Find shortest path between two nodes |
-
-#### `GET /graph/`
-
-**Query Parameters:**
-
-| Param | Required | Description |
-|-------|----------|-------------|
-| `workspace_id` | ✅ | Scope to workspace |
-
-Returns the latest materialized graph snapshot with nodes and edges. Returns `404` if no graph has been materialized yet — call `POST /graph/materialize` first.
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "id": "c61ba51e-5e52-4f68-8b35-4c74f6928d06",
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "graph_snapshot": {
-      "nodes": [
-        { "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "title": "Research Notes", "type": "8cb385bc-223d-4c3e-8c38-dfa22026d36e", "icon": null }
-      ],
-      "edges": [
-        { "id": "63ed9d0f-4a67-4cdf-8df5-ee166567f38a", "source": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "target": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b", "type": "refers_to" }
-      ],
-      "generated_at": "2026-06-21T08:30:00Z"
-    },
-    "version_hash": "sha256-hex",
-    "generated_at": "2026-06-21T08:30:00Z"
-  }
-}
-```
-
-#### `POST /graph/materialize`
-
-Trigger a fresh materialization of the graph from current entities and relations.
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579"
-}
-```
-
-**Response `201`:** New graph materialization object.
-
-#### `POST /graph/query`
-
-Filtered graph query.
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "relation_types": ["refers_to", "depends_on"],
-  "entity_type_ids": ["8cb385bc-223d-4c3e-8c38-dfa22026d36e"],
-  "limit": 100
-}
-```
-
-All filter fields are optional — omit to get the full graph.
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "nodes": [ ... ],
-    "edges": [ ... ],
-    "node_count": 42,
-    "edge_count": 18
-  }
-}
-```
-
-#### `POST /graph/traverse`
-
-Breadth-first traversal from a center node.
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "center_node": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "depth": 2,
-  "relation_types": ["refers_to"]
-}
-```
-
-| Field | Default | Max |
-|-------|---------|-----|
-| `depth` | 2 | 5 |
-
-#### `POST /graph/paths`
-
-Find the shortest path between two entities.
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "source_entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "target_entity_id": "2cf8e8f8-b3d2-430c-883a-d68a2bf6cb8b"
-}
-```
-
-**Response:** Shortest path with nodes, edges, and distance. Returns `distance: -1` if no path exists.
-
----
-
-### Governance
-
-Workspace health — detect duplicates, orphans, stale content, and calculate a health score. All governance analysis runs as background jobs with tiered processing: cheap checks (duplicate title detection) execute inline; expensive analysis (full content similarity, stale detection) is delegated to async job workers.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/governance/health` | Access | Get workspace health score |
-| GET | `/governance/duplicates` | Access | Find duplicate entities |
-| GET | `/governance/orphans` | Access | Find orphaned entities |
-| GET | `/governance/stale` | Access | Find stale entities |
-| POST | `/governance/health-score` | Access | Recalculate health score |
-
-#### `GET /governance/health`
-
-**Query Parameters:**
-
-| Param | Required | Description |
-|-------|----------|-------------|
-| `workspace_id` | ✅ | Scope to workspace |
-
-**Response `200`:** Latest governance report.
-
-```json
-{
-  "data": {
-    "id": "9cbef023-ffaa-45cc-ba1e-faef266bc39e",
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "health_score": 82,
-    "duplicate_count": 2,
-    "orphan_count": 5,
-    "stale_count": 3,
-    "report": {
-      "duplicates": [
-        { "title": "Untitled", "count": 3 },
-        { "title": "Meeting Notes", "count": 2 }
-      ],
-      "orphans": [ ... ],
-      "stale": [ ... ],
-      "entity_count": 42
-    },
-    "created_at": "2026-06-21T08:30:00Z"
-  }
-}
-```
-
-**Health score formula:**
-
-```
-score = max(0, 100 - penalty)
-penalty = min(70, duplicates × 5 + orphans × 2 + stale)
-```
-
-- **90–100:** Excellent (green)
-- **70–89:** Needs attention (yellow)
-- **Below 70:** Requires cleanup (red)
-
-#### `GET /governance/duplicates`
-
-Returns entities with identical (case-insensitive) titles.
-
-#### `GET /governance/orphans`
-
-Returns entities with zero relations — no incoming or outgoing connections.
-
-#### `GET /governance/stale`
-
-Returns entities not updated in 90+ days.
-
-#### `POST /governance/health-score`
-
-Force a recalculation and store a new report. Expects `?workspace_id=uuid` as query parameter.
-
----
-
-### Dashboard
-
-At-a-glance workspace overview.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/dashboard/overview` | Access | Workspace overview dashboard |
-
-**Query Parameters:**
-
-| Param | Required | Description |
-|-------|----------|-------------|
-| `workspace_id` | ✅ | Scope to workspace |
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "entity_count": 42,
-    "block_count": 215,
-    "relation_count": 18,
-    "comment_count": 7,
-    "member_count": 3,
-    "archived_count": 5,
-    "recent_entities": [
-      { "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3", "title": "Research Notes", "updated_at": "2026-06-21T08:30:00Z" }
-    ]
-  }
-}
-```
-
-> `member_count` reflects the actual workspace member count in cloud mode. In local mode, returns `1` (single-user desktop).
-
----
-
-### Notifications
-
-User notifications for workspace events.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/notifications/` | Access | List notifications |
-| POST | `/notifications/` | Access | Create a notification |
-| POST | `/notifications/<id>/read` | Access | Mark notification as read |
-
-#### `POST /notifications/`
-
-**Request:**
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "user_id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
-  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "type": "mention",
-  "title": "Mentioned in Research Notes",
-  "message": "You were mentioned in a comment."
-}
-```
-
-**Notification types:** `mention`, `comment`, `update`, `invite`, `system`.
-
-#### `POST /notifications/<id>/read`
-
-Mark a single notification as read. No request body needed.
-
----
-
-### Jobs (Cloud-Only)
-
-Asynchronous job tracking for long-running operations. **Only available in cloud mode.**
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/jobs/` | Access | List jobs |
-| POST | `/jobs/` | Access | Create a job |
-| POST | `/jobs/<id>/running` | Access | Mark job as running |
-| POST | `/jobs/<id>/completed` | Access | Mark job as completed |
-
-#### `POST /jobs/`
-
-```json
-{
-  "workspace_id": null,
-  "job_type": "embedding_refresh",
-  "payload": { "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3" }
-}
-```
-
-#### `POST /jobs/<id>/completed`
-
-```json
-{
-  "result": { "processed": 24, "failed": 0 }
-}
-```
-
----
-
-### Sync (Cloud-Only)
-
-Offline sync operations — queue, ingest, and acknowledge changes. **Only available in cloud mode.** Uses a Git-style operation log (ordered append-only changesets with server-side conflict resolution) rather than CRDTs — chosen for simplicity and predictable merge semantics in a workspace-oriented data model.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/sync/` | Access | List sync operations |
-| POST | `/sync/` | Access | Ingest a sync operation |
-| GET | `/sync/<id>` | Access | Get sync operation details |
-| POST | `/sync/<op_id>/ack` | Access | Acknowledge sync complete |
-
-#### `POST /sync/`
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "operation_type": "entity_update",
-  "entity_type": "entity",
-  "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-  "payload": { "title": "Research Notes v2" },
-  "device_id": "web-01",
-  "client_clock": 42
-}
-```
-
-**Operation types:** `entity_create`, `entity_update`, `entity_delete`, `block_create`, `block_update`, `block_delete`, `relation_create`, `relation_delete`.
-
-#### `POST /sync/<op_id>/ack`
-
-Mark a sync operation as processed. Conflicts are resolved server-side.
-
----
-
-### Activity
-
-Audit trail of workspace events.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/activity/` | Access | List activity log |
-
-**Query Parameters:**
-
-| Param | Required | Description |
-|-------|----------|-------------|
-| `workspace_id` | ✅ | Scope to workspace |
-| `page` | — | Page number |
-| `per_page` | — | Items per page (default 25) |
-
-**Response `200`:**
-```json
-{
-  "data": [
-    {
-      "id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-      "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-      "user_id": "d9b23b3f-1d86-4e5a-a5f1-3cf93f9ef294",
-      "entity_id": "fa82a0b1-12c8-47fb-ba2e-ff6a39226cb3",
-      "block_id": null,
-      "action": "entity.create",
-      "details": { "title": "Research Notes", "entity_type_id": "8cb385bc-223d-4c3e-8c38-dfa22026d36e" },
-      "created_at": "2026-06-21T08:30:00Z"
-    }
-  ],
-  "meta": {
-    "page": 1,
-    "per_page": 25,
-    "total": 42,
-    "pages": 2
-  }
-}
-```
-
-Returns most recent first. `user_id` may be `null` for system-generated events.
-
----
-
-### Backups
-
-Export and import workspace data for migration and safekeeping.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/backups/export` | Access | Export workspace as JSON (in-memory) |
-| POST | `/backups/export-to-disk` | Access | Export workspace to disk (`instance/backups/`) |
-| POST | `/backups/import` | Access | Import workspace from JSON |
-
-#### `POST /backups/export`
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579"
-}
-```
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "exported_at": "2026-06-21T12:30:00Z",
-    "entity_types": [ ... ],
-    "entities": [ ... ],
-    "blocks": [ ... ],
-    "relations": [ ... ],
-    "tags": [ ... ],
-    "comments": [ ... ],
-    "properties": [ ... ],
-    "files": [ ... ]
-  }
-}
-```
-
-Full workspace dump including entities, blocks, relations, tags, comments, properties, and **files metadata**. The export format is compatible with the import endpoint.
-
-#### `POST /backups/export-to-disk`
-
-Same payload as `/backups/export` but writes the JSON to `instance/backups/workspace_{id}_{timestamp}.json` on the server instead of returning it inline.
-
-**Response `200`:**
-```json
-{
-  "data": {
-    "path": "/path/to/instance/backups/workspace_50e50f55_20260621_123000.json"
-  }
-}
-```
-
-Useful for automated local backups or pre-migration snapshots.
-
-#### `POST /backups/import`
-
-```json
-{
-  "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-  "entity_types": [ ... ],
-  "entities": [ ... ],
-  "blocks": [ ... ],
-  "relations": [ ... ],
-  "tags": [ ... ],
-  "comments": [ ... ],
-  "properties": [ ... ],
-  "files": [ ... ]
-}
-```
-
-**Response `201`:**
-```json
-{
-  "data": {
-    "workspace_id": "50e50f55-27a3-4927-90c7-0e6d5eb72579",
-    "imported": {
-      "entity_types": 3,
-      "entities": 15,
-      "properties": 6,
-      "blocks": 120,
-      "relations": 8,
-      "tags": 5,
-      "comments": 2
-    }
-  }
-}
-```
-
-`files` in the request body are **not imported** — file data is informational only and included for archive completeness.
-
-Confirmation with counts of imported items.
-
-> **Tip:** Use export to create portable workspace archives. Works across local and cloud modes.
-
----
-
-## Quick Reference
-
-### Route Count by Module
-
-| Module | Routes | Available |
-|--------|:------:|-----------|
-| System | 1 | Both |
-| Auth | 8 | Cloud only |
-| Workspaces | 6 | Both |
-| Entities | 15 | Both (versions endpoint cloud-only) |
-| Blocks | 8 | Both |
-| Relations | 8 | Both |
-| Comments | 5 | Both |
-| Tags | 7 | Both |
-| Branches | 6 | Both |
-| Versions | 9 | Cloud only |
-| Diffs | 1 | Cloud only |
-| Search | 1 | Both |
-| AI | 1 | Both |
-| Files | 9 | Both (presign endpoint cloud-only) |
-| Graph | 5 | Both |
-| Governance | 5 | Both |
-| Dashboard | 1 | Both |
-| Notifications | 3 | Both |
-| Jobs | 4 | Cloud only |
-| Sync | 4 | Cloud only |
-| Activity | 1 | Both |
-| Backups | 3 | Both |
-| **Total** | **111** | **83 shared + 28 cloud-only** |
-
-### Essential Endpoints
-
-| What | Method | Endpoint | Notes |
-|------|--------|----------|-------|
-| Health check | `GET` | `/health` | |
-| Register | `POST` | `/auth/register` | Cloud-only |
-| Login | `POST` | `/auth/login` | Cloud-only |
-| My profile | `GET` | `/auth/me` | |
-| List workspaces | `GET` | `/workspaces/` | |
-| Create workspace | `POST` | `/workspaces/` | |
-| Create entity | `POST` | `/entities/` | |
-| Create block | `POST` | `/blocks/` | Append-only in local mode |
-| Block current list | `GET` | `/blocks/?entity_id=<id>` | Returns only non-deleted blocks |
-| Get block latest | `GET` | `/blocks/<id>` | Returns latest version of block |
-| Create relation | `POST` | `/relations/` | |
-| Create tag | `POST` | `/tags/` | |
-| Search | `GET` | `/search/` | |
-| AI query | `POST` | `/ai/query` | |
-| Dashboard | `GET` | `/dashboard/overview` | |
-| Graph query | `POST` | `/graph/query` | |
-| Graph materialize | `POST` | `/graph/materialize` | |
-| Health score | `GET` | `/governance/health` | |
-| Download file | `GET` | `/files/<id>/download` | Streams file content |
-| Cleanup orphans | `POST` | `/files/cleanup-orphans` | Removes unlinked files from disk |
-| Upload file | `POST` | `/files/upload` | Multipart; validates ext + MIME, dedup, quota |
-| Backup export | `POST` | `/backups/export` | |
-| Backup to disk | `POST` | `/backups/export-to-disk` | Writes to `instance/backups/` |
-
-### Common Patterns
-
-**Pagination:**
-```
-GET /endpoint?page=2&per_page=50
-```
-
-**Delete → restore:**
-```
-DELETE /entities/<id>       # deletes permanently
-POST   /entities/<id>/restore  # restores if within retention window
-```
-
-**Auth flow (cloud → local/desktop):**
-```
-POST https://api.gnovium.com/auth/register  →  access_token + refresh_token
-     ↳ Pass access_token as Bearer token to localhost:5001
-     ↳ Local Flask verifies JWT cryptographically — no network call
-```
-
-**Chain knowledge:**
-```
-POST /entities/                 → entity A
-POST /entities/                 → entity B
-POST /relations/                → A → B
-POST /graph/materialize         → snapshot the graph
-GET  /graph/query               → see the connection
-POST /search/?q=keyword         → find related content
-POST /ai/query                  → ask about the relationship
-POST /backups/export            → backup everything
-```
-
----
-
-## Best Practices
-
-### 1. Use pagination for list endpoints
-Always pass `page` and `per_page` to list endpoints. The default `per_page` is 25 — increase to 50 for batch operations.
-
-### 2. Exploit partial updates
-`PATCH` endpoints accept any subset of fields. Don't send the full object — only include what changed.
-
-### 3. Chain relations for rich knowledge
-A typical workflow: create entities → link with relations → view graph → query with AI.
-
-```
-POST /entities/         → entity A
-POST /entities/         → entity B
-POST /relations/        → A → B
-GET  /graph/query       → see the connection
-POST /ai/query          → ask about the relationship
-```
-
-### 4. Use branches for experiments
-Before making significant changes, create a branch:
-
-```
-POST /branches/       → new branch
-... make changes ...
-POST /branches/<id>/merge → merge back
-```
-
-### 5. Monitor workspace health
-Regularly check `/governance/health` to identify duplicates, orphans, and stale content. A score above 90 is healthy.
-
-### 6. Backup before migrations
-```
-POST /backups/export → save the JSON
-... make changes ...
-POST /backups/import → restore if needed
-```
-
-### 7. Restore deleted content
-Deleted entities and workspaces can be restored via `POST /<resource>/<id>/restore` within the retention window.
-
-### 8. Use hybrid search
-For the best results, use `mode=hybrid` in search queries — it combines keyword matching with full-text search.
-
-### 9. Desktop auth flow
-For electron/desktop apps, open a browser to the cloud API's `/auth/login`, capture the returned JWT, and pass it to the local Flask API. Both use the same `JWT_SECRET_KEY` — no extra config needed.
-
-### 10. Share JWT_SECRET_KEY
-Ensure `.env`, `.env.local`, and `.env.cloud` all define the same `JWT_SECRET_KEY`. Without this, tokens issued by the cloud API will be rejected by the local instance.
-
----
-
-## Appendix: Schema Reference
-
-> **Type note:** `UUID` refers to a v4 UUID string (36 chars with hyphens). In local SQLite mode, these are stored as `TEXT` columns — the wire format is identical.
 
 ### Pagination
 
-| Field | Type | Default | Range |
-|-------|------|---------|-------|
-| `page` | int | 1 | min 1 |
-| `per_page` | int | 25 | min 1, max 100 |
+- Query params: `?page=1&per_page=30`
+- Default `per_page`: 30 (`DEFAULT_PAGE_SIZE`)
+- Max `per_page`: 100 (`MAX_PAGE_SIZE`)
+- Response meta: `{"page": int, "per_page": int, "total": int, "pages": int}`
 
-### Auth Schemas
+### Input Sanitization
 
-| Schema | Fields |
-|--------|--------|
-| `RegisterSchema` | `email` (Email, req), `password` (Str, req, min 8), `name` (Str, opt) |
-| `LoginSchema` | `email` (Email, req), `password` (Str, req) |
-
-### Workspace Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `WorkspaceCreateSchema` | `name` (Str, req, 1-160), `description` (Str, opt), `settings` (Dict, opt) |
-| `WorkspaceUpdateSchema` | `name` (Str, opt, 1-160), `description` (Str, nullable), `settings` (Dict) |
-
-### Entity Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `EntityTypeCreateSchema` | `workspace_id` (UUID, req), `name` (Str, req), `icon` (Str, opt), `config` (Dict, opt) |
-| `EntityCreateSchema` | `workspace_id` (UUID, req), `entity_type_id` (UUID, req), `title` (Str, opt), `icon` (Str, opt), `cover_image` (Str, opt), `properties` (Dict, opt) |
-| `EntityUpdateSchema` | `title` (Str, nullable), `icon` (Str, nullable), `cover_image` (Str, nullable), `is_archived` (Bool), `properties` (Dict) |
-| `PropertyCreateSchema` | `workspace_id` (UUID, req), `entity_type_id` (UUID, opt, nullable), `name` (Str, req), `property_type` (Str, req), `config` (Dict, opt) |
-
-### Block Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `BlockCreateSchema` | `entity_id` (UUID, req), `parent_block_id` (UUID, opt, nullable), `block_type` (Str, req), `position` (Decimal, opt, nullable), `content` (Dict, opt) |
-| `BlockUpdateSchema` | `parent_block_id` (UUID, nullable), `block_type` (Str), `position` (Decimal), `content` (Dict) |
-| `MoveBlockSchema` | `parent_block_id` (UUID, opt, nullable), `position` (Decimal, req) |
-
-### Relation Schema
-
-| Schema | Fields |
-|--------|--------|
-| `RelationCreateSchema` | `workspace_id` (UUID, req), `source_entity_id` (UUID, req), `target_entity_id` (UUID, req), `relation_type` (Str, req), `metadata` (Dict, opt) |
-
-### Branch Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `BranchCreateSchema` | `workspace_id` (UUID, req), `parent_branch_id` (UUID, opt, nullable), `name` (Str, req), `description` (Str, opt), `is_default` (Bool, opt, default=false) |
-| `MergeBranchSchema` | `source_branch_id` (UUID, req), `target_branch_id` (UUID, req) |
-
-### Search / AI Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `SearchQuerySchema` | `workspace_id` (UUID, req), `q` (Str, req, min 1), `mode` (Str, opt, oneOf: `keyword`/`full_text`/`hybrid`/`semantic`, default=`hybrid`), `limit` (Int, opt, 1-50, default=20) |
-| `AIQuerySchema` | `workspace_id` (UUID, req), `question` (Str, req, min 1), `limit` (Int, opt, 1-20, default=8) |
-
-### File Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `FileCreateSchema` | `workspace_id` (UUID, req), `file_name` (Str, req), `mime_type` (Str, opt), `file_size` (Int, opt, nullable), `object_key` (Str, req), `public_url` (Str, opt) |
-
-### Comment Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `CommentCreateSchema` | `workspace_id` (UUID, req), `entity_id` (UUID, opt, nullable), `block_id` (UUID, opt, nullable), `parent_comment_id` (UUID, opt, nullable), `content` (Str, req, min 1) |
-| `CommentUpdateSchema` | `content` (Str, req, min 1) |
-
-### Tag Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `TagCreateSchema` | `workspace_id` (UUID, req), `name` (Str, req), `color` (Str, opt, nullable) |
-| `TagUpdateSchema` | `name` (Str), `color` (Str, nullable) |
-
-### Notification Schema
-
-| Schema | Fields |
-|--------|--------|
-| `NotificationCreateSchema` | `workspace_id` (UUID, req), `user_id` (UUID, req), `entity_id` (UUID, opt, nullable), `type` (Str, req), `title` (Str, req), `message` (Str, opt) |
-
-### Cloud-Only Schemas
-
-| Schema | Fields |
-|--------|--------|
-| `SnapshotCreateSchema` | `branch_id` (UUID, req), `name` (Str, opt), `description` (Str, opt) |
-| `ChangesetCreateSchema` | `branch_id` (UUID, req), `snapshot_id` (UUID, opt, nullable), `message` (Str, opt) |
-| `JobCreateSchema` | `workspace_id` (UUID, opt, nullable), `job_type` (Str, req), `payload` (Dict, req) |
-| `SyncOperationCreateSchema` | `workspace_id` (UUID, req), `operation_type` (Str, req), `entity_type` (Str, opt, nullable), `entity_id` (UUID, opt, nullable), `payload` (Dict, req), `device_id` (Str, opt, nullable), `client_clock` (Int, opt, nullable) |
+All JSON body strings are recursively sanitized via `sanitize_request_input` (before_request handler):
+- Control characters (0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F, 0x7F) stripped
+- HTML content: dangerous tags/elements/event handlers stripped
+- URLs: only http/https allowed, dangerous protocols rejected
+- Filenames: path traversal rejection, special chars replaced
 
 ---
 
-### Response Helpers
+## 6. Error Codes
 
-| Helper | Output | When Used |
-|--------|--------|-----------|
-| `item_response(item, status=200)` | `{"data": { serialized_model }}` | Single resource response |
-| `list_response(pagination, status=200)` | `{"data": [items], "meta": {page, per_page, total, pages}}` | Paginated collection |
-| `raw_response(data, status=200)` | `{"data": <raw_json> }` | Non-model responses — graph snapshots, backup data, governance reports, block lists with `?entity_id=` filter, search results |
+| HTTP | Code | Description |
+|------|------|-------------|
+| 400 | `bad_request` | Generic bad request |
+| 400 | `cloud_only` | Endpoint only available in cloud mode |
+| 400 | `auth_disabled` | Local auth is disabled |
+| 400 | `invalid_email` | Email validation failed |
+| 400 | `invalid_category` | Invalid settings category |
+| 400 | `invalid_file_type` | File type not allowed |
+| 400 | `invalid_request_body` | Malformed request body |
+| 400 | `code_already_used` | Auth code already consumed |
+| 400 | `code_expired` | Auth code has expired |
+| 400 | `invalid_archive` | Archive format invalid |
+| 400 | `origin_mismatch` | Redirect URI mismatch |
+| 400 | `decryption_failed` | Decryption of backup failed |
+| 400 | `quota_exceeded` | Storage quota exceeded |
+| 400 | `csrf_error` | CSRF validation failed |
+| 400 | `upload_error` | File upload failed |
+| 401 | `unauthorized` | Authentication required |
+| 401 | `token_expired` | JWT token has expired |
+| 401 | `invalid_token` | Token is invalid |
+| 401 | `token_revoked` | Token has been revoked |
+| 401 | `wrong_token` | Wrong token type used |
+| 401 | `account_locked` | Account locked (brute force) |
+| 401 | `invalid_credentials` | Email/password mismatch |
+| 403 | `forbidden` | Insufficient permissions |
+| 405 | `method_not_allowed` | HTTP method not allowed |
+| 404 | `not_found` | Resource not found |
+| 409 | `conflict` | Resource already exists |
+| 413 | `payload_too_large` | Request body exceeds limit (100MB max) |
+| 415 | `unsupported_media_type` | Unsupported content type |
+| 422 | `validation_error` | Schema validation failed |
+| 429 | `rate_limit_exceeded` | Rate limit hit |
+| 500 | `internal_error` | Unexpected server error |
+| 501 | `not_implemented` | Feature not yet implemented |
+| 502 | `bad_gateway` | Upstream service error |
+| 503 | `service_degraded` | Dependency unavailable |
+
+### Custom Exception Classes (`app/core/errors.py`)
+
+| Exception | HTTP | Code |
+|-----------|------|------|
+| `ApiError` | 400+ | configurable |
+| `NotFoundError` | 404 | `not_found` |
+| `ForbiddenError` | 403 | `forbidden` |
+| `ConflictError` | 409 | `conflict` |
+| `UnauthorizedError` | 401 | `unauthorized` |
+| `ValidationError` | 422 | `validation_error` |
+| `RateLimitError` | 429 | `rate_limit_exceeded` |
+| `UnsupportedMediaTypeError` | 415 | `unsupported_media_type` |
+| `NotImplementedError` | 501 | `not_implemented` |
+| `BadGatewayError` | 502 | `bad_gateway` |
+| `PayloadTooLargeError` | 413 | `payload_too_large` |
+| `InternalError` | 500 | `internal_error` |
+| `ServiceDegradedError` | 503 | `service_degraded` |
+| `AccountLockedError` | 401 | `account_locked` |
+| `WrongTokenError` | 401 | `wrong_token` |
 
 ---
 
-### Auth Decorator Legend
+## 7. Rate Limiting
 
-| Decorator | Meaning |
-|-----------|---------|
-| `@secured` | JWT access token required; `current_user_id()` returns the user UUID |
-| `@jwt_required(refresh=True)` | JWT refresh token required (for `/auth/refresh`, `/auth/logout`) |
-| _(none)_ | **Public** — no authentication required |
+Defined in `app/core/constants.py`:
+
+| Constant | Value | Endpoints |
+|----------|-------|-----------|
+| `RATE_LIMIT_STRICT` | `30/minute` | Writes, mutations |
+| `RATE_LIMIT_STANDARD` | `120/minute` | General reads |
+| `RATE_LIMIT_LENIENT` | `300/minute` | Dashboard, unread count |
+| `RATE_LIMIT_DESTRUCTIVE` | `10/minute` | Deletes, permanent deletes |
+| `RATE_LIMIT_AUTH_WRITE` | `5/minute` | Register, login |
+| `RATE_LIMIT_FILE_UPLOAD` | `10/minute` | File uploads |
+| `RATE_LIMIT_PASSWORD_RESET` | `3/minute` | Forgot/reset password |
+| `RATE_LIMIT_FILE_DOWNLOAD` | `60/minute` | File downloads |
+| `RATELIMIT_DEFAULT` (local) | `1200/minute` | Flask-Limiter default ceiling (local mode) |
+| `RATELIMIT_DEFAULT` (cloud) | `600/minute` | Flask-Limiter default ceiling (cloud mode) |
+
+**Storage:** Local mode uses `memory://`, cloud mode uses Redis.
 
 ---
 
-*Gnovium API — v1 — 111 endpoints — Built for connected, versioned, evolvable knowledge.*
-*Dual-mode: SQLite (local desktop) / PostgreSQL (cloud SaaS) — one contract, any deployment.*
+## 8. Data Models — Domain (PostgreSQL)
+
+All 36 domain models with their PostgreSQL table names:
+
+| # | Model | Table | Key Features |
+|---|-------|-------|-------------|
+| 1 | `User` | `users` | email (unique), google_id (unique), password_hash |
+| 2 | `Session` | `sessions` | refresh_jti (unique), revoked_at, expires_at |
+| 3 | `AuthCode` | `auth_codes` | code (unique), consumed_at, expires_at |
+| 4 | `Workspace` | `workspaces` | owner_id (FK), deployment_mode CHECK, sync_enabled |
+| 5 | `WorkspaceMember` | `workspace_members` | role CHECK (owner/admin/editor/viewer) |
+| 6 | `EntityType` | `entity_types` | workspace_id, name, slug, config JSON |
+| 7 | `Entity` | `entities` | entity_type_id (FK), parent_id, version, block_count |
+| 8 | `Block` | `blocks` | entity_id, branch_id, position, type, content JSON |
+| 9 | `EntityProperty` | `entity_properties` | type CHECK (12 types), workspace+name+type unique |
+| 10 | `EntityPropertyValue` | `entity_property_values` | entity_id+property_id unique, value JSON |
+| 11 | `Relation` | `relations` | no_self_relation CHECK, generated_by CHECK |
+| 12 | `Tag` | `tags` | workspace+name unique, entity_count |
+| 13 | `EntityTag` | `entity_tags` | entity_id+tag_id unique |
+| 14 | `Branch` | `branches` | workspace_id, parent_branch_id, version |
+| 15 | `Snapshot` | `snapshots` | branch_id (FK), metadata JSON |
+| 16 | `Changeset` | `changesets` | branch_id, snapshot_id |
+| 17 | `EntityVersion` | `entity_versions` | snapshot JSON, content_hash |
+| 18 | `BlockVersion` | `block_versions` | block_id (FK), snapshot JSON |
+| 19 | `EntityBranchHead` | `entity_branch_heads` | branch+entity unique, current_version_id |
+| 20 | `BranchMerge` | `branch_merges` | no_self_merge CHECK, status CHECK |
+| 21 | `MergeConflict` | `merge_conflicts` | conflict_type, details JSON |
+| 22 | `EntityEvent` | `entity_events` | event_type, payload JSON |
+| 23 | `File` | `file_records` | state, object_key, content_hash, object_lock |
+| 24 | `EntityFile` | `entity_files` | entity_id+file_id unique, block_id |
+| 25 | `FileVariant` | `file_variants` | file_id+variant_type unique, metrics |
+| 26 | `Invite` | `invites` | token (unique), status CHECK, expires_at |
+| 27 | `Comment` | `comments` | entity_id, block_id, parent_id, content |
+| 28 | `CommentReaction` | `comment_reactions` | comment+user+reaction unique |
+| 29 | `Notification` | `notifications` | type CHECK (15 types), is_read |
+| 30 | `Embedding` | `embeddings` | model, VECTOR(1024), content_hash |
+| 31 | `SearchDocument` | `search_documents` | TSVECTOR search_vector, content_hash |
+| 32 | `SyncOperation` | `sync_operations` | operation_type, payload JSON, client_clock |
+| 33 | `Job` | `jobs` | status/priority CHECK, idempotency_key |
+| 34 | `ActivityLog` | `activity_entries` | action, details JSON, BRIN index on created_at |
+| 35 | `GovernanceReport` | `governance_reports` | type/status CHECK, data JSON |
+| 36 | `GraphMaterialization` | `graph_materializations` | graph_snapshot JSON, version_hash |
+
+### Common Mixins
+
+```python
+class UUIDPrimaryKeyMixin:     # id = UUID, gen_random_uuid() default
+class TimestampMixin:          # created_at, updated_at (auto-updated)
+class CreatedOnlyMixin:        # created_at only
+class SoftDeleteMixin:         # is_deleted, deleted_at, deleted_by (FK users)
+```
+
+---
+
+## 9. Data Models — Local (SQLite)
+
+**29 local tables + 9 cloud-only stubs** (29 unique models with real tables)
+
+| # | Model | Table | Differences from Domain |
+|---|-------|-------|----------------------|
+| 1 | `User` | `users` | No google_id, password_hash |
+| 2 | `Session` | `sessions` | No deleted_by FK |
+| 3 | `AuthCode` | `auth_codes` | Same structure |
+| 4 | `Workspace` | `workspaces` | No cloud_workspace_id, JSON CHECK via json_valid() |
+| 5 | `EntityType` | `entity_types` | Same structure |
+| 6 | `Entity` | `entities` | No created_by FK |
+| 7 | `Block` | `blocks` | Composite PK (id, branch_id, created_at), lft/rgt for nested sets |
+| 8 | `Property` | `properties` | Table named `properties` (not `entity_properties`) |
+| 9 | `EntityPropertyValue` | `entity_property_values` | Same structure |
+| 10 | `Relation` | `relations` | No created_by FK |
+| 11 | `Tag` | `tags` | Same structure |
+| 12 | `EntityTag` | `entity_tags` | Same structure |
+| 13 | `Branch` | `branches` | version has no server_default in local |
+| 14 | `Snapshot` | `snapshots` | Same structure |
+| 15 | `Changeset` | `changesets` | Same structure |
+| 16 | `EntityVersion` | `entity_versions` | Same structure |
+| 17 | `BlockVersion` | `block_versions` | Same structure |
+| 18 | `EntityBranchHead` | `entity_branch_heads` | Uses block_id/block_created_at instead of version_id |
+| 19 | `EntityEvent` | `entity_events` | Same structure |
+| 20 | `File` | `file_records` | storage_provider defaults to 'local', no object_lock |
+| 21 | `EntityFile` | `entity_files` | Same structure |
+| 22 | `Embedding` | `embeddings` | embedding stored as TEXT (not VECTOR) |
+| 23 | `SearchDocument` | `search_documents` | search_vector stored as TEXT (not TSVECTOR) |
+| 24 | `SyncOperation` | `sync_operations` | No entity_id as FK |
+| 25 | `GraphMaterialization` | `graph_materializations` | Same structure |
+| 26 | `Notification` | `notifications` | Type CHECK limited to 6 types (not 15) |
+| 27 | `ActivityLog` | `activity_entries` | Extra block_id column |
+| 28 | `AuthCode` | `auth_codes` | Same structure |
+| 29 | `WorkspaceMember` | `workspace_members` | Cloud-only stub in local mode |
+
+**Cloud-only stubs in local mode:** `BranchMerge`, `Comment`, `CommentReaction`, `FileVariant`, `GovernanceReport`, `Invite`, `Job`, `MergeConflict`, `WorkspaceMember`
+
+---
+
+## 10. SQL Schemas
+
+### SQLite (`SQLITE_SCHEMA.sql` — 828 lines)
+
+**29 Tables** (29 local + 9 cloud-only stubs) + extended features:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Users & Auth                                             │
+│   users ──┐                                             │
+│   sessions│ (FK user_id)                                 │
+│   auth_codes (FK user_id)                                │
+├─────────────────────────────────────────────────────────┤
+│ Workspaces                                               │
+│   workspaces (FK owner_id→users, deployment_mode CHECK)  │
+├─────────────────────────────────────────────────────────┤
+│ Entity System                                            │
+│   entity_types (FK workspace_id)                         │
+│   entities (FK entity_type_id, parent_id)                │
+│   properties (FK workspace_id, entity_type_id)           │
+│   entity_property_values (FK entity_id, property_id)     │
+├─────────────────────────────────────────────────────────┤
+│ Block System                                             │
+│   blocks (Composite PK: id+branch_id+created_at)         │
+│     lft/rgt nested set columns                           │
+│     FTS5 virtual tables: blocks_fts, search_documents_fts│
+│   block_versions (FK block_id, changeset_id)             │
+├─────────────────────────────────────────────────────────┤
+│ Knowledge Graph                                          │
+│   relations (no_self_relation CHECK, workspace_id)       │
+│   tags, entity_tags                                      │
+├─────────────────────────────────────────────────────────┤
+│ Versioning & Branching                                    │
+│   branches, snapshots, changesets                        │
+│   entity_versions, entity_branch_heads                   │
+├─────────────────────────────────────────────────────────┤
+│ Files                                                    │
+│   file_records, entity_files                             │
+├─────────────────────────────────────────────────────────┤
+│ AI / Search                                              │
+│   embeddings (TEXT column for vector)                    │
+│   search_documents                                       │
+├─────────────────────────────────────────────────────────┤
+│ Sync & Events                                            │
+│   sync_operations, entity_events, activity_entries       │
+├─────────────────────────────────────────────────────────┤
+│ Notifications & Graph                                    │
+│   notifications, graph_materializations                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+**FTS5 Virtual Tables:**
+- `blocks_fts(entity_id, type, content, text)` — content-synced with `blocks` table
+- `search_documents_fts(entity_id, title, content)` — content-synced with `search_documents`
+
+**Triggers (7 total):**
+- `blocks_ai` — INSERT → index block text
+- `blocks_ad` — DELETE → remove from FTS
+- `blocks_au` — UPDATE (is_deleted=1) → remove from FTS
+- `blocks_au_content` — UPDATE (is_deleted=0) → re-index block text
+- `search_documents_ai`, `search_documents_ad`, `search_documents_au` — same pattern for search docs
+
+**Seed Data:**
+- User: `local@gnovium.local` (id: `local`)
+- Workspace: "My Workspace" (id: `00000000-0000-0000-0000-000000000001`)
+- Entity Type: "Page" (id: `00000000-0000-0000-0000-000000000002`)
+- Branch: "main" (id: `00000000-0000-0000-0000-000000000003`)
+
+### PostgreSQL (`POSTGRESQL_SCHEMA.sql` — 1182 lines)
+
+**36 Tables** (29 core + 7 cloud-only) + extended features:
+
+**Extensions:** `uuid-ossp`, `vector` (pgvector), `pg_trgm`, `pgcrypto`
+
+**Key differences from SQLite:**
+- UUID primary keys with `gen_random_uuid()`
+- `VECTOR(1024)` column on `embeddings` table
+- `TSVECTOR` column on `search_documents` with GIN-indexable `search_vector`
+- `deleted_by` FK columns on all tables
+- Full `updated_at` triggers on 18 tables
+- `update_search_vector()` trigger on `search_documents` for auto-population
+- Additional indexes: `idx_entities_created_by`, `idx_entity_versions_branch_id/snapshot_id/created_by`, etc.
+- BRIN index on `activity_entries.created_at`
+- `file_records` has S3-specific columns: `object_lock_mode`, `object_lock_retain_until`, `legal_hold_status`, `storage_class`
+- Cloud-only tables: `workspace_members`, `branch_merges`, `merge_conflicts`, `file_variants`, `invites`, `comments`, `comment_reactions`, `governance_reports`, `jobs`
+
+---
+
+## 11. Pydantic/Marshmallow Schemas
+
+All schemas use `marshmallow` with `unknown = EXCLUDE` to reject extra fields.
+
+### Auth Schemas (`app/schemas/auth.py`)
+
+| Schema | Fields |
+|--------|--------|
+| `RegisterSchema` | email (Email, required), password (String, 8-128, regex), name (Str?) |
+| `LoginSchema` | email (Email), password (Str) |
+| `AuthorizeSchema` | redirect_uri (Str, required), state (Str?), workspace_id (UUID?) |
+| `ExchangeCodeSchema` | code (Str, min 10), redirect_uri (Str?) |
+| `ChangePasswordSchema` | old_password (Str), new_password (Str, min 8) |
+| `ForgotPasswordSchema` | email (Email) |
+| `ResetPasswordSchema` | token (Str), new_password (Str, min 8) |
+| `GoogleLoginSchema` | credential (Str) |
+| `ProfileChangedSchema` | since (Str) |
+
+### Domain Schemas (`app/schemas/domain.py`)
+
+**Input Schemas (Create/Update):**
+
+| Schema | Purpose | Fields |
+|--------|---------|--------|
+| `WorkspaceCreateSchema` | Create workspace | name, description?, settings?, icon?, color? |
+| `WorkspaceUpdateSchema` | Update workspace | name?, description?, settings?, icon?, color? |
+| `EntityTypeCreateSchema` | Create entity type | workspace_id, name, slug?, icon?, description?, color?, config? |
+| `EntityTypeUpdateSchema` | Update entity type | name?, slug?, icon?, description?, color?, config? |
+| `PropertyCreateSchema` | Create property | workspace_id, entity_type_id?, name, type (OneOf 12), description?, required?, options?, config?, default_value? |
+| `PropertyUpdateSchema` | Update property | name?, type?, entity_type_id?, description?, required?, options?, config?, default_value? |
+| `EntityCreateSchema` | Create entity | workspace_id, entity_type_id, parent_id?, name?, icon?, cover_image?, sort_order?, summary?, properties?, is_favorite?, color?; validates property keys exist |
+| `EntityUpdateSchema` | Update entity | name?, icon?, cover_image?, parent_id?, sort_order?, summary?, properties?, is_favorite?, color?, is_archived? |
+| `BlockCreateSchema` | Create block | entity_id, branch_id, parent_block_id?, type, position, indent?, content?, properties?; validates content by block type |
+| `BlockUpdateSchema` | Update block | parent_block_id?, type?, position?, indent?, content?, properties? |
+| `MoveBlockSchema` | Move block | parent_block_id?, position, indent?, entity_id?, properties? |
+| `RelationCreateSchema` | Create relation | workspace_id, source_id, target_id, type, generated_by?, verified?, confidence?, ai_model?, properties?, label? |
+| `RelationUpdateSchema` | Update relation | type?, generated_by?, verified?, confidence?, ai_model?, properties?, label? |
+| `BranchCreateSchema` | Create branch | workspace_id, parent_branch_id?, name, description?, is_default?, is_locked? |
+| `BranchUpdateSchema` | Update branch | name?, description?, version?, is_locked? |
+| `MergeBranchSchema` | Merge branches | source_branch_id, target_branch_id |
+| `SnapshotCreateSchema` | Create snapshot | branch_id, name?, description?, metadata? |
+| `ChangesetCreateSchema` | Create changeset | branch_id, snapshot_id?, message? |
+| `EntitySnapshotSchema` | Entity snapshot | changeset_id? |
+| `SearchQuerySchema` | Search | workspace_id, q, mode? (keyword/full_text/hybrid/semantic), entity_type_id?, relation_type?, tag_ids?, date_from?, date_to?, limit? |
+| `FileCreateSchema` | Create file | workspace_id?, file_name, mime_type?, file_size?, object_key, content_hash?, has_extracted_text?, has_metadata? |
+| `PresignUploadSchema` | Presign upload | workspace_id?, file_name, content_type, file_size, content_hash? |
+| `PresignMultipartSchema` | Multipart start | workspace_id?, file_name, content_type, file_size, content_hash? |
+| `PresignMultipartCompleteSchema` | Complete multipart | workspace_id?, file_id, upload_id, parts (list) |
+| `QuarantineResolveSchema` | Quarantine | approve (Bool) |
+| `NotificationCreateSchema` | Create notification | workspace_id?, user_id, entity_id?, type (OneOf 15), title, body?, data? |
+| `JobCreateSchema` | Create job | workspace_id?, type, payload, priority?, idempotency_key? |
+| `CommentCreateSchema` | Create comment | workspace_id?, entity_id?, block_id?, parent_id?, content, display_name, avatar_url?, resolved? |
+| `CommentUpdateSchema` | Update comment | content, display_name?, avatar_url?, resolved? |
+| `SyncOperationCreateSchema` | Create sync op | workspace_id, operation_type, entity_type?, entity_id?, payload, device_id?, client_clock?, synced? |
+| `TagCreateSchema` | Create tag | workspace_id, name, color? |
+| `TagUpdateSchema` | Update tag | name, color? |
+| `WorkspaceMemberInviteSchema` | Invite member | email, role, display_name?, avatar_url? |
+| `WorkspaceMemberUpdateSchema` | Update member | email, role, display_name?, avatar_url? |
+| `GovernanceReportCreateSchema` | Create report | workspace_id, type, title, status?, data?, params?, created_by? |
+| `DiffQuerySchema` | Diff query | workspace_id, left_version_id?/right_version_id?, left_snapshot_id?/right_snapshot_id?, left_branch_id?/right_branch_id?, entity_type_id?, limit? |
+| `UserUpdateSchema` | Update user | name?, avatar_url?, profile_image_url? |
+
+**Output Schemas (Serialization):**
+
+| Schema | Fields |
+|--------|--------|
+| `UserSchema` | id, email, name, avatar_url, profile_image_url, timestamps, soft-delete fields |
+| `SessionSchema` | id, user_id, jti, refresh_jti, user_agent, ip_address, revoked_at, expires_at |
+| `AuthCodeSchema` | id, code, user_id, redirect_uri, expires_at, consumed_at |
+| `WorkspaceSchema` | id, name, description, settings, owner_id, deployment_mode, sync_enabled, cloud_workspace_id |
+| `InviteSchema` | id, workspace_id, email, role, invited_by, token, status, message, expires_at |
+| `EntitySchema` | id, workspace_id, entity_type_id, name, icon, cover_image, parent_id, sort_order, summary, properties, is_favorite, color, is_archived, archived_at, version, block_count |
+| `EntityPropertyValueSchema` | id, entity_id, property_id, value |
+| `BlockSchema` | id, entity_id, parent_block_id, type, content, position, branch_id, content_hash, indent, properties, version |
+| `CommentSchema` | id, workspace_id, entity_id, block_id, parent_id, user_id, content, display_name, avatar_url, resolved |
+| `CommentReactionSchema` | id, comment_id, user_id, reaction |
+| `RelationSchema` | id, workspace_id, source_id, target_id, type, generated_by, verified, confidence, ai_model, label |
+| `EntityFileSchema` | id, entity_id, file_id, block_id |
+| `FileVariantSchema` | id, file_id, variant_type, object_key, mime_type, width, height, file_size, algorithm, quality |
+| `FileSchema` | id, workspace_id, file_name, mime_type, file_size, content_hash, state, storage_provider, object_key, extracted_text, metadata_json, object_lock fields |
+| `EntityVersionSchema` | id, entity_id, branch_id, changeset_id, snapshot_id, version, message, snapshot, content_hash |
+| `BlockVersionSchema` | id, block_id, changeset_id, snapshot, content_hash |
+| `MergeConflictSchema` | id, merge_id, workspace_id, entity_id, conflict_type, details, resolved, resolution |
+| `EntityBranchHeadSchema` | id, branch_id, entity_id, current_version_id, base_version_id |
+| `EntityEventSchema` | id, workspace_id, entity_id, user_id, changeset_id, event_type, payload |
+| `EmbeddingSchema` | id, workspace_id, entity_id, block_id, model, embedding, content_hash |
+| `SearchDocumentSchema` | id, workspace_id, entity_id, block_id, title, content, content_hash, search_vector |
+| `GraphMaterializationSchema` | id, workspace_id, graph_snapshot, version_hash, generated_at |
+| `NotificationSchema` | id, workspace_id, user_id, entity_id, type, title, body, data, is_read |
+| `TagSchema` | id, workspace_id, name, color, entity_count |
+| `EntityTagSchema` | id, entity_id, tag_id |
+| `EntityTypeSchema` | id, workspace_id, name, slug, icon, description, color, config |
+| `PropertySchema` | id, workspace_id, entity_type_id, name, type, description, required, options, config, default_value |
+| `BranchSchema` | id, workspace_id, parent_branch_id, name, description, is_default, is_locked, version |
+| `SnapshotSchema` | id, branch_id, name, description, metadata |
+| `ChangesetSchema` | id, branch_id, snapshot_id, message |
+| `BranchMergeSchema` | id, source_branch_id, target_branch_id, merged_at, status, metadata |
+| `JobSchema` | id, workspace_id, type, status, progress, message, priority, payload, result, error, retry_count, max_retries |
+| `SyncOperationSchema` | id, workspace_id, operation_type, entity_type, entity_id, payload, device_id, client_clock, synced |
+| `GovernanceReportSchema` | id, workspace_id, type, title, status, data, params |
+| `WorkspaceMemberSchema` | id, workspace_id, user_id, role, email, display_name, avatar_url, joined_at |
+| `ActivityEntrySchema` | id, workspace_id, entity_id, block_id, user_id, display_name, action, resource_type, resource_id, details |
+
+---
+
+## 12. Service Layer
+
+### AuthService (`app/services/auth_service.py` — 429 lines)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `register(data)` | `dict → dict` | Email/password registration with validation, hashing, JWT creation |
+| `login(data, ip_address?)` | `dict → dict` | Credential validation, brute-force check, session creation |
+| `google_login(credential)` | `str → dict` | Google OAuth verification, auto-account creation |
+| `refresh()` | `→ dict` | Rotate access token, revoke old refresh token |
+| `logout()` | `→ dict` | Revoke current session |
+| `get_profile(user_id)` | `str → dict` | User profile via UserSchema dump |
+| `update_profile(user_id, data)` | `str, dict → dict` | Update name/avatar/profile image |
+| `change_password(user_id, data)` | `str, dict → dict` | Password change (cloud only) |
+| `generate_auth_code(user_id, redirect_uri?)` | `→ str` | One-time auth code for desktop exchange |
+| `authorize(user_id, redirect_uri, state?, workspace_id?)` | `→ dict` | OAuth-like authorization with scheme validation |
+| `exchange_code(code, redirect_uri?)` | `→ dict` | Code-for-tokens exchange |
+| `get_profile_changed_since(user_id, since)` | `str, str → dict` | Profile change detection for desktop sync |
+
+### BackupService (`app/services/backup_service.py` — 298 lines)
+
+| Method | Description |
+|--------|-------------|
+| `create_backup(workspace_id)` | Create encrypted .gnv ZIP backup |
+| `list_backups(workspace_id?)` | List .gnv and .json backup files on disk |
+| `restore_backup(workspace_id, backup_path, expected_source?)` | Restore from .gnv (ZipService) or .json |
+| `serialize(records)` | Serialize SQLAlchemy records to dicts |
+| `import_workspace(workspace_id, data)` | Full workspace import with dedup and ID remapping |
+
+### BlockService (`app/services/block_service.py` — 243 lines)
+
+| Method | Description |
+|--------|-------------|
+| `list_by_entity(entity_id)` | List non-deleted blocks for entity, ordered by position |
+| `create(data, user_id)` | Create block with sanitization, auto-position, event, search |
+| `update(block_id, data, user_id)` | Update with circular ref check, versioning, event, search |
+| `move(block_id, data, new_entity_id?, user_id?)` | Move with ref validation, search reindex for old+new entity |
+| `reorder(entity_id, block_order)` | Batch reorder blocks |
+| `delete(block_id, user_id?)` | Soft-delete, event, search update |
+| `restore(block_id, user_id?)` | Restore soft-deleted block |
+
+### CommentService (`app/services/comment_service.py` — 148 lines)
+
+| Method | Description |
+|--------|-------------|
+| `create(data, user_id)` | Create comment with content validation, sanitization, dedup |
+| `list_by_entity(entity_id, page, per_page)` | List non-deleted comments, ordered by created_at asc |
+| `update(comment_id, data, user_id)` | Update with ownership validation |
+| `delete(comment_id, user_id)` | Soft-delete with ownership validation |
+| `restore(comment_id)` | Restore soft-deleted comment |
+
+### DashboardService (`app/services/dashboard_service.py` — 136 lines)
+
+| Method | Description |
+|--------|-------------|
+| `overview(workspace_id)` | Cached overview: counts of entities, blocks, relations, comments, recent items |
+| `storage(workspace_id)` | Storage stats: file count, total size |
+
+### EntityService (`app/services/entity_service.py` — 567 lines)
+
+| Method | Description |
+|--------|-------------|
+| `create_type(data)` | Create entity type with duplicate check |
+| `create_property(data)` | Create property with duplicate check |
+| `create(data, user_id)` | Create entity with properties, parent relation, event, search |
+| `update(entity_id, data, user_id)` | Update entity fields and properties |
+| `soft_delete(entity_id, user_id?)` | Cascade soft-delete: blocks, values, tags, files, comments, notifications, search, relations |
+| `restore(entity_id, user_id?)` | Cascade restore related records |
+| `get_children(entity_id, page, per_page)` | Get children via "parent" relation |
+| `archive(entity_id, archived, user_id?)` | Toggle archive flag |
+| `duplicate(entity_id, user_id)` | Deep copy with "Copy" suffix |
+| `permanent_delete(entity_id, user_id?)` | Hard delete (must be soft-deleted first) |
+| `list_by_workspace(workspace_id, page, per_page, ...)` | List with type/archive filtering |
+| `get_with_blocks(entity_id)` | Entity with nested blocks |
+| `_upsert_properties(entity_id, values)` | Batch upsert property values |
+
+### ExportService (`app/services/export_service.py` — 537 lines)
+
+| Method | Description |
+|--------|-------------|
+| `export_workspace(workspace_id)` | Full workspace JSON serialization |
+| `export_to_disk(workspace_id, output_dir?)` | Write workspace JSON to file |
+| `export_markdown(workspace_id)` | Per-entity markdown with YAML front-matter |
+| `export_zip(workspace_id)` | Markdown + assets bundled in ZIP |
+| `export_secure_zip(workspace_id)` | Encrypted .gnv archive |
+| `import_secure_zip(zip_path, workspace_id, expected_source?)` | Import encrypted backup |
+| `export_html(workspace_id, entity_id, block_id?)` | Standalone HTML with inline CSS |
+| `export_pdf(workspace_id, entity_id, block_id?)` | PDF via wkhtmltopdf/chromium/WeasyPrint |
+
+### FileService (`app/services/file_service.py` — 1195 lines)
+
+| Method | Description |
+|--------|-------------|
+| `upload(file_obj, workspace_id, user_id)` | Local upload: validate, scan, dedup, store, generate variants, extract metadata |
+| `create_metadata(data, user_id)` | Create file record without storage |
+| `download_file(file_record, expires_in)` | Presigned download URL or local path |
+| `delete_file(file_record, deleted_by?)` | Soft-delete |
+| `link_entity(entity_id, file_id, block_id?)` | Create EntityFile link |
+| `unlink_entity(entity_id, file_id)` | Soft-delete EntityFile link |
+| `get_storage_info(workspace_id?)` | Storage usage stats |
+| `presign_upload(workspace_id, file_name, content_type, file_size, user_id, content_hash?)` | S3 presigned URL |
+| `presign_multipart_upload(...)` | S3 multipart start |
+| `complete_multipart_upload(file_id, upload_id, parts, ...)` | S3 multipart complete |
+| `confirm_upload(file_id, ...)` | Finalize single-part upload |
+| `resolve_quarantine(file_id, approve, resolved_by?)` | Approve/reject quarantined file |
+| `cleanup_orphans(workspace_id?)` | Remove DB + storage records without entity links |
+| `cleanup_expired_pending()` | Remove stale PENDING records |
+
+### GraphService (`app/services/graph_service.py` — 354 lines)
+
+| Method | Description |
+|--------|-------------|
+| `materialize(workspace_id, force?)` | Generate graph snapshot (incremental or full) |
+| `query_graph(workspace_id, relation_types?, entity_type_ids?, limit)` | Filtered node/edge query |
+| `traverse_graph(workspace_id, center_node_id, depth, relation_types?)` | BFS traversal |
+| `get_related_entities(entity_id, relation_type?, direction?, page, per_page)` | Directional relationship query |
+| `find_shortest_path(workspace_id, source, target, max_iterations)` | BFS shortest path |
+| `search(workspace_id, query, relation_type?)` | Search graph entities |
+
+### RelationService (`app/services/relation_service.py` — 192 lines)
+
+| Method | Description |
+|--------|-------------|
+| `create(data, user_id)` | Create with validation: type, self-relation, entity existence, duplicates |
+| `list_by_workspace(workspace_id, page, per_page, type?)` | List with type filter |
+| `outgoing(entity_id, page, per_page)` | Outgoing relations |
+| `backlinks(entity_id, page, per_page)` | Incoming relations |
+| `update(relation_id, data)` | Update fields |
+| `delete(relation_id, user_id?)` | Soft-delete |
+| `restore(relation_id)` | Restore |
+| `bulk_create(data_list, user_id)` | Batch create with allow_duplicate flag |
+
+### SearchService (`app/services/search_service.py` — 239 lines)
+
+| Method | Description |
+|--------|-------------|
+| `search(workspace_id, query, entity_type_id?, page, per_page)` | FTS5 (local) or tsvector (cloud) full-text search |
+| `rebuild_index(workspace_id)` | Rebuild search index (re-populate FTS or tsvector) |
+| `update_entity_search_document(entity_id)` | Create/update search document from entity blocks |
+
+### SyncService (`app/services/sync_service.py` — 1012 lines)
+
+| Method | Description |
+|--------|-------------|
+| `ingest(data, user_id)` | Incoming sync operation recording with conflict detection |
+| `mark_synced(operation_id)` | Mark operation as synced |
+| `sync_from_export(workspace_id, export_data)` | Differential import from cloud export |
+| `diff_workspaces(local_ws_id, remote_export)` | Compare local vs remote, return missing items |
+| `apply_diff(workspace_id, diff)` | Apply diff to local workspace |
+| `push(workspace_id, changes, device_id)` | Push local changes to cloud with conflict detection |
+| `pull(workspace_id)` | Pull pending sync operations |
+| `full_sync(workspace_id, remote_export?)` | Bidirectional full sync |
+| `status(workspace_id)` | Sync status: pending ops, entity/block counts |
+| `diff(workspace_id)` | Local diff between data and pending operations |
+
+### TagService (`app/services/tag_service.py` — 176 lines)
+
+| Method | Description |
+|--------|-------------|
+| `list_by_workspace(workspace_id, page, per_page)` | List tags |
+| `get_entity_tags(entity_id)` | Get tags for entity via EntityTag join |
+| `create(data)` | Create with duplicate check |
+| `update(tag_id, data)` | Update fields |
+| `delete(tag_id, user_id?)` | Soft-delete |
+| `restore(tag_id)` | Restore |
+| `tag_entity(entity_id, tag_id)` | Associate tag with entity |
+| `untag_entity(entity_id, tag_id)` | Remove association |
+
+### VersioningService (`app/services/versioning_service.py` — 609 lines)
+
+| Method | Description |
+|--------|-------------|
+| `get_version(version_id)` | Get entity version |
+| `list_versions(entity_id, page, per_page)` | List versions, newest first |
+| `create_changeset(data, user_id)` | Create changeset |
+| `create_snapshot(data, user_id)` | Create branch snapshot with version pointers |
+| `snapshot_entity(entity_id, changeset_id?)` | Create entity version, update branch head |
+| `merge(data, user_id)` | Branch merge with conflict detection (field-level) |
+| `resolve_conflict(conflict_id, resolution, merged_content?, user_id?)` | Resolve merge conflict |
+| `compare_versions(left_id, right_id)` | Semantic version diff |
+| `compare_branches(source_id, target_id)` | Branch comparison |
+| `compare_snapshots(left_id, right_id)` | Snapshot comparison |
+
+### ZipService (`app/services/zip_service.py`)
+
+| Method | Description |
+|--------|-------------|
+| `create_encrypted_zip(data, workspace_id)` | Create AES encrypted .gnv with HMAC |
+| `extract_encrypted_zip(zip_path, expected_source?)` | Decrypt and validate .gnv |
+| `encrypt_bytes(data, key)` | AES-GCM encryption |
+| `decrypt_bytes(data, key)` | AES-GCM decryption |
+| `compute_hmac(data)` | HMAC-SHA256 signature |
+
+### StorageProvider (`app/services/storage_provider.py` — 530 lines)
+
+**Abstract Base:** `StorageProvider` with abstract methods: `store`, `retrieve`, `delete`, `exists`, `size`, `presign_upload`, `presign_download`, `get_provider_name`
+
+**LocalProvider:**
+- Storage root: configurable directory
+- Path traversal protection via `_validate_path()`
+- Variant management: `store_variant`, `retrieve_variant`, `delete_all_variants`
+- Orphan cleanup: `cleanup_orphans()` — removes disk files without DB records
+- Stats: `get_storage_stats()` — per-tier count/bytes
+
+**S3Provider:**
+- boto3 S3 client with lazy initialization
+- Server-side encryption (AES256)
+- Presigned URLs for upload/download
+- Multipart upload support
+- Object Lock (GOVERNANCE mode)
+- Lifecycle rules: temp cleanup, quarantine, deleted objects, glacier transition
+- Circuit breaker protection on `store()`
+- Bucket versioning
+
+### Other Services
+
+| Service | File | Key Methods |
+|---------|------|-------------|
+| `ActivityService` | `activity_service.py` | create, list_by_workspace, list_by_entity, get_by_id |
+| `JobService` | `job_service.py` | create, list, get_by_id, mark_running, mark_completed, mark_failed, cancel |
+| `NotificationService` | `notification_service.py` | create, get_by_id, list_by_user, mark_read, mark_all_read, dismiss, get_unread_count |
+| `GovernanceService` | `governance_service.py` | health, duplicates, orphans, stale, create_report, list_runs, get_run |
+| `EmbeddingService` | `embedding_service.py` | generate_embeddings |
+
+| `WorkspaceService` | `workspace_service.py` | CRUD for workspaces |
+| `WorkspaceMemberService` | `workspace_member_service.py` | CRUD for workspace members |
+| `Security` | `security.py` | `current_user_id()` helper, `secured` decorator |
+
+### Processing Pipeline (`app/services/processing/`)
+
+| Module | Key Contents |
+|--------|-------------|
+| `pipeline.py` | `ProcessingPipeline` class, `process_local_upload()` |
+| `job_runner.py` | `JobRunner` class, `process_next_job()` |
+
+### Events (`app/events/service.py`)
+
+| Method | Description |
+|--------|-------------|
+| `EventService.create()` | Create entity event record |
+| `EventService.list_by_entity()` | List events for entity |
+| `EventService.list_by_workspace()` | List events for workspace |
+
+### AI Service (`app/ai/`)
+
+| Module | Description |
+|--------|-------------|
+| `agents.py` | AI agent definitions |
+| `context_builder.py` | Build context from workspace data |
+| `embedding_service.py` | Vector embedding generation |
+| `inference.py` | AI inference engine |
+| `memory.py` | Conversation memory management |
+| `prompt_builder.py` | Prompt construction |
+| `retriever.py` | Context retrieval |
+| `safety.py` | Content safety checks |
+| `service.py` | AI service orchestration |
+| `tool_runtime.py` | Tool execution runtime |
+
+---
+
+## 13. Repository Layer
+
+All repositories extend `BaseCRUDRepository` from `app/repositories/base.py`:
+
+| Method | Description |
+|--------|-------------|
+| `get(id)` | Get by primary key |
+| `list(filters, page, per_page, sort, order)` | Paginated list |
+| `create(data)` | Create record |
+| `update(id, data)` | Update record |
+| `delete(id, soft=True)` | Delete (soft by default) |
+| `query()` | Return base query |
+| `paginate(query, page, per_page)` | Paginate query |
+| `count(query)` | Count results |
+
+**Repository files:**
+
+| Repository | File | Model |
+|-----------|------|-------|
+| `UserRepository` | `domain.py` | User |
+| `SessionRepository` | `domain.py` | Session |
+| `AuthCodeRepository` | `domain.py` | AuthCode |
+| `WorkspaceRepository` | `domain.py` | Workspace |
+| `WorkspaceMemberRepository` | `domain.py` | WorkspaceMember |
+| `EntityRepository` | `domain.py` | Entity |
+| `EntityTypeRepository` | `domain.py` | EntityType |
+| `BlockRepository` | `domain.py` | Block |
+| `BlockVersionRepository` | `domain.py` | BlockVersion |
+| `EntityVersionRepository` | `domain.py` | EntityVersion |
+| `EntityPropertyValueRepository` | `domain.py` | EntityPropertyValue |
+| `PropertyRepository` | `domain.py` | EntityProperty |
+| `RelationRepository` | `domain.py` | Relation |
+| `TagRepository` | `domain.py` | Tag |
+| `EntityTagRepository` | `domain.py` | EntityTag |
+| `EntityFileRepository` | `domain.py` | EntityFile |
+| `FileRepository` | `domain.py` | FileRecord |
+| `FileVariantRepository` | `domain.py` | FileVariant |
+| `BranchRepository` | `domain.py` | Branch |
+| `SnapshotRepository` | `domain.py` | Snapshot |
+| `ChangesetRepository` | `domain.py` | Changeset |
+| `EntityBranchHeadRepository` | `domain.py` | EntityBranchHead |
+| `BranchMergeRepository` | `domain.py` | BranchMerge |
+| `MergeConflictRepository` | `domain.py` | MergeConflict |
+| `EntityEventRepository` | `domain.py` | EntityEvent |
+| `NotificationRepository` | `domain.py` | Notification |
+| `SearchDocumentRepository` | `domain.py` | SearchDocument |
+| `EmbeddingRepository` | `domain.py` | Embedding |
+| `GraphMaterializationRepository` | `domain.py` | GraphMaterialization |
+| `ActivityLogRepository` | `domain.py` | ActivityLog |
+| `SyncOperationRepository` | `domain.py` | SyncOperation |
+| `JobRepository` | `domain.py` | Job |
+| `InviteRepository` | `domain.py` | Invite |
+| `CommentRepository` | `domain.py` | Comment |
+| `GovernanceReportRepository` | `domain.py` | GovernanceReport |
+
+**Mixins** (`app/repositories/mixins.py`): Soft-delete filtering, workspace scoping, user ownership checks
+
+---
+
+## 14. Configuration Reference
+
+### Config Classes Hierarchy
+
+```
+Config (base)
+├── LocalConfig (local mode defaults)
+├── CloudConfig (cloud mode defaults)
+└── TestingConfig (test mode, extends LocalConfig)
+    └── CloudTestingConfig (extends CloudConfig)
+```
+
+### Base Config (`Config`)
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `GNOVIUM_MODE` | str | `"local"` | Deployment mode |
+| `SECRET_KEY` | str | `""` | Flask secret key |
+| `JWT_SECRET_KEY` | str | `""` | JWT signing key |
+| `JWT_ACCESS_TOKEN_EXPIRES` | timedelta | 30 min | Access token lifetime |
+| `JWT_REFRESH_TOKEN_EXPIRES` | timedelta | 30 days | Refresh token lifetime |
+| `SQLALCHEMY_DATABASE_URI` | str | computed | Database URL |
+| `CORS_ORIGINS` | list | `localhost:3000` | Allowed CORS origins |
+| `ALLOWED_HOSTS` | list | `127.0.0.1,localhost` | Allowed hosts |
+| `ALLOWED_CLOUD_HOSTS` | list | `""` | Allowed cloud proxy hosts |
+| `MAX_CONTENT_LENGTH` | int | 100MB | Request body size limit |
+| `GOOGLE_CLIENT_ID` | str | `""` | Google OAuth client ID |
+| `CLOUD_API_URL` | str | `""` | Cloud API base URL |
+| `WEB_APP_URL` | str | `https://app.gnovium.com` | Web app URL |
+| `LOCAL_AUTH_ENABLED` | bool | `False` | Local auth toggle |
+| `LOCAL_STORAGE_QUOTA` | int | 1GB | Local storage quota |
+| `MAX_FILE_SIZE` | int | 100MB | Max upload file size |
+| `ZIP_ENCRYPTION_KEY` | str | `""` | AES encryption key for .gnv |
+| `ZIP_HMAC_KEY` | str | `""` | HMAC key for .gnv |
+| `CLAMAV_ENABLED` | bool | `False` | ClamAV malware scanning |
+| `IMAGE_PROCESSING_ENABLED` | bool | `True` | Image variant generation |
+| `DOCUMENT_EXTRACTION_ENABLED` | bool | `True` | PDF/text extraction |
+| `INLINE_FILE_PROCESSING` | bool | `True` | Inline processing toggle |
+| `ORPHAN_CLEANUP_ENABLED` | bool | `True` | Orphan file cleanup |
+| `TEMP_EXPIRATION_DAYS` | int | 7 | Temp file retention |
+| `QUARANTINE_EXPIRATION_DAYS` | int | 30 | Quarantine retention |
+| `BACKUP_RETENTION_DAYS` | int | 30 | Backup retention |
+| `DB_POOL_SIZE` | int | 5 | Connection pool size |
+| `DB_MAX_OVERFLOW` | int | 10 | Max pool overflow |
+| `DB_POOL_TIMEOUT` | int | 30 | Pool timeout |
+| `DB_POOL_RECYCLE` | int | 280 | Connection recycle |
+| `AUTH_CODE_EXPIRY_MINUTES` | int | 5 | Auth code lifetime |
+| `RATELIMIT_DEFAULT` | str | `"1200 per minute"` | Default rate limit |
+| `CACHE_TYPE` | str | `"SimpleCache"` | Cache backend |
+| `CACHE_DEFAULT_TIMEOUT` | int | 300 | Cache TTL |
+| `AWS_REGION` | str | `us-east-1` | AWS region |
+| `S3_BUCKET` | str | `""` | S3 bucket name |
+
+### LocalConfig Overrides
+
+| Variable | Local Default |
+|----------|---------------|
+| `GNOVIUM_MODE` | `"local"` |
+| `SQLALCHEMY_DATABASE_URI` | `sqlite:///local.db` |
+| `CORS_ORIGINS` | `http://localhost:3000` |
+| `LOCAL_AUTH_ENABLED` | `True` |
+| `SECRET_KEY` | `"gnovium-local-dev-secret-key-change-in-production!!"` |
+| `JWT_SECRET_KEY` | `"gnovium-local-dev-key-change-in-production!!"` |
+| `RATELIMIT_DEFAULT` | `"1200 per minute"` |
+| `RATELIMIT_STORAGE_URI` | `memory://` |
+
+### CloudConfig Overrides
+
+| Variable | Cloud Default |
+|----------|---------------|
+| `GNOVIUM_MODE` | `"cloud"` |
+| `CORS_ORIGINS` | `https://gnovium.com,https://www.gnovium.com,https://app.gnovium.com,https://api.gnovium.com` |
+| `ALLOWED_HOSTS` | `gnovium.com,www.gnovium.com,app.gnovium.com,api.gnovium.com` |
+| `RATELIMIT_DEFAULT` | `"600 per minute"` |
+| `RATELIMIT_STORAGE_URI` | Redis URL |
+| `PREFERRED_URL_SCHEME` | `https` |
+| `SESSION_COOKIE_SECURE` | `True` |
+| `CACHE_TYPE` | `RedisCache` |
+
+### Environment Files
+
+| File | Purpose |
+|------|---------|
+| `.env` | Base config loaded first |
+| `.env.local` | Local mode overrides |
+| `.env.cloud` | Cloud mode overrides (production CORS, WEB_APP_URL) |
+| `.env.cloud.dev` | Cloud dev overrides |
+| `.env.production` | Production overrides |
+| `.env.example` | Reference template |
+
+### Database URL Resolution
+
+- PostgreSQL `postgres://` → auto-rewritten to `postgresql://`
+- Neon.tech hosts → auto-rewritten to `postgresql+psycopg` with `sslmode=require`
+- SQLite default path: `data/local.db`
+
+---
+
+## 15. Middleware & Security
+
+### Request Context Middleware (`app/middleware/request_context.py`)
+
+- Generates unique `request_id` (uuid4) per request
+- Records request timing via `MetricsCollector`
+- Adds security headers to response (CSP, HSTS, XSS)
+- Tracks active connections
+
+### Security Middleware (`app/middleware/security.py`)
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `Content-Security-Policy` | `default-src 'self'` | CSP protection |
+| `X-Content-Type-Options` | `nosniff` | MIME sniffing prevention |
+| `X-Frame-Options` | `DENY` | Clickjacking protection |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HSTS |
+| `X-XSS-Protection` | `1; mode=block` | XSS filter |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Referrer control |
+
+### Input Validation & Sanitization
+
+- **Global:** `before_request` handler strips control characters from all JSON body strings
+- **Endpoint-level:** Marshmallow schemas with `unknown = EXCLUDE`
+- **Settings:** `_SettingsUpdateSchema` with `unknown = RAISE`
+- **HTML:** Stripped of dangerous tags: `script`, `iframe`, `object`, `embed`, `form`, `style`, `link`, `meta`, `base`, `applet`, `frame`, `frameset`, `ilayer`, `layer`, `bgsound`, `audio`, `video`, `canvas`, `svg`
+- **Event handlers:** All `on*` attributes removed
+- **Protocols:** Only `http://` and `https://` allowed; `javascript:`, `data:`, `vbscript:`, `file:`, etc. rejected
+- **Filename:** Path traversal detection via `..` sequences; special chars replaced with `_`
+- **Password:** Regex validates: uppercase, lowercase, digit, special char, 8-128 length
+
+### Circuit Breaker (`app/core/circuit_breaker.py`)
+
+- States: `CLOSED` → `OPEN` → `HALF_OPEN` → `CLOSED`
+- Configurable: `failure_threshold` (default 5), `recovery_timeout` (default 60s)
+- Thread-safe with `threading.Lock()`
+- Decorator: `@circuit_breaker(failure_threshold=5, recovery_timeout=60)`
+- Used for S3 operations to prevent cascading failures
+
+### Security Logging (`app/core/security_logger.py`)
+
+| Event | Level | Logged By |
+|-------|-------|-----------|
+| Authentication failure | WARNING | `SecurityLogger.log_auth_failure()` |
+| Rate limit hit | INFO | `SecurityLogger.log_rate_limit_hit()` |
+| CSRF failure | WARNING | `SecurityLogger.log_csrf_failure()` |
+| Suspicious request | ERROR | `SecurityLogger.log_suspicious_request()` |
+| Privilege escalation | CRITICAL | `SecurityLogger.log_privilege_escalation()` |
+
+### Logging Configuration (`app/core/logging.py`)
+
+- **Framework:** structlog
+- **Format:** JSON (default) or console via `LOG_FORMAT`
+- **Level:** Configurable via `LOG_LEVEL` (default INFO)
+- **Processor chain:** merge_contextvars → add_log_level → TimeStamper(iso) → redact_sensitive → JSONRenderer
+- **Sensitive data redaction:** Keys/values matching `password|secret|token|jwt|authorization|api_key|api_secret|access_key|private_key` are replaced with `***REDACTED***`
+
+---
+
+## 16. Monitoring & Metrics
+
+### MetricsCollector (`app/monitoring.py`)
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `gnovium_requests_total` | Counter | method, path, status | Request count |
+| `gnovium_request_duration_seconds` | Histogram | le (buckets) | Request duration |
+| `gnovium_errors_total` | Counter | type | Error count |
+| `gnovium_active_connections` | Gauge | — | Active connections |
+| `gnovium_uptime_seconds` | Gauge | — | Application uptime |
+
+**Histogram buckets (s):** `0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10`
+
+**Duration percentiles:** P50, P95, P99, min, max, avg
+
+**DB Pool Status:** size, checked_in, checked_out, overflow
+
+### Metrics Endpoint
+
+**`GET /metrics`** — Prometheus text format at `/metrics`
+
+### Health Endpoint
+
+**`GET /health`** — Returns:
+```json
+{
+  "service": "gnovium-api",
+  "status": "healthy" | "degraded",
+  "dependencies": {
+    "database": "ok" | "error: ...",
+    "redis": "ok" | "unavailable" | "error: ...",
+    "db_pool": {"size": 5, "checked_in": 3, "checked_out": 2, "overflow": 0}
+  }
+}
+```
+
+---
+
+## 17. File Storage Architecture
+
+### Providers
+
+| Provider | Mode | Storage Backend | Key Features |
+|----------|------|----------------|--------------|
+| `LocalProvider` | Local | Filesystem | Path traversal protection, variant generation, orphan cleanup |
+| `S3Provider` | Cloud | AWS S3 | Presigned URLs, multipart upload, object lock, lifecycle rules, versioning |
+
+### Object Key Structure
+
+```
+v1/objects/{variant}/{prefix1}/{prefix2}/{content_hash}{ext}
+v1/quarantine/{reason}/{content_hash}
+```
+
+- `{variant}`: `original`, `thumbnail`, `preview`, `optimized`
+- `{prefix1}/{prefix2}`: First 2 chars of hash for sharding
+- `{content_hash}`: SHA-256 hex digest
+
+### File States
+
+| State | Description |
+|-------|-------------|
+| `PENDING` | Upload in progress |
+| `READY` | Upload complete, file available |
+| `QUARANTINED` | Flagged by malware scan |
+| `DELETED` | Soft-deleted |
+
+### File Validation Pipeline
+
+1. Extension check (`ALLOWED_EXTENSIONS`)
+2. MIME type check (`ALLOWED_MIMETYPES`)
+3. Magic byte validation (`_validate_magic_bytes`)
+4. Malware scan (`_scan_file_for_malware()` → clamscan)
+5. Content hash dedup (SHA-256)
+6. Storage quota check (`_check_quota()`)
+7. Post-upload: image variants (WebP), PDF text extraction, metadata extraction
+
+### Image Processing
+
+- **Input threshold:** `IMAGE_PROCESSING_THRESHOLD = 10MB`
+- **Variants:** thumbnail (max 256px), preview (max 1024px), optimized
+- **Format:** WebP
+- **Library:** PIL (Pillow)
+
+---
+
+## 18. Sync Mechanism
+
+### Architecture
+
+```
+┌──────────────────────┐       ┌──────────────────────┐
+│    Local App         │       │    Cloud API         │
+│  (SQLite + Electron) │       │  (PostgreSQL)        │
+│                      │       │                      │
+│  ┌────────────┐      │       │ ┌──────────────┐     │
+│  │SyncService │◄─────┼───────┼►│SyncService   │     │
+│  │ push/pull  │      │ HTTP  │ │ ingest/ack   │     │
+│  │ full_sync  │      │       │ │ sync_from_   │     │
+│  └────────────┘      │       │ │ export       │     │
+└──────────────────────┘       └──────────────────────┘
+```
+
+### Operation Flow
+
+1. **Push:** Local changes → `POST /sync/push` → creates `SyncOperation` records with `client_clock`
+2. **Pull:** `GET /sync/pull` → returns pending operations
+3. **Ack:** `POST /sync/<op_id>/ack` → marks operation as synced
+4. **Full Sync:** `POST /sync/full-sync` → bidirectional diff + apply
+
+### Conflict Detection
+
+- **Tombstone:** Entity deleted after client's last sync
+- **Staleness:** `client_clock < entity.updated_at`
+- **Name collision:** Duplicate name+type detection
+- **Resolution:** `source` / `target` / `manual` (with `merged_content`)
+
+### Sync Fields
+
+| Entity Type | Fields Synced |
+|-------------|---------------|
+| entity_types | name, description, icon, color, config |
+| tags | name, color, description |
+| properties | name, type, description, required, options, metadata |
+| entities | name, entity_type_id, icon, cover_image, is_archived, metadata |
+| relations | source_id, target_id, type, properties |
+| blocks | entity_id, type, content, parent_block_id, position, branch_id, metadata |
+| comments | entity_id, content, block_id, parent_id |
+
+---
+
+## 19. Background Jobs & Processing
+
+### Worker (`worker.py`)
+- Entry point for background job processing
+
+### Scheduler (`scheduler.py`)
+- Scheduled task runner
+- Handles: backup cleanup, expired session cleanup, orphan file cleanup
+
+### Job System (Cloud Only)
+
+- **Table:** `jobs`
+- **Statuses:** pending, running, completed, failed, cancelled, dead_letter
+- **Priorities:** critical, high, medium, low
+- **Idempotency:** `idempotency_key` unique index
+- **Retries:** configurable `retry_count` / `max_retries`
+- **Timeout:** `timeout_seconds` per job
+
+### Processing Pipeline (`app/services/processing/`)
+
+| Component | File | Description |
+|-----------|------|-------------|
+| `ProcessingPipeline` | `pipeline.py` | Orchestrates file processing workflows |
+| `process_local_upload` | `pipeline.py` | Post-upload processing: variants, metadata, text extraction |
+| `JobRunner` | `job_runner.py` | Executes job tasks (file validation, etc.) |
+| `process_next_job` | `job_runner.py` | Dequeue and execute next pending job |
+
+---
+
+## 20. Testing
+
+### Test Structure
+
+```
+tests/
+├── conftest.py              — Shared fixtures (app, client, db)
+├── test_auth.py             — Auth endpoint tests
+├── test_blocks.py           — Block CRUD tests
+├── test_dashboard.py        — Dashboard tests
+├── test_entities.py         — Entity CRUD tests
+├── test_files.py            — File upload/tests
+├── test_misc.py             — Miscellaneous tests
+├── test_models.py           — Model validation tests
+├── test_notifications.py    — Notification tests
+├── test_relations.py        — Relation tests
+├── test_services.py         — Service layer tests
+├── test_versions.py         — Versioning tests
+├── test_workspaces.py       — Workspace tests
+├── cloud/
+│   ├── conftest.py          — Cloud-specific fixtures
+│   ├── test_admin.py        — Admin endpoint tests
+│   ├── test_comments.py     — Comment tests
+│   ├── test_governance.py   — Governance tests
+│   ├── test_jobs.py         — Job CRUD tests
+│   ├── test_smoke.py        — Cloud smoke tests
+│   └── test_workspace_members.py — Member management tests
+```
+
+### Test Configuration (`TestingConfig`)
+
+- **Database:** SQLite in-memory (`sqlite://`)
+- **Rate limiting:** Disabled
+- **Cache:** NullCache
+- **Zip keys:** Test-specific encryption/HMAC keys
+- **Auth keys:** Test-specific JWT/secret keys
+
+### Running Tests
+
+```bash
+cd backend
+python -m pytest tests/ -x -q              # Standard run
+python -m pytest tests/cloud/ -x -q        # Cloud-specific tests
+python -m pytest tests/test_auth.py -x -v  # Single test file
+```
+
+---
+
+## 21. Scripts & Utilities
+
+| Script | Path | Purpose |
+|--------|------|---------|
+| `gen_api_doc.py` | `scripts/gen_api_doc.py` | Generate API documentation |
+| `compare_api_specs.py` | `scripts/compare_api_specs.py` | Compare API specs |
+| `compare_spec_vs_code.py` | `scripts/compare_spec_vs_code.py` | Compare spec vs code |
+| `s3_create_folders.py` | `scripts/s3_create_folders.py` | Create S3 folder structure |
+| `test_storage.py` | `scripts/test_storage.py` | Storage provider tests |
+| `s3_migrate_prefix.py` | `s3_migrate_prefix.py` | S3 prefix migration |
+| `pgadmin_connect.py` | `pgadmin_connect.py` | pgAdmin connection helper |
+| `fk_cascade_audit_report.json` | `fk_cascade_audit_report.json` | FK cascade audit |
+
+---
+
+> **END OF API REFERENCE** — This document covers 208+ endpoints across 28 API modules, 36 database tables (29 core + 7 cloud-only), 100+ marshmallow schemas, 27 services, 33+ repositories, full configuration reference, error codes, rate limits, security model, storage architecture, and sync mechanism.

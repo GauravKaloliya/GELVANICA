@@ -16,7 +16,7 @@ export interface Endpoint {
   parameters?: Parameter[];
   requestBody?: string;
   response: string;
-  availability?: 'cloud-only';
+  availability?: 'cloud-only' | 'both' | 'local-only';
 }
 
 export interface ErrorCode {
@@ -55,10 +55,3 @@ export interface AuthMethod {
   bestFor: string;
 }
 
-export interface RateLimitTier {
-  tier: string;
-  requestsPerMinute: number;
-  requestsPerHour: number;
-  burstLimit: number;
-  description: string;
-}

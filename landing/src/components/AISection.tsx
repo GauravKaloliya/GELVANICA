@@ -58,7 +58,7 @@ const capabilities = [
 
 export default function AISection() {
   return (
-    <section id="ai" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="ai" aria-label="AI Capabilities" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <ParticleGraph className="opacity-40" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mb-14 text-center">
@@ -80,11 +80,14 @@ export default function AISection() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          role="list"
           className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
         >
           {capabilities.map((c) => (
             <motion.div
               key={c.title}
+              role="listitem"
+              aria-label={c.title}
               variants={cardVariants}
               whileHover={{ scale: 1.002, transition: { type: 'spring' as const, stiffness: 300, damping: 25 } }}
               className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth flex flex-col"

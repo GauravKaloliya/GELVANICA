@@ -1,4 +1,4 @@
-import type { AuthMethod, RateLimitTier } from './types';
+import type { AuthMethod } from './types';
 
 export const AUTH_METHODS: AuthMethod[] = [
   {
@@ -121,13 +121,6 @@ gnovium config set token $GNOVIUM_PAT`,
   },
 ];
 
-export const RATE_LIMIT_TIERS: RateLimitTier[] = [
-  { tier: 'Free', requestsPerMinute: 30, requestsPerHour: 500, burstLimit: 10, description: 'Personal use, development, and testing. Suitable for individual knowledge workers.' },
-  { tier: 'Pro', requestsPerMinute: 120, requestsPerHour: 3000, burstLimit: 30, description: 'Professional use for small teams and power users. Includes priority queueing.' },
-  { tier: 'Team', requestsPerMinute: 500, requestsPerHour: 10000, burstLimit: 100, description: 'Team collaboration with higher throughput. Suitable for small to medium teams.' },
-  { tier: 'Enterprise', requestsPerMinute: 2000, requestsPerHour: 50000, burstLimit: 250, description: 'Large-scale deployments with custom rate limits available on request.' },
-];
-
 export const BACKOFF_STRATEGY = `## Recommended Backoff Strategy
 
 When you receive a 429 Too Many Requests response, implement the following retry strategy:
@@ -136,10 +129,9 @@ When you receive a 429 Too Many Requests response, implement the following retry
 1. Check the Retry-After header (value in seconds)
 2. If present, wait exactly Retry-After seconds before retrying
 3. If absent, use exponential backoff:
-   - Initial delay: 1 second
-   - Multiplier: 2x per retry
-   - Maximum delay: 60 seconds
-   - Maximum retries: 5
+   - Initial delay: 60 seconds
+   - Each retry doubles the delay: 60 → 120 → 240 → 480 → 960
+   - After 5 retries reaching 960s (~16 min), block for 24 hours
 4. Add jitter (±20% random variation) to prevent thundering herd
 \`\`\`
 
@@ -149,10 +141,10 @@ Every API response includes the following rate limit headers:
 
 | Header | Description | Example |
 |--------|-------------|---------|
-| X-RateLimit-Limit | Maximum requests per hour | 500 |
+| X-RateLimit-Limit | Maximum requests per minute | 600 (cloud) / 1200 (local) |
 | X-RateLimit-Remaining | Requests remaining in current window | 423 |
 | X-RateLimit-Reset | Unix timestamp when the window resets | 1758470400 |
-| Retry-After | Seconds to wait before retrying (only on 429) | 30 |
+| Retry-After | Seconds to wait before retrying (only on 429) | 60 |
 
 ### Best Practices
 

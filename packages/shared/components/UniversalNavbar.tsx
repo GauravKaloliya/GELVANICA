@@ -10,7 +10,7 @@ import type { AppRoute, AnchorHash, ExternalUrl } from '../lib/routes';
 import { Routes, cloudWebUrl, docsUrl, landingUrl, mobileDefault, toExternalUrl } from '../lib';
 import gnoviumLogoImg from '../assets/logo/logo.png';
 
-const gnoviumLogoSrc = gnoviumLogoImg.src || gnoviumLogoImg;
+const gnoviumLogoSrc = typeof gnoviumLogoImg === 'string' ? gnoviumLogoImg : gnoviumLogoImg.src;
 
 /* ─── Types ─────────────────────────────────── */
 

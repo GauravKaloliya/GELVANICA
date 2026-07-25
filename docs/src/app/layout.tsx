@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { bootstrapEnv } from "@gnovium/shared";
-import gnoviumLogo from "@gnovium/shared/assets/logo/logo.png";
 
 bootstrapEnv();
 
@@ -40,10 +39,10 @@ export const metadata: Metadata = {
     description:
       "Complete API reference for the Gnovium Knowledge Operating System.",
   },
-  icons: [
-    { rel: "icon", url: "/favicon.ico", sizes: "any" },
-    { rel: "icon", url: gnoviumLogo.src, type: "image/jpeg" },
-  ],
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/logo.png",
+  },
 };
 
 const themeScript = `
@@ -55,7 +54,7 @@ const themeScript = `
         var html = document.documentElement;
         html.className = html.className.replace(/\\b(dark|light|sepia|high-contrast|ocean|midnight)\\b/g, '').trim() + ' ' + t;
       }
-    } catch (e) {}
+    } catch (e) { console.error('Theme init failed:', e); }
   })();
 `;
 

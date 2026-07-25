@@ -1,0 +1,110 @@
+@layer base {
+  /* ── Border Reset ── */
+  *,
+  *::before,
+  *::after {
+    @apply border-border;
+  }
+
+  /* ── Body Foundation ── */
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+      'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ── Focus Ring ── */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* ── Global Focus-Visible Ring for Interactive Elements ── */
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+    box-shadow: 0 0 0 2px oklch(0.439 0 0 / 0.4);
+  }
+
+  /* ── Selection ── */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+
+  /* ── Scrollbar Base ── */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-muted-foreground/20;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+
+  /* ── Firefox Scrollbar ── */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.708 0 0 / 0.3) transparent;
+  }
+
+  /* ── Typography Reset ── */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* ── Link Reset ── */
+  a {
+    @apply text-foreground underline-offset-4;
+  }
+
+  a:hover {
+    @apply underline;
+  }
+
+  /* ── Image Reset ── */
+  img {
+    @apply max-w-full h-auto;
+  }
+
+  /* ── Input Placeholder ── */
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-muted-foreground/50;
+  }
+
+  /* ── Disabled States ── */
+  [disabled],
+  [aria-disabled='true'] {
+    @apply pointer-events-none opacity-50;
+  }
+
+  /* ── Animations ── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

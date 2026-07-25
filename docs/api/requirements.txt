@@ -14,3 +14,4 @@ redis==5.0.8
 google-auth>=2.29.0
 requests==2.32.3
 structlog==24.4.0
+gunicorn==22.0.0

@@ -1,7 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
-import noHardcodedUrlsPlugin from "../../scripts/eslint-rules/no-hardcoded-urls.mjs";
+import noHardcodedUrlsPlugin from "../scripts/eslint-rules/no-hardcoded-urls.mjs";
 
 const eslintConfig = defineConfig([
   ...nextVitals,

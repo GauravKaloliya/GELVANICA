@@ -2,7 +2,6 @@
 PostgreSQL-specific custom column types.
 These use native PG extensions (pgvector, TSVECTOR) with safe fallbacks to standard types on SQLite.
 """
-from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.types import UserDefinedType, Text
 
 
@@ -10,7 +9,7 @@ class Vector(UserDefinedType):
     """pgvector VECTOR(n) column type for embedding similarity search with SQLite fallback."""
     cache_ok = True
 
-    def __init__(self, dim=1536):
+    def __init__(self, dim=1024):
         self.dim = dim
 
     def get_col_spec(self, **kw):
@@ -30,7 +29,14 @@ class Vector(UserDefinedType):
             if value is None:
                 return None
             if isinstance(value, str):
-                return [float(x) for x in value.strip("[]").split(",")]
+                inner = value.strip()
+                if inner.startswith("[") and inner.endswith("]"):
+                    inner = inner[1:-1]
+                if not inner:
+                    return []
+                return [float(x.strip()) for x in inner.split(",")]
+            if isinstance(value, list):
+                return [float(x) for x in value]
             return value
         return process
 

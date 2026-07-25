@@ -1,11 +1,27 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const nextConfig: NextConfig = {
   output: "standalone",
   basePath: process.env.NEXT_PUBLIC_CLOUD_WEB_BASE_PATH ?? "/app",
+  assetPrefix: process.env.NEXT_PUBLIC_CLOUD_WEB_BASE_PATH ?? "/app",
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+      },
+    ],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
   },
+  poweredByHeader: false,
+  reactStrictMode: true,
+  compress: true,
+  productionBrowserSourceMaps: false,
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

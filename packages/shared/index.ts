@@ -6,7 +6,7 @@ export {
   DocsRightSlot,
   LandingRightSlot,
   CloudWebRightSlot,
-  FrontendMobileAuthSlot,
+  CloudWebMobileAuthSlot,
 } from './components/UniversalNavbar';
 export type { UniversalNavbarProps, NavItemConfig } from './components/UniversalNavbar';
 

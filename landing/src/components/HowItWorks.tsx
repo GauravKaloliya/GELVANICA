@@ -76,7 +76,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="how-it-works" aria-label="How it works" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <ParticleGraph className="opacity-40" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mb-14 text-center">
@@ -94,11 +94,14 @@ export default function HowItWorks() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          role="list"
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
           {steps.map((s) => (
             <motion.div
               key={s.step}
+              role="listitem"
+              aria-label={`Step ${s.step}: ${s.title}`}
               variants={cardVariants}
               whileHover={{ scale: 1.002, transition: { type: 'spring' as const, stiffness: 300, damping: 25 } }}
               className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-5 neo-depth flex flex-col"

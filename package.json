@@ -4,26 +4,40 @@
   "private": true,
   "description": "Gnovium — Knowledge Operating System",
   "workspaces": [
-    "local-app",
     "docs",
     "cloud-web",
     "landing",
     "packages/*"
   ],
   "scripts": {
-    "dev:local-app": "npm run dev --workspace=local-app",
+    "dev": "node tools/proxy.mjs",
     "dev:docs": "npm run dev --workspace=docs",
     "dev:cloud-web": "npm run dev --workspace=cloud-web",
     "dev:landing": "npm run dev --workspace=landing",
     "dev:backend": "python3 backend/run.py",
+    "dev:worker": "python3 backend/worker.py",
+    "dev:scheduler": "python3 backend/scheduler.py",
+    "s3:migrate-prefix": "python3 backend/s3_migrate_prefix.py",
+    "s3:monitor": "python3 backend/monitoring.py",
     "dev:proxy": "node tools/proxy.mjs",
-    "dev": "node tools/proxy.mjs",
-    "build:docs": "npm run build --workspace=docs",
-    "build:cloud-web": "npm run build --workspace=cloud-web",
-    "build:landing": "npm run build --workspace=landing",
-    "build": "npm run build:landing && npm run build:cloud-web && npm run build:docs",
-    "build:all": "npm run build",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "build": "turbo run build",
+    "build:docs": "turbo run build --filter=docs",
+    "build:cloud-web": "turbo run build --filter=cloud-web",
+    "build:landing": "turbo run build --filter=landing",
+    "build:all": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:watch": "vitest",
+    "clean": "turbo run clean",
+    "analyze": "turbo run analyze"
+  },
+  "dependencies": {
+    "framer-motion": "^12.42.2",
+    "lucide-react": "^1.24.0",
+    "motion-dom": "^12.42.2"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.5"
   }
 }

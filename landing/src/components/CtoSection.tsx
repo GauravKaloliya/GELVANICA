@@ -20,6 +20,8 @@ export default function CtoSection() {
       className="flex flex-col sm:flex-row items-start sm:items-center gap-5"
     >
       <div className="w-16 h-16 border-[3px] border-[var(--foreground)] bg-[var(--code-bg)] shrink-0 neo-depth-btn"
+        role="img"
+        aria-label="Arpita Makwana CTO photo"
         style={{
           backgroundImage: `url(${ctoImg.src})`,
           backgroundSize: 'cover',
@@ -41,6 +43,7 @@ export default function CtoSection() {
           href="https://www.linkedin.com/in/arpita-makwana-3a7a57269"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="Arpita Makwana LinkedIn profile"
           className="text-step-0 font-black font-mono uppercase tracking-wider px-2.5 py-1.5 border-2 border-[var(--border)] neo-depth-btn text-[var(--foreground)] hover:bg-[var(--code-bg)] transition-all flex items-center gap-1"
         >
           <ExternalLink className="h-3 w-3" /> LinkedIn
@@ -49,6 +52,7 @@ export default function CtoSection() {
           href="https://github.com/ArpitaMakvana"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="Arpita Makwana GitHub profile"
           className="text-step-0 font-black font-mono uppercase tracking-wider px-2.5 py-1.5 border-2 border-[var(--border)] neo-depth-btn text-[var(--foreground)] hover:bg-[var(--code-bg)] transition-all flex items-center gap-1"
         >
           <ExternalLink className="h-3 w-3" /> GitHub

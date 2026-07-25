@@ -44,7 +44,7 @@ const cloudFeatures = [
 
 export default function DualModeSection() {
   return (
-    <section id="modes" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="modes" aria-label="Cloud and local modes" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <ParticleGraph className="opacity-40" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mb-16 text-center">
@@ -63,9 +63,12 @@ export default function DualModeSection() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          role="list"
           className="grid gap-8 md:grid-cols-2"
         >
           <motion.div
+            role="listitem"
+            aria-label="Local mode"
             variants={cardVariants}
             whileHover={{ scale: 1.002, transition: { type: 'spring' as const, stiffness: 300, damping: 25 } }}
             className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth flex flex-col"
@@ -109,6 +112,8 @@ export default function DualModeSection() {
           </motion.div>
 
           <motion.div
+            role="listitem"
+            aria-label="Cloud mode"
             variants={cardVariants}
             whileHover={{ scale: 1.002, transition: { type: 'spring' as const, stiffness: 300, damping: 25 } }}
             className="bg-[var(--card-bg)] border-[3px] border-[var(--accent-secondary)] rounded-none p-6 neo-depth flex flex-col relative"

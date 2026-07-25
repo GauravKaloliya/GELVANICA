@@ -15,6 +15,7 @@ const LANDING_NAV: NavItemConfig[] = [
 
 const CLOUD_WEB_NAV: NavItemConfig[] = [
   { type: 'internal', href: Routes.cloudWeb.home.build({}), label: 'Home' },
+  { type: 'internal', href: Routes.cloudWeb.graph.build({}), label: 'Graph' },
   { type: 'external', href: toExternalUrl(docsUrl()), label: 'Documentation' },
 ];
 

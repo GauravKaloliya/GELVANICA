@@ -1,4 +1,4 @@
-# Gnovium Frontend
+# Gnovium Cloud Web
 
 > Next.js 16 dashboard — the web client for the Gnovium Knowledge Operating System.
 
@@ -22,14 +22,14 @@ npm install
 
 ```bash
 # Standalone (default port 3000)
-npm run dev -w frontend
+npm run dev -w cloud-web
 
 # Or via the unified proxy (auto-routes to /app on port 3000)
 npm run dev
 ```
 
 ```bash
-npm run build -w frontend    # production build
+npm run build -w cloud-web    # production build
 ```
 
 Other scripts:
@@ -69,51 +69,11 @@ When accessed through the unified proxy (`npm run dev` from root):
 
 | External | Internal | App |
 |----------|----------|-----|
-| `http://localhost:3000/app` | `http://localhost:3101` | Frontend (port 3101) |
+| `http://localhost:3000/app` | `http://localhost:3101` | Cloud Web (port 3101) |
 
 The `basePath: /app` in `next.config.ts` ensures asset URLs are correct behind the proxy. When running standalone, `NEXT_PUBLIC_BASE_PATH` should be empty.
 
 ---
-
-## Project Structure
-
-```
-frontend/
-├── .env.local                  # NEXT_PUBLIC_BASE_PATH=/app
-├── .gitignore
-├── next.config.ts              # basePath via env, unoptimized images
-├── next-env.d.ts               # Auto-generated Next.js type declarations
-├── eslint.config.mjs           # ESLint flat config (9.x)
-├── vercel.json                 # Deployment + security headers
-├── postcss.config.mjs          # Tailwind v4 PostCSS plugin
-├── package.json                # Scripts & dependencies
-├── tsconfig.json               # TypeScript strict, @/ path alias
-│
-├── public/
-│   ├── logo/
-│   │   └── gnovium.jpeg        # Brand logo
-│   └── ... (boilerplate assets from create-next-app)
-│
-└── src/
-    ├── lib/
-    │   ├── api.ts              # REST client: login, register, googleLogin, checkEmail
-    │   ├── avatar.ts           # DiceBear identicon fallback
-    │   └── session.tsx         # SessionProvider + useSession() hook
-    │
-    └── app/
-        ├── globals.css         # Imports: tailwindcss + @gnovium/shared/styles/base.css
-        ├── layout.tsx          # Root layout — session → theme → navbar → page
-        ├── page.tsx            # /  — Dashboard (protected)
-        ├── signin/page.tsx     # /signin — Email/password + Google OAuth
-        ├── signup/page.tsx     # /signup — Registration + avatar upload
-        ├── auth/electron/
-        │   └── callback/
-        │       └── page.tsx    # /auth/electron/callback — Electron bridge
-        └── components/
-            ├── Navbar.tsx      # Responsive nav · auth-aware · theme toggle
-            ├── ThemeProvider.tsx # 6-theme context
-            └── ParticleGraph.tsx # Canvas particle animation background
-```
 
 ---
 
@@ -153,17 +113,17 @@ layout.tsx (server)
 
 ## CSS Architecture
 
-The frontend uses the shared design system:
+The cloud-web app uses the shared design system:
 
 ```
-frontend/src/app/globals.css (4 lines)
+cloud-web/src/app/globals.css (4 lines)
   ├── @import "tailwindcss"
   ├── @source packages/shared/components/  (scans shared components for Tailwind classes)
   ├── @source packages/shared/index.ts
   └── @import "../../../packages/shared/styles/base.css"  (832 lines — all theme tokens, utilities)
 ```
 
-This means the frontend's `globals.css` is a thin 4-line importer. All design tokens, custom utilities, and neo-brutalist styles live in the shared package.
+This means cloud-web's `globals.css` is a thin 4-line importer. All design tokens, custom utilities, and neo-brutalist styles live in the shared package.
 
 ---
 
@@ -200,7 +160,7 @@ checkEmail(email)                 → GET /auth/check-email
 ## Deployment
 
 ```bash
-npm run build -w frontend
+npm run build -w cloud-web
 ```
 
 Deploys to Vercel via `vercel.json`:
@@ -218,7 +178,7 @@ vercel --prod
 
 ## Backend API Dependencies
 
-The frontend calls the [Gnovium API](../backend/README.md) for authentication only. The full backend serves **111 endpoints across 22 modules** — this frontend is a lightweight auth gateway; the main workspace UI lives in the [Electron desktop app](../electron/README.md).
+Cloud-web calls the [Gnovium API](../backend/README.md) for authentication only. The full backend serves **114 endpoints across 22 modules** — cloud-web is a lightweight auth gateway; the main workspace UI lives in the [local-app](../local-app/README.md).
 
 ---
 
@@ -228,4 +188,4 @@ The frontend calls the [Gnovium API](../backend/README.md) for authentication on
 - [Shared Package](../packages/shared/README.md) — UniversalNavbar, base.css design system
 - [Docs](../docs/README.md) — API documentation portal
 - [Landing](../landing/README.md) — Marketing landing page
-- [Backend](../backend/README.md) — Flask API (111 endpoints, 22 modules)
+- [Backend](../backend/README.md) — Flask API (114 endpoints, 22 modules)

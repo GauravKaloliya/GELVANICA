@@ -5381,7 +5381,7 @@
           "Sync"
         ],
         "summary": "List sync operations",
-        "description": "Cloud-only. Returns sync operations for a workspace. Set pending=true to return unsynced operations only.",
+        "description": "Returns sync operations for a workspace. Set pending=true to return unsynced operations only.",
         "operationId": "syncList",
         "parameters": [
           {
@@ -5465,7 +5465,7 @@
           "Sync"
         ],
         "summary": "Create sync operation",
-        "description": "Cloud-only. Ingests a client operation for cross-device synchronization. Used by the offline sync engine to queue changes made on other devices.",
+        "description": "Ingests a client operation for cross-device synchronization. Used by the offline sync engine to queue changes made on other devices.",
         "operationId": "syncCreate",
         "parameters": [],
         "responses": {
@@ -5513,7 +5513,7 @@
           "Sync"
         ],
         "summary": "Get sync operation",
-        "description": "Cloud-only. Retrieves a single sync operation by ID.",
+        "description": "Retrieves a single sync operation by ID.",
         "operationId": "syncGet",
         "parameters": [
           {
@@ -5572,7 +5572,7 @@
           "Sync"
         ],
         "summary": "Acknowledge sync operation",
-        "description": "Cloud-only. Marks a sync operation as applied. Used to confirm that an operation has been processed by the server.",
+        "description": "Marks a sync operation as applied. Used to confirm that an operation has been processed by the server.",
         "operationId": "syncAck",
         "parameters": [
           {
@@ -5586,6 +5586,150 @@
             "description": "Sync operation ID"
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/sync/diff": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Diff workspace against remote export",
+        "description": "Compares local workspace against remote export data and returns what is missing locally.",
+        "operationId": "syncDiff",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/sync/apply-diff": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Apply sync diff to workspace",
+        "description": "Applies a diff (records missing locally) to the local workspace.",
+        "operationId": "syncApplyDiff",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/sync/sync-from-export": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Full differential sync from export",
+        "description": "Performs a full differential sync: imports remote export data into the local workspace.",
+        "operationId": "syncFromExport",
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -6954,6 +7098,6 @@
   ],
   "externalDocs": {
     "description": "Gnovium API Documentation",
-    "url": "https://api.gnovium.com/docs"
+    "url": "https://api.gnovium.com/v1/docs"
   }
 }

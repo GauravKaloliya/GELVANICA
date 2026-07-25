@@ -26,7 +26,7 @@ const cardVariants = {
 
 export default function AboutSection() {
   return (
-    <section id="about" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="about" aria-label="About GNOVIUM" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <ParticleGraph className="opacity-40" />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 relative z-10">
         <RevealSection>
@@ -78,6 +78,8 @@ export default function AboutSection() {
                 height="200"
                 viewBox="0 0 160 160"
                 fill="none"
+                role="img"
+                aria-label="Gnovium robot mascot illustration"
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               >
@@ -116,6 +118,7 @@ export default function AboutSection() {
             <Mail size={14} strokeWidth={2} />
             <a
               href="mailto:hello@gnovium.com"
+              aria-label="Send email to hello@gnovium.com"
               className="text-[var(--accent-secondary)] border-b-2 border-[var(--accent-secondary)] pb-0.5 hover:opacity-80 transition-opacity"
             >
               hello@gnovium.com

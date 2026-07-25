@@ -3,12 +3,11 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from '@/lib/session';
 import { useTheme } from './ThemeProvider';
-import { getAvatarUrl } from '@/lib/avatar';
+import { getAvatarUrl } from '@/lib/utils/avatar';
 import {
   UniversalNavbar,
   CloudWebRightSlot,
   CloudWebMobileAuthSlot,
-  Routes,
   getNavItems,
 } from '@gnovium/shared';
 
@@ -20,7 +19,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
-    router.push(Routes.cloudWeb.signIn.build({}));
+    router.push("/auth/sign-in");
   };
 
   return (
@@ -32,7 +31,7 @@ export default function Navbar() {
       pathname={pathname}
       rightSlot={
         <CloudWebRightSlot
-          user={user ? { name: user.name, email: user.email, avatar_url: user.avatar_url ?? undefined } : null}
+          user={user ? { name: user.name ?? undefined, email: user.email, avatar_url: user.avatar_url ?? undefined } : null}
           isLoading={isLoading}
           pathname={pathname}
           onLogout={handleLogout}
@@ -41,7 +40,7 @@ export default function Navbar() {
       }
       mobileBottomSlot={(onClose) => (
         <CloudWebMobileAuthSlot
-          user={user ? { name: user.name, email: user.email, avatar_url: user.avatar_url ?? undefined } : null}
+          user={user ? { name: user.name ?? undefined, email: user.email, avatar_url: user.avatar_url ?? undefined } : null}
           isLoading={isLoading}
           pathname={pathname}
           onLogout={handleLogout}

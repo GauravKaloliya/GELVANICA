@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { GraduationCap, FlaskConical, Briefcase, Rocket, ArrowRight } from 'lucide-react';
+import { GraduationCap, FlaskConical, Briefcase, Rocket } from 'lucide-react';
 import ParticleGraph from './ParticleGraph';
 import { RevealSection } from './RevealSection';
 
@@ -46,7 +46,7 @@ const audiences = [
 
 export default function WhoItsFor() {
   return (
-    <section id="who-its-for" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="who-its-for" aria-label="Who it is for" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <ParticleGraph className="opacity-40" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mb-14 text-center">
@@ -64,11 +64,14 @@ export default function WhoItsFor() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          role="list"
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
         >
           {audiences.map((a) => (
             <motion.div
               key={a.title}
+              role="listitem"
+              aria-label={a.title}
               variants={cardVariants}
               whileHover={{ scale: 1.002, transition: { type: 'spring' as const, stiffness: 300, damping: 25 } }}
               className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-5 neo-depth flex flex-col"

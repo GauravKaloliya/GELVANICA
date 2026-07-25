@@ -1,0 +1,150 @@
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant sepia (&:where(.sepia, .sepia *));
+@custom-variant high-contrast (&:where(.high-contrast, .high-contrast *));
+
+.dark,
+.dark * {
+  /* ── Core Colors ── */
+  --color-background: oklch(0.145 0 0);
+  --color-foreground: oklch(0.985 0 0);
+
+  /* ── Surface Colors ── */
+  --color-card: oklch(0.145 0 0);
+  --color-card-foreground: oklch(0.985 0 0);
+  --color-popover: oklch(0.145 0 0);
+  --color-popover-foreground: oklch(0.985 0 0);
+
+  /* ── Brand Colors ── */
+  --color-primary: oklch(0.985 0 0);
+  --color-primary-foreground: oklch(0.205 0 0);
+
+  /* ── Secondary Colors ── */
+  --color-secondary: oklch(0.269 0 0);
+  --color-secondary-foreground: oklch(0.985 0 0);
+
+  /* ── Muted Colors ── */
+  --color-muted: oklch(0.269 0 0);
+  --color-muted-foreground: oklch(0.708 0 0);
+
+  /* ── Accent Colors ── */
+  --color-accent: oklch(0.269 0 0);
+  --color-accent-foreground: oklch(0.985 0 0);
+
+  /* ── Destructive Colors ── */
+  --color-destructive: oklch(0.396 0.141 25.723);
+  --color-destructive-foreground: oklch(0.637 0.237 25.331);
+
+  /* ── Border Colors ── */
+  --color-border: oklch(0.269 0 0);
+  --color-input: oklch(0.269 0 0);
+  --color-ring: oklch(0.439 0 0);
+
+  /* ── Sidebar Colors ── */
+  --color-sidebar-background: oklch(0.205 0 0);
+  --color-sidebar-foreground: oklch(0.985 0 0);
+  --color-sidebar-primary: oklch(0.985 0 0);
+  --color-sidebar-primary-foreground: oklch(0.205 0 0);
+  --color-sidebar-accent: oklch(0.269 0 0);
+  --color-sidebar-accent-foreground: oklch(0.985 0 0);
+  --color-sidebar-border: oklch(0.269 0 0);
+  --color-sidebar-ring: oklch(0.439 0 0);
+
+  /* ── Semantic Colors ── */
+  --color-success: oklch(0.627 0.174 145.177);
+  --color-success-foreground: oklch(0.985 0 0);
+  --color-warning: oklch(0.795 0.184 86.047);
+  --color-warning-foreground: oklch(0.205 0 0);
+  --color-info: oklch(0.673 0.216 251.485);
+  --color-info-foreground: oklch(0.985 0 0);
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.4), 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px oklch(0 0 0 / 0.4), 0 2px 4px oklch(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px oklch(0 0 0 / 0.4), 0 4px 6px oklch(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px oklch(0 0 0 / 0.4), 0 10px 10px oklch(0 0 0 / 0.3);
+}
+
+.sepia,
+.sepia * {
+  --color-background: #faf6f0;
+  --color-foreground: #433422;
+  --color-card: #f5efe5;
+  --color-card-foreground: #433422;
+  --color-popover: #f5efe5;
+  --color-popover-foreground: #433422;
+  --color-primary: #8b5e3c;
+  --color-primary-foreground: #faf6f0;
+  --color-secondary: #e8dfd1;
+  --color-secondary-foreground: #5a4636;
+  --color-muted: #ede5d8;
+  --color-muted-foreground: #7a6b5a;
+  --color-accent: #e0d3c0;
+  --color-accent-foreground: #433422;
+  --color-destructive: #c0392b;
+  --color-destructive-foreground: #faf6f0;
+  --color-border: #d4c8b5;
+  --color-input: #d4c8b5;
+  --color-ring: #8b5e3c;
+  --color-sidebar-background: #f0e8da;
+  --color-sidebar-foreground: #433422;
+  --color-sidebar-primary: #8b5e3c;
+  --color-sidebar-primary-foreground: #faf6f0;
+  --color-sidebar-accent: #e0d3c0;
+  --color-sidebar-accent-foreground: #433422;
+  --color-sidebar-border: #d4c8b5;
+  --color-sidebar-ring: #8b5e3c;
+  --color-success: #5a8a4a;
+  --color-success-foreground: #faf6f0;
+  --color-warning: #c4841d;
+  --color-warning-foreground: #faf6f0;
+  --color-info: #4a7a9a;
+  --color-info-foreground: #faf6f0;
+  --shadow-xs: 0 1px 2px rgba(67,52,34,.06);
+  --shadow-sm: 0 1px 3px rgba(67,52,34,.1);
+  --shadow-md: 0 4px 6px rgba(67,52,34,.1);
+  --shadow-lg: 0 10px 15px rgba(67,52,34,.1);
+  --shadow-xl: 0 20px 25px rgba(67,52,34,.12);
+}
+
+.high-contrast,
+.high-contrast * {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-card: #0d0d0d;
+  --color-card-foreground: #ffffff;
+  --color-popover: #0d0d0d;
+  --color-popover-foreground: #ffffff;
+  --color-primary: #ffdd00;
+  --color-primary-foreground: #000000;
+  --color-secondary: #1a1a1a;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #1a1a1a;
+  --color-muted-foreground: #e0e0e0;
+  --color-accent: #ffdd00;
+  --color-accent-foreground: #000000;
+  --color-destructive: #ff3333;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #666666;
+  --color-input: #333333;
+  --color-ring: #ffdd00;
+  --color-sidebar-background: #0a0a0a;
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-primary: #ffdd00;
+  --color-sidebar-primary-foreground: #000000;
+  --color-sidebar-accent: #333333;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #555555;
+  --color-sidebar-ring: #ffdd00;
+  --color-success: #00cc66;
+  --color-success-foreground: #000000;
+  --color-warning: #ffaa00;
+  --color-warning-foreground: #000000;
+  --color-info: #00aaff;
+  --color-info-foreground: #000000;
+  --shadow-xs: 0 1px 2px rgba(255,255,255,.05);
+  --shadow-sm: 0 1px 3px rgba(255,255,255,.08);
+  --shadow-md: 0 4px 6px rgba(255,255,255,.08);
+  --shadow-lg: 0 10px 15px rgba(255,255,255,.1);
+  --shadow-xl: 0 20px 25px rgba(255,255,255,.1);
+}

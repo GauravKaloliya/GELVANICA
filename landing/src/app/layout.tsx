@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   title: "Gnovium — Knowledge Operating System",
   description:
     "Gnovium is a next-generation knowledge operating system that transforms how you capture, connect, and create with information.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/logo.png",
+  },
 };
 
 const themeScript = `
@@ -33,7 +37,7 @@ const themeScript = `
         var html = document.documentElement;
         html.className = html.className.replace(/\\b(dark|light|sepia|high-contrast|ocean|midnight)\\b/g, '').trim() + ' ' + t;
       }
-    } catch (e) {}
+    } catch (e) { console.error('Theme init failed:', e); }
   })();
 `;
 

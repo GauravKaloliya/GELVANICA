@@ -1,27 +1,23 @@
-# Gnovium Inference & Multi-Agent System Architecture (Version 1.1)
+# Gnovium AI Platform & Multi-Agent System Architecture
 
-Custom GPU-Native Inference Runtime + Global Multi-Agent System  
+Qwen2.5-3B-Instruct Fine-Tuning + Electron Desktop + Cloud API + Multi-Agent System  
 (Local-First + Network-Aware Design)
 
 ## 1. Executive Summary
 
-This architecture delivers a high-performance, custom-built Inference Runtime and multi-agent system that works seamlessly in both Local-First and Cloud/Network modes — matching Gnovium's core design principle.
+This architecture covers fine-tuning Qwen2.5-3B-Instruct on Gnovium's data, deploying it on both Electron desktop and cloud APIs, and integrating with a practical multi-agent system for workspace intelligence.
 
-- **Default:** Fully local, offline, on-device (GPU-native)
+- **Default:** Fully local, offline, on-device (Q4_K_M GGUF)
 - **Network Mode:** Enables synchronization, collaboration, and distributed agent execution when connected
 - **Same knowledge model, tools, and agent behaviors across modes**
-- **AI subsystem MVP: 1-month focused delivery**
-
-**Key Updates (v1.1):** Modern SLM recommendations, strengthened agent safety pipeline, preserved custom runtime vision.
 
 ## 2. Design Principles
 
 - **Local-First:** All core operations work offline with full data ownership
 - **Network-Aware:** Graceful upgrade to distributed capabilities when online
 - **Mode Transparency:** Same APIs, agent logic, and user experience
-- **Performance:** GPU-native kernels for local speed
-- **Scalability:** Cloud mode for heavier computation and multi-user coordination
 - **Safety-First:** Explicit validation, simulation, and approval gates for agent actions
+- **Agent Platform:** Runtime-agnostic, extensible multi-agent architecture
 
 Environment Variables:
 ```
@@ -29,58 +25,383 @@ GNOVIUM_MODE=local (default)
 GNOVIUM_MODE=cloud (network features enabled)
 ```
 
-## 3. Layered Architecture (Global)
+## 3. AI Platform Overview
 
 ```
-Existing Gnovium App (Block Editor + Knowledge Graph)
-          |
-   Multi-Agent System (Supervisor, Planner, Workers)
-          |
-   Tool Runtime (Registry, Validator, Executor + Safety Layer)
-          |
-   Inference Runtime (Scheduler, Engine, KV Cache)
-          |
-   Model Registry + Small Language Models
-          |
-   Dual Backend (GPU-Native Local ↔ Cloud Inference)
+AI Platform
+│
+├── Qwen2.5-3B-Instruct Fine-Tuning (QLoRA)
+├── Evaluation
+├── Quantization (GGUF)
+├── Model Registry
+├── Inference Runtime
+├── Embedding Service (BGE-M3 Large)
+│
+├── Agent Platform
+│   ├── Supervisor
+│   ├── Planner
+│   ├── Editor
+│   ├── Search
+│   ├── Knowledge
+│   ├── Graph
+│   ├── File
+│   ├── Memory
+│   ├── Tool Runtime
+│   ├── Blackboard
+│   ├── Scheduler
+│   ├── Context Builder
+│   ├── Prompt Builder
+│   └── Safety Layer
+│
+├── Electron Runtime
+└── Cloud Runtime
 ```
 
-## 4. Inference Runtime (Custom GPU-Native)
+## 4. System Architecture & Model Specifications
 
-- Custom Tensor Engine (C++/CUDA) — long-term strategic differentiator
-- GPU Memory Allocator + KV Cache Manager
-- Transformer forward pass (RoPE, Attention, LayerNorm, MLP)
-- Basic Flash Attention support
-- Tokenizer + Advanced Sampling
-- **Model Loader & Registry**: Supports multiple instruction-tuned SLMs. Recommended models evolve as the ecosystem advances.
-- Practical MVP backends (llama.cpp, ONNX Runtime, TensorRT-LLM) provide a working AI subsystem day one; the custom GPU-native runtime remains the long-term strategic differentiator and will replace these as it matures.
-- **Local Mode:** Full GPU acceleration on user device
-- **Cloud Mode:** Optional offloading to managed GPU instances
+| Component | Specification |
+|-----------|--------------|
+| **Base Model** | Qwen2.5-3B-Instruct |
+| **Embedding Model** | BGE-M3 Large |
+| **Dataset Storage** | SQLite + sqlite-vec (local) → pgvector (cloud) |
+| **Fine-Tuning Framework** | Unsloth |
+| **Method** | QLoRA (4-bit NF4) |
 
-## 5. Multi-Agent System (Global Design)
+### Model Architecture
 
-- **Supervisor Agent:** Orchestrates tasks, decides local vs cloud execution
-- **Planner Agent:** Breaks down complex workspace tasks
-- **Worker Agents:**
-  - Editor Agent (CRUD on blocks, pages, relations)
-  - Knowledge Agent (graph queries, relations, search)
-  - Governance Agent (health checks, duplicates, orphans)
-  - File/Settings Agent
-- **ReAct + Task State Machine**
-- **Mode-Aware Execution:**
-  - Local: All agents run on-device
-  - Cloud: Agents can coordinate across users/devices, use shared context
+| Parameter | Value |
+|-----------|-------|
+| Model Type | Decoder-only Transformer |
+| Parameters | ~3.09 Billion |
+| Layers | 36 |
+| Hidden Size | 2048 |
+| Intermediate Size (MLP) | 11008 |
+| Attention Heads | 16 |
+| Key/Value Heads (GQA) | 2 |
+| Head Dimension | 128 |
+| Activation | SwiGLU |
+| Positional Encoding | RoPE |
+| Context Length | 32K (native) |
+| Vocabulary Size | 151,936 |
+| Attention | Grouped Query Attention |
+| Normalization | RMSNorm (Pre-Norm) |
+| Bias | No (most linear layers) |
 
-### Agent Execution Safety (Critical Improvement)
+**Transformer Block Pipeline** (each of 36 layers):
+$$\text{Input} \rightarrow \text{RMSNorm} \rightarrow \text{Multi-Head Attention} \rightarrow \text{Residual} \rightarrow \text{RMSNorm} \rightarrow \text{SwiGLU Feed-Forward} \rightarrow \text{Residual}$$
 
-All agent-driven modifications follow a staged, auditable pipeline:
+### Training Configuration (QLoRA)
+
+| Parameter | Value |
+|-----------|-------|
+| Rank (r) | 64 |
+| Alpha ($\alpha$) | 128 |
+| LoRA Dropout | 0.05 |
+| Target Modules | q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj |
+| Optimizer | AdamW (8-bit) |
+| Learning Rate | 2e-4 |
+| Scheduler | Cosine (3% warmup) |
+| Weight Decay | 0.01 |
+| Epochs | 3 (max 5) |
+| Gradient Accumulation | 8 or 16 |
+| Batch Size | 1–2 per device |
+| Precision | BF16 |
+| Quantization | 4-bit NF4 |
+| Sequence Length | 8192 or 16384 |
+| Gradient Checkpointing | Enabled |
+| Flash Attention | Enabled |
+| Packing | Enabled |
+
+### Dataset Distribution
+
+| # | Domain | Samples | % |
+|---|--------|---------|---|
+| 1 | General instruction following | 20,000 | 2.0% |
+| 2 | Workspace Q&A | 90,000 | 9.0% |
+| 3 | Block editing | 80,000 | 8.0% |
+| 4 | Entity operations | 70,000 | 7.0% |
+| 5 | Relation extraction | 120,000 | 12.0% |
+| 6 | Relation classification | 60,000 | 6.0% |
+| 7 | Knowledge graph reasoning | 45,000 | 4.5% |
+| 8 | Semantic search (retrieval-grounded QA) | 35,000 | 3.5% |
+| 9 | Hybrid retrieval reasoning | 40,000 | 4.0% |
+| 10 | Workspace summarization | 50,000 | 5.0% |
+| 11 | Multi-step planning | 55,000 | 5.5% |
+| 12 | Tool calling | 180,000 | 18.0% |
+| 13 | Agent collaboration | 20,000 | 2.0% |
+| 14 | Memory usage | 25,000 | 2.5% |
+| 15 | Safety & permissions | 35,000 | 3.5% |
+| 16 | Versioning operations | 30,000 | 3.0% |
+| 17 | AI governance | 25,000 | 2.5% |
+| 18 | Gnovium domain knowledge | 20,000 | 2.0% |
+| | **Total** | **1,000,000** | **100%** |
+
+### Data Engineering Strategy
+
+1. **Dataset Split:** Training (900k) → Validation (50k) → Test (50k held-out)
+2. **Negative Examples:** Train refusal of unauthorized/impossible actions
+3. **Counterexamples:** Demonstrate mistake correction (wrong JSON → correct JSON)
+4. **Edge Cases:** Empty workspaces, ultra-dense files (100k blocks), cyclic graphs, invalid merges
+5. **Long Context Layering:** 2K → 4K → 8K → 16K → 32K
+6. **Curriculum Training:** Instruction → Q&A → Editing → Relations → Tool Calling → Planning → Agents
+
+### Training Governance
+
+- **Data Quality:** Deduplication, class balancing, formatting checks, label integrity
+- **Execution Control:** Validate every 500 steps, checkpoint best state, early stop after 3 regressions
+- **Evaluation Metrics:** Exact Match & F1, Tool Calling Accuracy & JSON Validity, Hallucination Rate, Permission Compliance, Latency & Token Efficiency
+
+### Automated Benchmark Suite
+
+Every training run produces a benchmark report with:
+
+| Metric | Description |
+|--------|-------------|
+| JSON Validity | % of tool calls producing valid JSON |
+| Tool Calling Accuracy | % of tool invocations with correct arguments |
+| Relation Extraction P/R/F1 | Precision, Recall, F1 on relation extraction tasks |
+| Planning Success Rate | % of multi-step plans completed without errors |
+| Hallucination Rate | % of generated facts not grounded in retrieved context |
+| Retrieval Grounding Accuracy | % of answers supported by retrieved documents |
+| Permission Compliance | % of actions respecting user workspace permissions |
+| Latency | End-to-end response time (p50/p95/p99) |
+| Tokens/sec | Generation throughput |
+
+## 5. Model Registry
+
+```
+Model Registry
+
+├── Model Versions (Qwen2.5-3B-Instruct v1, v2, v3, ...)
+├── Quantized Variants (Qwen2.5-3B-Instruct GGUF 4bit, 8bit)
+├── Metadata (size, latency, benchmarks, license)
+├── Rollback
+├── Promotion (staging → production)
+└── Deployment Targets (desktop, cloud)
+```
+
+## 6. Inference Runtime
+
+```
+Inference Runtime
+
+├── Tokenizer (Qwen2.5)
+├── Model Loader (GGUF)
+├── KV Cache
+├── Scheduler
+├── Sampler
+├── GPU Runtime
+├── Streaming
+├── Batch Engine
+└── Speculative Decoding
+```
+
+- **Local Mode:** Q4_K_M GGUF on user device
+- **Cloud Mode:** Full precision on managed GPU inference server
+
+## 7. Embedding Service
+
+```
+BGE-M3 Large → Vector Store / Vector DB → Retrieval
+```
+
+- **Local:** BGE-M3 Large (bundled) → SQLite + sqlite-vec
+- **Cloud:** BGE-M3 Large → pgvector
+- Separate from LLM inference for performance and accuracy
+
+## 8. Desktop Deployment (Electron)
+
+```
+Electron App (bundled Qwen2.5-3B-Instruct GGUF + BGE-M3 Large)
+    ↓
+Local Backend (Flask)
+    ↓
+Inference Runtime (Local GPU)
+    ↓
+Vector Store
+```
+
+## 9. Cloud Deployment
+
+```
+Cloud
+    ↓
+Load Balancer
+    ↓
+API Gateway
+    ↓
+Inference Servers (Managed GPU)
+    ↓
+Model Registry (Qwen2.5-3B-Instruct versions)
+    ↓
+Embedding Service (Dedicated Model)
+    ↓
+Vector DB + PostgreSQL
+```
+
+## 10. Agent Platform
+
+### 10.1 Agent Foundation Layer
+
+```
+Application
+    ↓
+Agent Platform
+    ↓
+Supervisor | Planner | Memory | Communication | Execution | Safety | Monitoring
+```
+
+### 10.2 Agent Registry
+
+All agents are registered with metadata so new agents can be added without changing the runtime.
+
+```
+Agent Registry
+
+• Agent ID
+• Agent Type
+• Capabilities
+• Tools
+• Permissions
+• Memory
+• Version
+• Status
+```
+
+### 10.3 Agent Types
+
+#### Core
+- **Supervisor Agent** — Orchestrates tasks, decides local vs cloud execution
+- **Planner Agent** — Breaks down complex workspace tasks
+
+#### Workspace
+- **Editor Agent** — CRUD on blocks, pages, relations
+- **Search Agent** — Full-text and semantic search across knowledge base
+- **Knowledge Agent** — Graph queries, relations, properties. Validates and scores AI-suggested relations from page content, then creates approved relations via the Editor Agent with first-class provenance columns (`generated_by`, `verified`, `confidence`, `ai_model`).
+- **Graph Agent** — Knowledge graph traversal and visualization
+- **File Agent** — File upload, download, management
+
+#### System
+- **Memory Agent** — Manages agent memory and retrieval
+- **Tool Agent** — Tool discovery, permission validation, execution
+
+### 10.4 Agent Memory
+
+Every agent has its own memory system:
+
+```
+Agent Memory
+    ↓
+Short-Term Memory (current task context)
+    ↓
+Long-Term Memory (persistent knowledge from past runs)
+    ↓
+Workspace Memory (current workspace state)
+    ↓
+Conversation Memory (interaction history with user)
+    ↓
+Shared Team Memory (cross-agent state via blackboard)
+```
+
+### 10.5 Shared Blackboard
+
+```
+Supervisor
+    ↓
+Blackboard (shared state)
+    ↓
+Planner → Workers
+```
+
+### 10.6 Message Bus
+
+```
+Message Bus
+    ↓
+Events (state changes, task completion)
+    ↓
+Commands (agent-to-agent instructions)
+    ↓
+Responses (results, errors)
+    ↓
+Streaming (real-time token output)
+```
+
+### 10.7 Agent Scheduler
+
+```
+Task Queue
+    ↓
+Scheduler
+    ↓
+Priority Queue
+    ↓
+Workers
+```
+
+### 10.8 Agent Lifecycle
+
+```
+Create → Initialize → Run → Pause → Resume → Terminate
+```
+
+### 10.9 Agent State Machine
+
+Every agent has a state machine:
+
+```
+Idle → Planning → Waiting → Executing → Completed
+                                          ↓
+                                       Failed → Retrying
+```
+
+### 10.10 Tool Runtime
+
+```
+Tool Registry
+    ↓
+Discovery (find tools by capability)
+    ↓
+Capability Matching (match task to tool)
+    ↓
+Permission Check (validate agent authorization)
+    ↓
+Execution (run with safety gates)
+```
+
+Tool permissions:
+```
+Read | Write | Delete | Admin
+```
+
+### 10.11 Agent Context Builder
+
+```
+Workspace
+    ↓
+Context Builder (gathers entities, blocks, relations, settings)
+    ↓
+Agent
+```
+
+### 10.12 Agent Prompt Builder
+
+```
+Memory + Retrieved Knowledge + Task
+    ↓
+Prompt Builder
+    ↓
+LLM
+```
+
+### 10.13 Agent Execution Safety
 
 ```
 LLM Output / Planner
      ↓
 Policy Validator (content policies, workspace rules)
      ↓
-Permission Validator (user scopes, branch protection, etc.)
+Permission Validator (user scopes, tool permissions, branch protection)
      ↓
 Simulation / Dry-Run (compute proposed changes without applying)
      ↓
@@ -88,20 +409,46 @@ Diff Generation (human-readable preview)
      ↓
 Explicit User Approval (configurable auto-approve for low-risk actions)
      ↓
+JSON Validator (validate LLM output is well-formed JSON)
+     ↓
+Schema Validator (validate JSON against expected tool schema)
+     ↓
 Execution via Tool Runtime
 ```
 
-This replaces direct LLM → CRUD paths and significantly reduces risk of unintended or destructive changes.
+### 10.14 Agent Recovery
 
-Read-only tools (search, graph queries, health checks) bypass the approval stage entirely. Destructive operations (deletes, bulk edits, permission changes) always require explicit confirmation. This keeps the execution model practical while maintaining safety where it matters.
+```
+Failure
+    ↓
+Retry (automatic, configurable count)
+    ↓
+Fallback (alternative strategy)
+    ↓
+Escalate (supervisor agent)
+    ↓
+Human Approval
+```
 
-## 6. Tool Runtime (Unified)
+### 10.15 Agent Monitoring
 
-- JSON schema-based tool registry
-- **Enhanced Safety + Permission Validator** layer (policy + permission checks)
-- Simulation & Diff capabilities
-- Direct integration with Gnovium's stable APIs
-- Network-aware tools (sync, collaboration primitives in Cloud mode)
+```
+Execution Time
+CPU / GPU Utilization
+Memory Usage
+Failures
+Retries
+```
+
+### 10.16 Agent Logs
+
+```
+Task
+Reasoning
+Tools Used
+Output
+Errors
+```
 
 ### Standard AI Pipeline
 
@@ -115,16 +462,16 @@ Context Builder ──→ Gathers workspace context (entities, blocks, relations
 Retriever ──→ Semantic + graph-aware retrieval (hybrid search)
      │
      ▼
-Inference Runtime ──→ GPU-native (local) or cloud inference engine
+Inference Runtime ──→ Local (GGUF) or cloud inference engine
      │
      ▼
-Multi-Agent Runtime ──→ Supervisor, Planner, Worker Agents
+Agent Platform ──→ Supervisor, Planner, Workers, Memory, Bus
      │
      ▼
 Safety Layer (Policy + Permission + Simulation + Diff)
      │
      ▼
-Tool Runtime ──→ Registry, Validator, Executor (with User Approval)
+Tool Runtime ──→ Registry, Discovery, Permissions, Executor (with User Approval)
      │
      ▼
 Gnovium APIs ──→ Entities, Blocks, Relations, Graph, Search, Governance
@@ -135,7 +482,6 @@ Workspace
 
 ### High-level API Boundaries
 
-Agents interact via these contracts:
 - Editor API (blocks, pages, content)
 - Knowledge API (relations, properties)
 - Graph API (queries, traversal)
@@ -144,58 +490,67 @@ Agents interact via these contracts:
 - Version API (snapshots, branches, diffs)
 - Synchronization API (Cloud Mode)
 
-## 7. Memory & Context Management
+## 11. Memory & Context Management
 
-- **Working Memory:** Current task
-- **Semantic Memory:** Vector embeddings
-- **Conversation Context:** Ongoing interactions
+- **Working Memory:** Current task (per-agent short-term)
+- **Semantic Memory:** Vector embeddings via BGE-M3 Large
+- **Conversation Context:** Ongoing interactions (per-agent conversation memory)
+- **Workspace Context:** Current workspace state (workspace memory)
+- **Shared Team Memory:** Cross-agent state via blackboard
 - **Workspace Context Builder:** Adapts to mode
 
-### Embedding Flow
-
-```
-Embedding Generation → Vector Store (Local / Cloud) → Retrieval
-```
-
-## 8. Dual-Mode Operational Features
+## 12. Dual-Mode Operational Features
 
 ### Local Mode (Default)
 
 - Full offline operation
-- On-device GPU inference
+- On-device GPU inference (bundled quantized Qwen2.5-3B-Instruct)
 - Personal agents only
+- Local Agent Runtime (Electron + Flask + SQLite + local vector store)
 - Instant performance
-- SQLite + local vector store
 
 ### Cloud / Network Mode
 
 - Synchronization of: Workspaces, Pages, Blocks, Relations, Branches, Versions, Embeddings, Graph metadata, Files (metadata), Settings
-- Multi-user agent collaboration
+- Multi-user agent collaboration via shared blackboard
 - Distributed inference (optional)
 - Shared knowledge graph updates
 - Managed backups and scaling
 
-**Sync Philosophy:** Git-inspired (deterministic history + merges) rather than real-time CRDTs. This choice enables explicit versioning, branching workflows, and clean conflict resolution — the same model developers rely on for code — rather than eventual-consistency heuristics. Dual storage (append-only local vs changesets in cloud) is preserved.
+**Sync Philosophy:** Git-inspired (deterministic history + merges) rather than real-time CRDTs.
 
-## 9. 30-Day Implementation Roadmap (MVP)
+## 13. Model Lifecycle Summary
 
-| Week | Focus |
-|------|-------|
-| Week 1 | Custom Tensor Engine + GPU Backend + Basic Transformer + Model Registry |
-| Week 2 | KV Cache, Tokenizer, Sampling, Model Loader + Local Mode |
-| Week 3 | Tool Registry, Enhanced Safety Layer (Policy/Permission/Simulation/Diff), ReAct Loop, Basic Agents |
-| Week 4 | Multi-agent orchestration, Staged Execution Pipeline, Dual-mode switching, Integration + Testing |
+```
+Qwen2.5-3B-Instruct
+    ↓
+QLoRA Fine-tuning (4-bit NF4 via Unsloth)
+    ↓
+LoRA Adapter
+    ↓
+Merge with Base
+    ↓
+FP16 Model (~6.2 GB)
+    ↓
+GGUF Conversion → Q4_K_M
+    ↓
+≈ 2.0 GB (deployment artifact)
+    ↓
+Model Registry
+    ↓
+Desktop (Q4_K_M GGUF) / Cloud (full precision) Deployment
+    ↓
+Agent Platform
+    ↓
+Workspace
+```
 
-## 10. Future Enhancements (Post-MVP)
+**Total AI Package:**
 
-- Advanced distributed agents
-- Model Routing (multiple local models + optional cloud models)
-- Multi-model orchestration
-- Autonomous governance agents (with safety gates)
-- AI Branch Simulation
-- Enhanced sync protocol (if real usage shows limitations)
-- Advanced privacy features (BYOK, optional E2E)
+| Component | Size |
+|-----------|------|
+| Qwen2.5-3B-Instruct (Q4_K_M GGUF) | ~2.0 GB |
+| BGE-M3 Large (embedding model) | ~0.6–1.2 GB |
+| **Total** | **~2.6–3.2 GB** |
 
----
-
-This architecture preserves Gnovium's **"Start Local. Scale when ready."** philosophy while incorporating stronger safety, modern model recommendations, and practical scalability considerations.
+This architecture delivers a complete V1 platform — a practical AI system built on fine-tuned Qwen2.5-3B-Instruct, multi-agent intelligence, Electron desktop, cloud API, and dual-mode deployment.

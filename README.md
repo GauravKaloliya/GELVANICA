@@ -10,8 +10,8 @@
 
 [![Version](https://img.shields.io/badge/release-v1.0.1-000?style=for-the-badge&labelColor=fff)](https://github.com/GauravKaloliya/GNOVIUM/releases)
 [![License](https://img.shields.io/badge/license-MIT-000?style=for-the-badge&labelColor=fff)](LICENSE)
-[![Endpoints](https://img.shields.io/badge/endpoints-111-000?style=for-the-badge&labelColor=fff)](docs/public/openapi.json)
-[![Routes](https://img.shields.io/badge/routes-80-000?style=for-the-badge&labelColor=fff)](docs/public/openapi.json)
+[![Endpoints](https://img.shields.io/badge/endpoints-114-000?style=for-the-badge&labelColor=fff)](docs/public/openapi.json)
+[![Routes](https://img.shields.io/badge/routes-83-000?style=for-the-badge&labelColor=fff)](docs/public/openapi.json)
 [![Modules](https://img.shields.io/badge/modules-22-000?style=for-the-badge&labelColor=fff)](docs/src/data/modules)
 [![AI](https://img.shields.io/badge/ai-Inference-000?style=for-the-badge&labelColor=fff)](#-ai-workspace-assistant)
 [![Mode](https://img.shields.io/badge/mode-local+cloud-000?style=for-the-badge&labelColor=fff)](#-deployment-modes)
@@ -28,7 +28,7 @@
 ║  editing, relational knowledge graphs, Git-inspired versioning, and     ║
 ║  AI-powered semantic search into one unified workspace.                 ║
 ║                                                                          ║
-║  111 ENDPOINTS · 80 ROUTES · 22 MODULES · 2 DEPLOYMENT MODES           ║
+║  114 ENDPOINTS · 83 ROUTES · 22 MODULES · 2 DEPLOYMENT MODES           ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -165,7 +165,7 @@ Enable cloud infrastructure for collaboration and scale.
 **File Storage:** S3-compatible
 **Cache:** Redis
 **AI:** Cloud Inference Runtime
-**Sync:** Multi-device real-time
+**Sync:** Bidirectional cloud sync
 
 ```
 GNOVIUM_MODE=cloud
@@ -200,12 +200,12 @@ GNOVIUM_MODE=cloud
 # Install all workspaces
 npm install
 
-# Start everything via unified proxy (landing + frontend + docs + backend)
+# Start everything via unified proxy (landing + cloud-web + docs + backend)
 npm run dev
 
 # Or run individual apps:
 npm run dev -w landing    # Landing page (port 3100 standalone → 3000 via proxy)
-npm run dev -w frontend   # Web dashboard (port 3101)
+npm run dev -w cloud-web  # Cloud dashboard (port 3101)
 npm run dev -w docs       # API docs portal (port 3102)
 npm run dev:backend        # Flask API (port 5001)
 
@@ -219,7 +219,7 @@ npm run dev:backend
 | URL (via proxy) | App | Internal Port |
 |---------------|-----|---------------|
 | `http://localhost:3000/` | Landing page | 3100 |
-| `http://localhost:3000/app` | Frontend dashboard | 3101 |
+| `http://localhost:3000/app` | Cloud dashboard | 3101 |
 | `http://localhost:3000/api/v1/docs` | API documentation | 3102 |
 | `http://localhost:3000/api/v1/` | Flask backend API | 5001 |
 
@@ -242,17 +242,17 @@ npm run dev:backend
 │  ├── src/app/page.tsx       — Single-page marketing site             │
 │  └── packages: @gnovium/shared, framer-motion, lucide-react          │
 │                                                                      │
-│  frontend/         Web dashboard (Next.js 16, port 3101)             │
+│  cloud-web/        Cloud dashboard (Next.js 16, port 3101)           │
 │  ├── src/app/signin|signup  — Auth gateway (Google OAuth + email)   │
 │  ├── src/app/page.tsx       — Protected dashboard                    │
 │  └── basePath: /app (behind proxy)                                   │
 │                                                                      │
 │  docs/             API docs portal (Next.js 16, port 3102)           │
-│  ├── src/data/modules/*.ts  — 22 module files (111 endpoints)        │
+│  ├── src/data/modules/*.ts  — 22 module files (114 endpoints)        │
 │  ├── src/components/*.tsx   — 15 components + shared UniversalNavbar │
 │  └── basePath: /api/v1/docs (behind proxy)                           │
 │                                                                      │
-│  electron/         Desktop app (Electron + vanilla JS SPA)           │
+│  local-app/        Desktop app (Electron + vanilla JS SPA)           │
 │  ├── main/index.ts          — BrowserWindow + FlaskManager           │
 │  ├── renderer/js/*.js       — 10 page modules + 8 components         │
 │  └── basePath: N/A (standalone Electron app)                         │
@@ -260,7 +260,7 @@ npm run dev:backend
 │  packages/         Shared packages                                   │
 │  └── shared/                — @gnovium/shared                        │
 │       ├── components/                                                 │
-│       │   ├── UniversalNavbar.tsx  — Navbar (landing/docs/frontend)  │
+│       │   ├── UniversalNavbar.tsx  — Navbar (landing/docs/cloud-web)  │
 │       │   └── DownloadContent.tsx  — Download button component       │
 │       ├── styles/                                                    │
 │       │   └── base.css          — 832-line unified design system     │
@@ -287,9 +287,9 @@ The shared package at `packages/shared/` provides:
 
 | Export | Description | Used By |
 |--------|-------------|---------|
-| `UniversalNavbar` | Variant-based responsive navbar with theme toggle, creator credit, API status, customizable right slot | docs, landing, (frontend uses its own) |
+| `UniversalNavbar` | Variant-based responsive navbar with theme toggle, creator credit, API status, customizable right slot | docs, landing, (cloud-web uses its own) |
 | `DownloadContent` | Download button with dropdown menu | docs, landing |
-| `base.css` | 832-line unified design system: 6 themes, neo-brutalist tokens, custom utilities, component styles | docs, landing, frontend (via @import) |
+| `base.css` | 832-line unified design system: 6 themes, neo-brutalist tokens, custom utilities, component styles | docs, landing, cloud-web (via @import) |
 
 All CSS is consolidated into `packages/shared/styles/base.css` — the source of truth for all design tokens, theme variables, and custom utility classes. Each app's `globals.css` is a thin importer (4 lines each), achieving a **58% reduction** in total CSS lines (2,117 → 882).
 
@@ -315,7 +315,7 @@ The dev proxy (`tools/proxy.mjs`) is a Node.js reverse proxy that runs all apps 
 | App | Internal Port |
 |-----|---------------|
 | Landing | 3100 |
-| Frontend | 3101 |
+| Cloud Web | 3101 |
 | Docs | 3102 |
 | Backend (Flask) | 5001 |
 
@@ -326,7 +326,7 @@ The dev proxy (`tools/proxy.mjs`) is a Node.js reverse proxy that runs all apps 
 | Incoming Path | Target App | Target URL |
 |--------------|------------|------------|
 | `/` (fallback) | Landing | `http://localhost:3100` |
-| `/app*` | Frontend | `http://localhost:3101/app*` |
+| `/app*` | Cloud Web | `http://localhost:3101/app*` |
 | `/api/v1/docs*` | Docs | `http://localhost:3102/api/v1/docs*` |
 | `/api/v1/*` (strip prefix) | Backend | `http://localhost:5001/*` |
 
@@ -335,7 +335,7 @@ The dev proxy (`tools/proxy.mjs`) is a Node.js reverse proxy that runs all apps 
 Frontend and docs use `NEXT_PUBLIC_BASE_PATH` env variable to set `basePath` in `next.config.ts`:
 
 ```env
-# frontend/.env.local
+# cloud-web/.env.local
 NEXT_PUBLIC_BASE_PATH=/app
 
 # docs/.env.local
@@ -355,7 +355,7 @@ Production deployment uses **nginx** as the reverse proxy:
 ```yaml
 # docker-compose.yml — 5 services
 nginx:80     → landing:3000  (/)
-             → frontend:3000 (/app)
+             → cloud-web:3000 (/app)
              → docs:3000     (/api/v1/docs)
              → backend:5000  (/api/v1/)
 ```
@@ -374,7 +374,7 @@ All three Next.js apps share a single CSS foundation:
 |------|-------|---------|
 | `packages/shared/styles/base.css` | 832 | **Source of truth** — 6 themes, design tokens, custom utilities, neo-brutalist components |
 | `landing/src/app/globals.css` | 42 | Imports + smooth-scroll + scroll-snap overrides |
-| `frontend/src/app/globals.css` | 4 | Imports only |
+| `cloud-web/src/app/globals.css` | 4 | Imports only |
 | `docs/src/app/globals.css` | 4 | Imports only |
 | **Total** | **882** | **58% reduction from 2,117** |
 
@@ -446,7 +446,7 @@ All API responses follow a standardized envelope:
   "data": { ... },
   "meta": {
     "page": 1,
-    "per_page": 25,
+    "per_page": 50,
     "total": 42,
     "pages": 2
   }
@@ -469,7 +469,7 @@ All API responses follow a standardized envelope:
 | Method | Header | Token Type | Lifespan |
 |--------|--------|-----------|----------|
 | Access | `Authorization: Bearer <token>` | JWT | 30 minutes |
-| Refresh | `Authorization: Bearer <token>` | JWT | 14 days |
+| Refresh | `Authorization: Bearer <token>` | JWT | 30 days |
 | API Key | `X-API-Key: <key>` | Static | Configurable |
 
 ---
@@ -738,7 +738,7 @@ AI-powered Q&A using the Inference Runtime with a Safety-First multi-agent pipel
 | `workspace_id` | UUID | — | **Required.** Scope search to workspace |
 | `q` | string | — | **Required.** Search query |
 | `mode` | enum | `hybrid` | `keyword`, `full_text`, `hybrid`, `semantic` |
-| `limit` | int | 20 | Results per page (1-50) |
+| `limit` | int | 20 | Results per page (1-30) |
 
 ```json
 // Response
@@ -797,7 +797,7 @@ The visual knowledge graph — materialized, queryable, traversable.
 
 ### 🔀 Versions Module (9 endpoints)
 
-Workspace versioning — snapshots, changesets, and entity history. **Cloud only.**
+Workspace versioning — snapshots, changesets, and entity history.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
@@ -852,7 +852,7 @@ Git-inspired branching for fearless experimentation.
 
 ### 👁 Diffs Module (1 endpoint)
 
-**Cloud only.** Visual comparison between versions, snapshots, and branches.
+Visual comparison between versions, snapshots, and branches.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
@@ -943,16 +943,19 @@ Asynchronous job tracking for long-running operations. **Cloud only.**
 
 ---
 
-### 🔄 Sync Module (4 endpoints)
+### 🔄 Sync Module (7 endpoints)
 
-Offline sync operations — queue operations for multi-device synchronization. **Cloud only.** Uses a Git-style operation log (ordered append-only changesets with server-side conflict resolution) rather than CRDTs — chosen for simplicity and predictable merge semantics in a workspace-oriented data model.
+Offline sync operations — queue, ingest, diff, apply, and acknowledge changes. Uses a Git-style operation log (ordered append-only changesets with server-side conflict resolution) rather than CRDTs — chosen for simplicity and predictable merge semantics in a workspace-oriented data model.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `GET` | `/sync/` | Access | List sync operations |
 | `POST` | `/sync/` | Access | Ingest a sync operation |
-| `GET` | `/sync/<id>` | Access | Get sync operation status |
-| `POST` | `/sync/<id>/ack` | Access | Acknowledge sync operation |
+| `GET` | `/sync/<id>` | Access | Get sync operation details |
+| `POST` | `/sync/<id>/ack` | Access | Acknowledge sync complete |
+| `POST` | `/sync/diff` | Access | Compare local vs remote export; returns missing records |
+| `POST` | `/sync/apply-diff` | Access | Apply missing remote records to local workspace |
+| `POST` | `/sync/sync-from-export` | Access | Full differential import from remote export data |
 
 **Operation types:** `entity_create`, `entity_update`, `entity_delete`, `block_create`, `block_update`, `block_delete`, `relation_create`, `relation_delete`
 
@@ -1019,20 +1022,20 @@ Health checks.
 | Comments | 5 | 💬 Discussion | Both |
 | Tags | 7 | 🏷️ Classification | Both |
 | Branches | 6 | 🌿 Branching | Both |
-| Versions | 9 | 🔀 Versioning | Cloud only |
-| Diffs | 1 | 👁 Visual Diff | Cloud only |
-| Search | 1 | 🔍 Search | Both |
-| AI | 1 | 🤖 AI Assistant | Both |
-| Files | 9 | 📎 File Management | Both |
+| Versions | 9 | 🔀 Versioning | Both |
+| Diffs | 1 | 👁 Visual Diff | Both |
+| Search | 1 | 🔍 Search | Pending |
+| AI | 1 | 🤖 AI Assistant | Pending |
+| Files | 9 | 📎 File Management | Both (presign cloud-only) |
 | Graph | 5 | 🕸️ Knowledge Graph | Both |
-| Governance | 5 | 🩺 Health & Quality | Both |
+| Governance | 5 | 🩺 Health & Quality | Pending |
 | Dashboard | 1 | 📊 Analytics | Both |
 | Notifications | 3 | 🔔 Alerts | Both |
 | Jobs | 4 | ⚡ Async Operations | Cloud only |
-| Sync | 4 | 🔄 Offline Sync | Cloud only |
+| Sync | 7 | 🔄 Offline Sync | Both |
 | Activity | 1 | 📜 Audit Trail | Both |
 | Backups | 3 | 💾 Data Portability | Both |
-| **Total** | **111** | **22 Modules** | **83 both + 28 cloud-only** |
+| **Total** | **114** | **22 Modules** | **95 both + 12 cloud-only + 7 pending** |
 
 <br />
 
@@ -1106,25 +1109,19 @@ GNOVIUM_MODE=local python run.py
 # Health check
 curl http://localhost:5001/health
 
-# Register a user
-curl -X POST http://localhost:5001/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"me@example.com","password":"secure-pass","name":"Test User"}'
+# Auth endpoints (register, login, etc.) are cloud-only.
+# In local mode, set a fixed test token:
+TOKEN="dev-test-token"
 
-# Save your token
-TOKEN="<access_token_from_response>"
-
-# Create a workspace
-curl -X POST http://localhost:5001/api/v1/workspaces/ \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"My Knowledge Base"}'
+# List seed workspace
+curl http://localhost:5001/api/v1/workspaces/ \
+  -H "Authorization: Bearer $TOKEN"
 
 # Create an entity
 curl -X POST http://localhost:5001/api/v1/entities/ \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"workspace_id":"<WS_ID>","title":"Research Notes","entity_type_id":"<TYPE_ID>"}'
+  -d '{"workspace_id":"00000000-0000-0000-0000-000000000001","title":"Research Notes","entity_type_id":"00000000-0000-0000-0000-000000000002"}'
 
 # Add a block
 curl -X POST http://localhost:5001/api/v1/blocks/ \
@@ -1133,15 +1130,7 @@ curl -X POST http://localhost:5001/api/v1/blocks/ \
   -d '{"entity_id":"<ENTITY_ID>","block_type":"text","content":{"text":"Hello Gnovium!"}}'
 ```
 
-### 6. Try the Data Seed
-
-```bash
-# Seed a workspace with sample data
-curl -X POST http://localhost:5001/api/v1/system/seed \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"workspace_id":"<WS_ID>"}'
-```
+> **Cloud mode** starts with `GNOVIUM_MODE=cloud`. Auth endpoints are then available at the cloud API (e.g. `https://api.gnovium.com/api/v1/auth/register`).
 
 ### 7. Run Tests
 
@@ -1158,269 +1147,7 @@ pytest tests/ -v
 
 <br />
 
-## 📦 REPOSITORY STRUCTURE
 
-<br />
-
-```
-GNOVIUM/
-│
-├── README.md                         # You are here
-├── LICENSE                           # MIT License
-├── vercel.json                       # Vercel deployment configuration
-├── .vercelignore                     # Vercel ignore rules
-├── package.json                      # Root npm scripts (Vercel build)
-├── requirements.txt                  # Root pip dependencies (Vercel)
-├── .gitignore                        # Git ignore rules
-│
-├── gnovium_mvp_context.md            # MVP product & data model overview
-├── gnovium_llm_multiagent_architecture.md # Inference & multi-agent architecture
-│
-├── api/                              # Vercel serverless function entry point
-│   └── index.py                      # Imports Flask app from backend/
-│
-├── backend/                          # Flask API Server
-│   ├── __init__.py                   # Makes backend a Python package
-│   ├── run.py                        # Application entry point
-│   ├── requirements.txt              # Python dependencies
-│   ├── pyproject.toml                # Python project metadata
-│   ├── API.md                        # Complete API reference (2152 lines)
-│   ├── SQLITE_SCHEMA.sql             # SQLite database schema
-│   ├── POSTGRESQL_SCHEMA.sql         # PostgreSQL database schema
-│   │
-│   ├── app/                          # Application package
-│   │   ├── __init__.py               # Flask app factory
-│   │   ├── extensions.py             # Flask extensions (SQLAlchemy, JWT, CORS, etc.)
-│   │   │
-│   │   ├── api/                      # API layer
-│   │   │   ├── __init__.py
-│   │   │   └── v1/                   # API v1 routes
-│   │   │       ├── __init__.py       # Blueprint registration
-│   │   │       ├── helpers.py        # Route helpers (envelope, pagination)
-│   │   │       ├── auth/            # 🔐 Auth routes
-│   │   │       ├── workspaces/      # 📂 Workspace routes
-│   │   │       ├── entities/        # 📄 Entity routes
-│   │   │       ├── blocks/          # 🧱 Block routes
-│   │   │       ├── files/           # 📎 File routes
-│   │   │       ├── tags/            # 🏷️ Tag routes
-│   │   │       ├── relations/       # 🔗 Relation routes
-│   │   │       ├── search/          # 🔍 Search routes
-│   │   │       ├── ai/              # 🤖 AI routes
-│   │   │       ├── graph/           # 🕸️ Graph routes
-│   │   │       ├── versions/        # 🔀 Version routes
-│   │   │       ├── branches/        # 🌿 Branch routes
-│   │   │       ├── diffs/           # 👁 Diff routes
-│   │   │       ├── governance/      # 🩺 Governance routes
-│   │   │       ├── dashboard/       # 📊 Dashboard routes
-│   │   │       ├── comments/        # 💬 Comment routes
-│   │   │       ├── notifications/   # 🔔 Notification routes
-│   │   │       ├── jobs/            # ⚡ Job routes
-│   │   │       ├── sync/            # 🔄 Sync routes
-│   │   │       ├── activity/        # 📜 Activity routes
-│   │   │       └── backups/         # 💾 Backup routes
-│   │   │
-│   │   ├── core/                    # Core infrastructure
-│   │   │   ├── config.py            # Configuration management
-│   │   │   ├── errors.py            # Error handling & codes
-│   │   │   ├── logging.py           # Logging configuration
-│   │   │   ├── response.py          # Response envelope
-│   │   │   ├── serialization.py     # JSON serialization
-│   │   │   └── validation.py        # Request validation
-│   │   │
-│   │   ├── models/                  # Database models
-│   │   │   ├── base.py              # Base model class
-│   │   │   ├── types.py             # Custom SQLAlchemy types
-│   │   │   ├── domain.py            # Cloud models (PostgreSQL)
-│   │   │   ├── local.py             # Local models (SQLite)
-│   │   │   └── local_base.py        # SQLite-specific base
-│   │   │
-│   │   ├── schemas/                 # Request/response schemas
-│   │   │   ├── common.py            # Shared schema components
-│   │   │   └── domain.py            # Domain-specific schemas
-│   │   │
-│   │   ├── services/                # Business logic layer
-│   │   │   ├── auth_service.py      # Authentication service
-│   │   │   ├── workspace_service.py # Workspace service
-│   │   │   ├── entity_service.py    # Entity service
-│   │   │   ├── block_service.py     # Block service
-│   │   │   ├── file_service.py      # File service
-│   │   │   ├── tag_service.py       # Tag service
-│   │   │   ├── relation_service.py  # Relation service
-│   │   │   ├── search_service.py    # Search service
-│   │   │   ├── graph_service.py     # Graph engine service
-│   │   │   ├── versioning_service.py# Versioning service
-│   │   │   ├── backup_service.py    # Backup service
-│   │   │   ├── comment_service.py   # Comment service
-│   │   │   ├── notification_service.py # Notification service
-│   │   │   ├── job_service.py       # Job service
-│   │   │   ├── sync_service.py      # Sync service
-│   │   │   ├── dashboard_service.py # Dashboard service
-│   │   │   ├── governance_service.py# Governance service
-│   │   │   └── security.py          # Security utilities
-│   │   │
-│   │   ├── repositories/            # Data access layer
-│   │   │   ├── base.py              # Abstract repository interface
-│   │   │   ├── domain.py            # Cloud repository implementations
-│   │   │   └── local.py             # SQLite repository implementations
-│   │   │
-│   │   ├── graph/                   # Graph engine
-│   │   │   ├── __init__.py
-│   │   │   └── service.py           # Graph traversal & pathfinding
-│   │   │
-│   │   ├── ai/                      # AI integration
-│   │   │   ├── __init__.py
-│   │   │   └── service.py           # Inference Runtime integration
-│   │   │
-│   │   ├── events/                  # Event system
-│   │   │   ├── __init__.py
-│   │   │   └── service.py           # Event publishing
-│   │   │
-│   │   ├── jobs/                    # Background job processing
-│   │   │   └── __init__.py
-│   │   │
-│   │   ├── sync/                    # Sync engine
-│   │   │   └── __init__.py
-│   │   │
-│   │   └── middleware/              # WSGI middleware
-│   │       ├── __init__.py
-│   │       ├── request_context.py   # Request context middleware
-│   │       └── security.py          # Security middleware
-│   │
-│   ├── tests/                       # Test suite
-│   │   ├── conftest.py              # Test fixtures
-│   │   ├── test_app.py              # Application tests
-│   │   ├── test_api_routes.py       # API route tests
-│   │   └── test_integration.py      # Integration tests
-│   │
-│   ├── instance/                    # Runtime data (gitignored)
-│   │   └── gnovium.db               # SQLite database (local mode)
-│   │
-│   └── .env                         # Environment configuration
-│
-├── frontend/                        # Next.js Web Dashboard
-│   ├── README.md                    # Frontend documentation
-│   ├── next.config.ts               # Next.js configuration
-│   ├── package.json                 # Node dependencies
-│   ├── tsconfig.json                # TypeScript strict, @/ alias
-│   ├── postcss.config.mjs           # Tailwind v4 PostCSS
-│   ├── eslint.config.mjs            # ESLint flat config
-│   ├── vercel.json                  # Deployment + security headers
-│   │
-│   ├── public/
-│   │   └── logo/gnovium.jpeg        # Brand logo
-│   │
-│   └── src/
-│       ├── app/                     # Next.js pages
-│       │   ├── globals.css          # 6 themes · neo-brutalist design tokens
-│       │   ├── layout.tsx           # Root layout with session + theme
-│       │   ├── page.tsx             # Dashboard (protected)
-│       │   ├── signin/page.tsx      # Login + Google OAuth
-│       │   ├── signup/page.tsx      # Registration with avatar
-│       │   └── auth/electron/callback/page.tsx # Electron OAuth bridge
-│       │
-│       └── lib/
-│           ├── api.ts               # REST client (login, register, googleLogin)
-│           ├── avatar.ts            # DiceBear identicon fallback
-│           └── session.tsx          # SessionProvider + useSession() hook
-│
-├── electron/                        # Desktop App (Electron + Vite)
-│   ├── README.md                    # Electron app documentation
-│   ├── package.json                 # Dependencies (electron, vite, electron-builder)
-│   ├── vite.config.ts               # Vite config (renderer bundling)
-│   ├── electron-builder.yml         # Build config (DMG, AppImage, NSIS)
-│   │
-│   ├── main/
-│   │   └── index.ts                 # Main process (FlaskManager, IPC, tray, window mgmt)
-│   │
-│   ├── preload/
-│   │   ├── index.ts                 # Preload bridge (18 IPC methods)
-│   │   └── loading.ts               # Loading screen preload
-│   │
-│   ├── src/
-│   │   ├── flask-manager.ts         # Python subprocess lifecycle
-│   │   ├── error-boundary.ts        # Renderer error IPC proxy
-│   │   └── crash-reporter.ts        # Local crash report writer
-│   │
-│   └── renderer/
-│       ├── index.html               # SPA shell (landing + main layout)
-│       ├── loading.html             # Loading screen
-│       ├── styles.css               # 6 themes · full component CSS
-│       ├── gnovium-logo.jpeg        # App logo
-│       ├── js/
-│       │   ├── app.js               # SPA entry point
-│       │   ├── error-handler.js     # Global error handler
-│       │   ├── router/index.js      # Client-side router
-│       │   ├── store/               # Observer-pattern state
-│       │   ├── lib/                 # API client + DOM helpers
-│       │   ├── pages/               # 11 page modules
-│       │   └── components/          # 8 shared components
-│       └── logo/
-│           └── founder.jpeg         # Founder photo
-│
-├── docs/                    # Next.js Documentation Portal
-│   ├── README.md                    # Docs site documentation
-│   ├── next.config.ts              # Static export config
-│   ├── package.json                # Node dependencies
-│   ├── tsconfig.json               # TypeScript configuration
-│   ├── postcss.config.mjs          # PostCSS configuration
-│   ├── eslint.config.mjs           # ESLint configuration
-│   │
-│   ├── public/                     # Static assets
-│   │   ├── openapi.json            # OpenAPI 3.0.3 spec (JSON)
-│   │   ├── openapi.yaml            # OpenAPI 3.0.3 spec (YAML)
-│   │   ├── api-version.json        # API version manifest
-│   │   ├── logo/gnovium.jpeg       # Logo
-│   │   └── images/                 # (reserved for assets)
-│   │
-│   ├── scripts/
-│   │   └── generate-openapi.ts     # OpenAPI spec from TS endpoint data
-│   │
-│   └── src/
-│       ├── app/                    # Next.js pages
-│       │   ├── globals.css         # Global styles (6 themes)
-│       │   ├── layout.tsx          # Root layout
-│       │   ├── page.tsx            # Main docs page
-│       │   ├── not-found.tsx       # 404 page
-│       │   ├── changelog/page.tsx  # Version changelog
-│       │   ├── download/page.tsx   # OpenAPI download
-│       │   └── error-catalog/page.tsx # Error catalog
-│       │
-│       ├── components/             # 15 React components
-│       │   ├── Navigation.tsx      # Top nav + endpoint counter
-│       │   ├── Sidebar.tsx         # Desktop module tree
-│       │   ├── MobileDocs.tsx      # Mobile accordion + tab nav
-│       │   ├── SearchPalette.tsx   # Ctrl+K modal search
-│       │   ├── ThemeProvider.tsx   # 6-theme context
-│       │   ├── Footer.tsx          # Site footer
-│       │   ├── Breadcrumbs.tsx     # Breadcrumb trail
-│       │   ├── ParticleGraph.tsx   # Animated background
-│       │   ├── BackToTop.tsx       # Scroll-to-top FAB
-│       │   ├── SchemaTree.tsx      # JSON schema viewer
-│       │   ├── ApiPlayground.tsx   # Interactive "Send Request"
-│       │   ├── PageWrapper.tsx     # Layout wrapper
-│       │   ├── ErrorBoundary.tsx   # Error boundary
-│       │   ├── SkipToContent.tsx  # Accessibility
-│       │   └── Tooltip.tsx        # Hover tooltip
-│       │
-│       └── data/                   # Data layer
-│           ├── index.ts           # ENDPOINTS[] + MODULES[]
-│           ├── types.ts           # Shared TypeScript types
-│           ├── common.ts          # Shared schemas
-│           ├── icons.tsx          # Module icon components
-│           ├── changelog.ts       # Version history (v0.5.0 → v4.0.0)
-│           ├── error-catalog.ts   # 17 error codes
-│           ├── auth-guide.ts      # Auth methods
-│           └── modules/           # 22 endpoint module files
-│               ├── auth.ts, workspaces.ts, entities.ts, blocks.ts
-│               ├── files.ts, tags.ts, relations.ts, search.ts
-│               ├── ai.ts, graph.ts, versions.ts, branches.ts
-│               ├── diffs.ts, system.ts, governance.ts
-│               ├── dashboard.ts, comments.ts, notifications.ts
-│               ├── jobs.ts, sync.ts, activity.ts, backups.ts
-
-```
-
-<br />
 
 ---
 
@@ -1435,7 +1162,7 @@ GNOVIUM/
 | **v0.5.0** | Beta | Developer Preview | Entity CRUD, Block CRUD, Relations, Basic Graph, Files, Notifications (28 endpoints, 7 modules) | ✅ Shipped |
 | **v0.9.0** | Beta | Beta Preview | Tags, Comments, Activity, Jobs, Rate Limiting, Standardized response envelope (72 endpoints, 18 modules) | ✅ Shipped |
 | **v1.0.0** | Major | **MVP Release** | All 22 modules, 106 endpoints, 75 routes, full feature set, JWT auth, Graph engine, AI search, Governance, Versioning | ✅ Shipped |
-| **v1.0.1** | Patch | API Specification | OpenAPI 3.0.3 spec, Error catalog (17 codes), Auth guide (OAuth2 PKCE, API keys, PATs), Rate limit tiers, CORS guide, 6-theme neo-brutalist docs | ✅ Current |
+| **v1.0.1** | Patch | API Specification | OpenAPI 3.0.3 spec, Error catalog (17 codes), Auth guide (OAuth2 PKCE, API keys, PATs), CORS guide, 6-theme neo-brutalist docs | ✅ Current |
 | **v1.1.0** | Minor | Cloud Mode Beta | NeonDB (PostgreSQL), S3 storage, Redis caching, GNOVIUM_MODE env var, Presigned URLs, Workspace sync | 🔜 Jul 2026 |
 | **v2.0.0** | Major | Cloud Sync | Real-time WebSocket sync, Multi-user collaboration, Shared workspaces, Role-based access, Automatic backups, API v2 migration | 🔜 Q4 2026 |
 | **v3.0.0** | Major | Digital Twin | Organizational Digital Twin, Multi-Agent System, Knowledge Evolution Engine, Autonomous pattern discovery | 🔜 Future |
@@ -1445,7 +1172,7 @@ GNOVIUM/
 
 | Version | Status | Release | End of Life | Endpoints | Modules |
 |---------|--------|---------|-------------|-----------|---------|
-| v1.0.1 | **Current** | Jun 22, 2026 | Dec 2027 | 111 | 22 |
+| v1.0.1 | **Current** | Jun 22, 2026 | Dec 2027 | 114 | 22 |
 | v1.0.0 | Superseded | Jun 2026 | — | 106 | 22 |
 | v1.1.0 | Planned | Jul 2026 | Jun 2028 | ~120 | ~26 |
 | v2.0.0 | Planned | Q4 2026 | Jun 2029 | ~150 | ~30 |
@@ -1531,9 +1258,9 @@ The MVP demonstrates that knowledge can be managed as a **connected, versioned, 
 
 | Resource | Location | Description |
 |----------|----------|-------------|
-| **OpenAPI Specification (JSON)** | [`public/openapi.json`](docs/public/openapi.json) | Complete 3.0.3 spec: 111 operations, 80 paths, 9 schemas, 3 security schemes |
+| **OpenAPI Specification (JSON)** | [`public/openapi.json`](docs/public/openapi.json) | Complete 3.0.3 spec: 114 operations, 83 paths, 9 schemas, 3 security schemes |
 | **OpenAPI Specification (YAML)** | [`public/openapi.yaml`](docs/public/openapi.yaml) | Same spec in YAML format |
-| **API Reference (Markdown)** | [`backend/API.md`](backend/API.md) | 2152-line detailed API reference with request/response examples |
+| **API Reference (Markdown)** | [`backend/API.md`](backend/API.md) | 2279-line detailed API reference with request/response examples |
 | **Error Catalog** | [`src/data/error-catalog.ts`](docs/src/data/error-catalog.ts) | 17 standardized error codes with causes, resolutions, and JSON examples |
 | **Auth Guide** | [`src/data/auth-guide.ts`](docs/src/data/auth-guide.ts) | OAuth2 PKCE, API Keys, PATs, Rate Limits, CORS |
 | **API Changelog** | [`/changelog`](docs/src/app/changelog) | Full version history with migration paths |
@@ -1624,7 +1351,7 @@ Built with ❤️ by **[Gaurav Kaloliya](https://www.linkedin.com/in/gaurav-kalo
 ║                                                                      ║
 ║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   ║
 ║                                                                      ║
-║    111 ENDPOINTS · 80 ROUTES · 22 MODULES · 2 DEPLOYMENT MODES      ║
+║    114 ENDPOINTS · 83 ROUTES · 22 MODULES · 2 DEPLOYMENT MODES      ║
 ║                                                                      ║
 ║    Start local. Scale when you're ready.                             ║
 ║    No migration. No lock-in.                                         ║

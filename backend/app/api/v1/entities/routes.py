@@ -1,123 +1,351 @@
-from flask import Blueprint, request
+from flask import Blueprint, Response, request
 
-from app.api.v1.helpers import item_response, list_response, pagination_args, request_json
+from app.api.v1.helpers import check_workspace_access, item_response, list_response, pagination_args, raw_response, request_json
+from app.core.constants import RATE_LIMIT_DESTRUCTIVE, RATE_LIMIT_STANDARD, RATE_LIMIT_STRICT
+from app.core.errors import NotFoundError
+from app.core.response import error
 from app.core.validation import load_schema
-from app.repositories import BlockRepository, EntityRepository, EntityTypeRepository, PropertyRepository
-from app.schemas.domain import EntityCreateSchema, EntityTypeCreateSchema, EntityUpdateSchema, PropertyCreateSchema
+from app.extensions import db, limiter
+from app.repositories import EntityRepository, EntityTypeRepository, EntityVersionRepository, PropertyRepository
+from app.schemas.domain import EntityCreateSchema, EntityTypeCreateSchema, EntityTypeUpdateSchema, EntityUpdateSchema, PropertyCreateSchema
 from app.services.entity_service import EntityService
 from app.services.security import current_user_id, secured
 
 bp = Blueprint("entities", __name__)
 
 
-@bp.get("/")
+@bp.get("/<string:workspace_id>/entities/")
+@limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-def list_entities():
+def list_entities(workspace_id: str) -> Response:
+    """List entities, optionally filtered by workspace_id and entity_type_id."""
     args = pagination_args()
-    filters = {"workspace_id": request.args.get("workspace_id"), "entity_type_id": request.args.get("entity_type_id")}
-    return list_response(EntityRepository().list(filters, args["page"], args["per_page"]))
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    filters = {"workspace_id": workspace_id}
+    entity_type_id = request.args.get("type") or request.args.get("entity_type_id")
+    if entity_type_id:
+        filters["entity_type_id"] = entity_type_id
+    search = request.args.get("search")
+    if search:
+        filters["search"] = search
+    tags = request.args.get("tags")
+    if tags:
+        filters["tags"] = tags
+    deleted = request.args.get("deleted")
+    if deleted:
+        filters["is_deleted"] = deleted.lower() in ("true", "1")
+    sort = request.args.get("sort")
+    order = request.args.get("order")
+    descending = order != "asc"
+    return list_response(EntityRepository().list(filters, args["page"], args["per_page"], order_by=sort, descending=descending))
 
 
-@bp.post("/")
+@bp.post("/<string:workspace_id>/entities/")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def create_entity():
-    return item_response(EntityService().create(load_schema(EntityCreateSchema(), request_json()), current_user_id()), 201)
+def create_entity(workspace_id: str) -> Response:
+    """Create a new entity."""
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    data["workspace_id"] = workspace_id
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    return item_response(EntityService().create(load_schema(EntityCreateSchema(), data), current_user_id()), 201)
 
 
-@bp.get("/<string:entity_id>")
+@bp.get("/<string:workspace_id>/entities/<string:entity_id>")
+@limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-def get_entity(entity_id):
-    return item_response(EntityRepository().get(entity_id))
+def get_entity(workspace_id: str, entity_id: str) -> Response:
+    """Get an entity by ID with flattened properties."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity and entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
+    result = EntityService().get_with_blocks(entity_id)
+    result["properties"] = EntityService().flatten_properties(entity_id)
+    blocks = result.pop("blocks", [])
+    return raw_response({"entity": result, "blocks": blocks, "storage_used": 0})
 
 
-@bp.patch("/<string:entity_id>")
+@bp.patch("/<string:workspace_id>/entities/<string:entity_id>")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def update_entity(entity_id):
+def update_entity(workspace_id: str, entity_id: str) -> Response:
+    """Update an entity."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
     return item_response(
-        EntityService().update(entity_id, load_schema(EntityUpdateSchema(), request_json(), partial=True), current_user_id())
+        EntityService().update(entity_id, load_schema(EntityUpdateSchema(), data, partial=True), current_user_id())
     )
 
 
-@bp.delete("/<string:entity_id>")
+@bp.delete("/<string:workspace_id>/entities/<string:entity_id>")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def delete_entity(entity_id):
+def delete_entity(workspace_id: str, entity_id: str) -> Response:
+    """Soft-delete an entity."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
     return item_response(EntityService().soft_delete(entity_id, current_user_id()))
 
 
-@bp.post("/<string:entity_id>/restore")
+@bp.delete("/<string:workspace_id>/entities/<string:entity_id>/permanent")
+@limiter.limit(RATE_LIMIT_DESTRUCTIVE)
 @secured
-def restore_entity(entity_id):
+def permanent_delete_entity(workspace_id: str, entity_id: str) -> Response:
+    """Permanently delete an entity (must be soft-deleted first)."""
+    from app.repositories import EntityRepository
+    from app.services.entity_service import EntityService
+    try:
+        entity = EntityRepository().get(entity_id, include_deleted=True)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
+    return item_response(EntityService().permanent_delete(entity_id, current_user_id()))
+
+
+@bp.post("/<string:workspace_id>/entities/<string:entity_id>/restore")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def restore_entity(workspace_id: str, entity_id: str) -> Response:
+    """Restore a soft-deleted entity."""
+    try:
+        entity = EntityRepository().get(entity_id, include_deleted=True)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
     return item_response(EntityService().restore(entity_id, current_user_id()))
 
 
-@bp.post("/<string:entity_id>/archive")
+@bp.post("/<string:workspace_id>/entities/<string:entity_id>/archive")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def archive_entity(entity_id):
-    return item_response(EntityService().archive(entity_id, True))
+def archive_entity(workspace_id: str, entity_id: str) -> Response:
+    """Archive an entity."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
+    return item_response(EntityService().archive(entity_id, archived=True, user_id=current_user_id()))
 
 
-@bp.post("/<string:entity_id>/duplicate")
+@bp.post("/<string:workspace_id>/entities/<string:entity_id>/duplicate")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def duplicate_entity(entity_id):
+def duplicate_entity(workspace_id: str, entity_id: str) -> Response:
+    """Duplicate an entity with all its blocks."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
     return item_response(EntityService().duplicate(entity_id, current_user_id()), 201)
 
 
-@bp.get("/<string:entity_id>/children")
+@bp.get("/<string:workspace_id>/entities/<string:entity_id>/children")
+@limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-def get_children(entity_id):
+def get_children(workspace_id: str, entity_id: str) -> Response:
+    """List child entities."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
     args = pagination_args()
     return list_response(EntityService().get_children(entity_id, args["page"], args["per_page"]))
 
 
-@bp.post("/<string:entity_id>/children")
+@bp.post("/<string:workspace_id>/entities/<string:entity_id>/children")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def create_child(entity_id):
+def create_child(workspace_id: str, entity_id: str) -> Response:
+    """Create a child entity under the given parent."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
     data = request_json()
-    data["workspace_id"] = request_json().get("workspace_id")
-    if not data.get("workspace_id"):
-        from app.core.response import error
-        return error("workspace_id is required", status=400)
-    data["entity_type_id"] = request_json().get("entity_type_id")
-    if not data.get("entity_type_id"):
-        from app.core.response import error
-        return error("entity_type_id is required", status=400)
-    entity = EntityService().create({**data, "parent_id": entity_id}, current_user_id())
-    return item_response(entity, 201)
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    data["workspace_id"] = workspace_id
+    data["parent_id"] = entity_id
+    validated = load_schema(EntityCreateSchema(), data)
+    return item_response(EntityService().create(validated, current_user_id()), 201)
 
 
-@bp.get("/<string:entity_id>/versions")
+@bp.get("/<string:workspace_id>/entities/<string:entity_id>/versions")
+@limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-def get_versions(entity_id):
-    from flask import current_app
-    if current_app.config.get("GNOVIUM_MODE") != "cloud":
-        from app.core.response import error
-        return error("Version history is not available in local mode", status=404)
-    from app.repositories import EntityVersionRepository
+def get_versions(workspace_id: str, entity_id: str) -> Response:
+    """List entity versions."""
+    try:
+        entity = EntityRepository().get(entity_id)
+    except NotFoundError:
+        return error("not_found", "Entity not found", status=404)
+    if entity.workspace_id:
+        access_err = check_workspace_access(str(entity.workspace_id))
+        if access_err:
+            return access_err
     args = pagination_args()
     return list_response(EntityVersionRepository().list({"entity_id": entity_id}, args["page"], args["per_page"]))
 
 
-@bp.post("/types")
+@bp.post("/<string:workspace_id>/entities/types")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def create_entity_type():
-    return item_response(EntityService().create_type(load_schema(EntityTypeCreateSchema(), request_json())), 201)
+def create_entity_type(workspace_id: str) -> Response:
+    """Create a new entity type."""
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    data = {**data, "workspace_id": workspace_id}
+    validated = load_schema(EntityTypeCreateSchema(), data)
+    return item_response(EntityService().create_type(validated), 201)
 
 
-@bp.get("/types")
+@bp.get("/<string:workspace_id>/entities/types/<string:type_id>")
+@limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-def list_entity_types():
+def get_entity_type(workspace_id: str, type_id: str) -> Response:
+    try:
+        et = EntityTypeRepository().get(type_id)
+    except NotFoundError:
+        return error("not_found", "Entity type not found", status=404)
+    access_err = check_workspace_access(str(et.workspace_id))
+    if access_err:
+        return access_err
+    return item_response(et)
+
+
+@bp.get("/<string:workspace_id>/entities/types")
+@limiter.limit(RATE_LIMIT_STANDARD)
+@secured
+def list_entity_types(workspace_id: str) -> Response:
+    """List entity types for a workspace."""
     args = pagination_args()
-    return list_response(EntityTypeRepository().list({"workspace_id": request.args.get("workspace_id")}, args["page"], args["per_page"]))
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    return list_response(EntityTypeRepository().list({"workspace_id": workspace_id}, args["page"], args["per_page"]))
 
 
-@bp.post("/properties")
+@bp.post("/<string:workspace_id>/entities/properties")
+@limiter.limit(RATE_LIMIT_STRICT)
 @secured
-def create_property():
-    return item_response(EntityService().create_property(load_schema(PropertyCreateSchema(), request_json())), 201)
+def create_property(workspace_id: str) -> Response:
+    """Create a new property definition."""
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    data = {**data, "workspace_id": workspace_id}
+    validated = load_schema(PropertyCreateSchema(), data)
+    return item_response(EntityService().create_property(validated), 201)
 
 
-@bp.get("/properties")
+@bp.get("/<string:workspace_id>/entities/properties")
+@limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-def list_properties():
+def list_properties(workspace_id: str) -> Response:
+    """List property definitions for a workspace."""
     args = pagination_args()
-    return list_response(PropertyRepository().list({"workspace_id": request.args.get("workspace_id")}, args["page"], args["per_page"]))
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    return list_response(PropertyRepository().list({"workspace_id": workspace_id}, args["page"], args["per_page"]))
+
+
+@bp.patch("/<string:workspace_id>/entities/types/<string:type_id>")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def update_entity_type(workspace_id: str, type_id: str) -> Response:
+    """Update an entity type."""
+    try:
+        et = EntityTypeRepository().get(type_id)
+    except NotFoundError:
+        return error("not_found", "Entity type not found", status=404)
+    access_err = check_workspace_access(str(et.workspace_id))
+    if access_err:
+        return access_err
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    data = load_schema(EntityTypeUpdateSchema(), data, partial=True)
+    et = EntityTypeRepository().update(et, data)
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    return item_response(et)
+
+
+@bp.delete("/<string:workspace_id>/entities/types/<string:type_id>")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def delete_entity_type(workspace_id: str, type_id: str) -> Response:
+    """Soft-delete an entity type."""
+    try:
+        et = EntityTypeRepository().get(type_id)
+    except NotFoundError:
+        return error("not_found", "Entity type not found", status=404)
+    access_err = check_workspace_access(str(et.workspace_id))
+    if access_err:
+        return access_err
+    EntityTypeRepository().soft_delete(et)
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    return item_response(et)

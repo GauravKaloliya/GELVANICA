@@ -303,11 +303,49 @@ function AnimatedCounter({ value, label }: { value: number; label: string }) {
   );
 }
 
+function UseCaseGuideCard({ guide, copiedId, onCopy }: { guide: typeof USE_CASE_GUIDES[number]; copiedId: string | null; onCopy: (text: string, id: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="border-2 border-[var(--border)] bg-[var(--card-bg)]">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer text-left"
+      >
+        {expanded ? <ChevronDown className="h-4 w-4 text-[var(--muted)]" /> : <ChevronRight className="h-4 w-4 text-[var(--muted)]" />}
+        <div>
+          <h3 className="display-heading text-sm text-[var(--foreground)]">{guide.title}</h3>
+          <p className="text-step-0 font-mono text-[var(--muted)]">{guide.description}</p>
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t-2 border-[var(--border)] pt-3">
+          <ol className="list-decimal list-inside space-y-1">
+            {guide.steps.map((s, i) => (
+              <li key={i} className="text-step-0 font-mono text-[var(--muted)]">{s}</li>
+            ))}
+          </ol>
+          <div className="border-2 border-[var(--border)] bg-[var(--code-bg)] overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--card-bg)] border-b-2 border-[var(--border)]">
+              <span className="text-step-0 font-mono text-[var(--muted)] font-bold uppercase">Quick Start Code</span>
+              <button onClick={() => onCopy(guide.code, `guide-${guide.id}`)} className="p-1 border border-[var(--border)] neo-depth-btn cursor-pointer" aria-label="Copy guide code">
+                {copiedId === `guide-${guide.id}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              </button>
+            </div>
+            <CodeBlock code={guide.code} language="bash" maxHeight="300px" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DocsContent() {
   const searchParams = useSearchParams();
   const { theme } = useTheme();
 
   const [activeEndpointId, setActiveEndpointId] = useState<string>(() => {
+    const urlEndpoint = searchParams.get('endpoint');
+    if (urlEndpoint && ENDPOINTS.some(ep => ep.id === urlEndpoint)) return urlEndpoint;
     try {
       const stored = localStorage.getItem('gnovium-active-endpoint');
       if (stored && ENDPOINTS.some(ep => ep.id === stored)) return stored;
@@ -321,14 +359,20 @@ function DocsContent() {
   const [filterMethod, setFilterMethod] = useState<string | null>(null);
   const [filterModule, setFilterModule] = useState<string | null>(null);
   const [sortAlpha, setSortAlpha] = useState(false);
-  const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({});
-  useEffect(() => {
+  const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>(() => {
     try {
       const stored = localStorage.getItem('gnovium-modules');
-      if (stored) setCollapsedModules(JSON.parse(stored));
+      if (stored) return JSON.parse(stored);
     } catch { /* ignore */ }
-  }, []);
-  const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
+    return {};
+  });
+  const [recentlyViewed, setRecentlyViewed] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('gnovium-recent');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return [];
+  });
   const [showFilters, setShowFilters] = useState(false);
   const filterDialogRef = useRef<HTMLDialogElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -354,7 +398,7 @@ function DocsContent() {
   useEffect(() => {
     localStorage.setItem('gnovium-viewed', JSON.stringify([...viewedEndpoints]));
   }, [viewedEndpoints]);
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState(() => `Loaded ${ENDPOINTS.length} endpoints across ${ALL_MODULES.length} modules`);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [pinnedEndpoints, setPinnedEndpoints] = useState<Set<string>>(() => {
     try {
@@ -377,13 +421,6 @@ function DocsContent() {
     });
   }, []);
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('gnovium-recent');
-      if (stored) setRecentlyViewed(JSON.parse(stored));
-    } catch {}
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem('gnovium-modules', JSON.stringify(collapsedModules));
   }, [collapsedModules]);
 
@@ -401,10 +438,6 @@ function DocsContent() {
     }
   }, [showFilters]);
 
-  useEffect(() => {
-    setAnnouncement(`Loaded ${ENDPOINTS.length} endpoints across ${ALL_MODULES.length} modules`);
-  }, []);
-
   const addRecent = useCallback((id: string) => {
     setRecentlyViewed((prev) => {
       const next = [id, ...prev.filter((p) => p !== id)].slice(0, 5);
@@ -412,21 +445,6 @@ function DocsContent() {
       return next;
     });
   }, []);
-
-  // Deep link
-  useEffect(() => {
-    const endpointId = searchParams.get('endpoint');
-    if (endpointId) {
-      const ep = ENDPOINTS.find((e) => e.id === endpointId);
-      if (ep) {
-        setActiveEndpointId(endpointId);
-        addRecent(endpointId);
-        setTimeout(() => {
-          document.getElementById(endpointId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      }
-    }
-  }, [searchParams, addRecent]);
 
   // Debounced search
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -463,14 +481,6 @@ function DocsContent() {
     });
     return grouped;
   }, [filteredEndpoints]);
-
-  useEffect(() => {
-    setCollapsedModules((prev) => {
-      const next: Record<string, boolean> = {};
-      Object.keys(modules).forEach((m) => { next[m] = prev[m] ?? true; });
-      return next;
-    });
-  }, [filterMethod, filterModule]);
 
   const toggleModule = (name: string) => {
     setCollapsedModules((prev) => ({ ...prev, [name]: !prev[name] }));
@@ -1274,41 +1284,9 @@ function DocsContent() {
           <h2 className="display-heading text-base text-[var(--foreground)] uppercase tracking-tight flex items-center gap-2">
             <BookOpen className="h-4 w-4" /> Use-Case Guides
           </h2>
-          {USE_CASE_GUIDES.map((guide) => {
-            const [expanded, setExpanded] = useState(false);
-            return (
-              <div key={guide.id} className="border-2 border-[var(--border)] bg-[var(--card-bg)]">
-                <button
-                  onClick={() => setExpanded(!expanded)}
-                  className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer text-left"
-                >
-                  {expanded ? <ChevronDown className="h-4 w-4 text-[var(--muted)]" /> : <ChevronRight className="h-4 w-4 text-[var(--muted)]" />}
-                  <div>
-                    <h3 className="display-heading text-sm text-[var(--foreground)]">{guide.title}</h3>
-                    <p className="text-step-0 font-mono text-[var(--muted)]">{guide.description}</p>
-                  </div>
-                </button>
-                {expanded && (
-                  <div className="px-4 pb-4 space-y-3 border-t-2 border-[var(--border)] pt-3">
-                    <ol className="list-decimal list-inside space-y-1">
-                      {guide.steps.map((s, i) => (
-                        <li key={i} className="text-step-0 font-mono text-[var(--muted)]">{s}</li>
-                      ))}
-                    </ol>
-                    <div className="border-2 border-[var(--border)] bg-[var(--code-bg)] overflow-hidden">
-                      <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--card-bg)] border-b-2 border-[var(--border)]">
-                        <span className="text-step-0 font-mono text-[var(--muted)] font-bold uppercase">Quick Start Code</span>
-                        <button onClick={() => handleCopy(guide.code, `guide-${guide.id}`)} className="p-1 border border-[var(--border)] neo-depth-btn cursor-pointer" aria-label="Copy guide code">
-                          {copiedId === `guide-${guide.id}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                        </button>
-                      </div>
-                      <CodeBlock code={guide.code} language="bash" maxHeight="300px" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {USE_CASE_GUIDES.map((guide) => (
+            <UseCaseGuideCard key={guide.id} guide={guide} copiedId={copiedId} onCopy={handleCopy} />
+          ))}
         </div>
         </RevealSection>
 
@@ -1767,9 +1745,9 @@ const response = await fetch(
                 borderLeftColor: (() => { const c = getModuleColor(moduleName); return theme === 'dark' ? c.dark : c.light; })(),
                 background: (() => { const c = getModuleColor(moduleName); return `${theme === 'dark' ? c.dark : c.light}08`; })(),
               }}
-              aria-expanded={!collapsedModules[moduleName]}
+              aria-expanded={!(collapsedModules[moduleName] ?? true)}
             >
-              {collapsedModules[moduleName] ? (
+              {(collapsedModules[moduleName] ?? true) ? (
                 <ChevronRight className="h-4 w-4 text-[var(--muted)]" />
               ) : (
                 <ChevronDown className="h-4 w-4 text-[var(--muted)]" />
@@ -1780,7 +1758,7 @@ const response = await fetch(
             </button>
 
             <AnimatePresence initial={false}>
-              {!collapsedModules[moduleName] && (
+              {!(collapsedModules[moduleName] ?? true) && (
                 <motion.div
                   key="content"
                   initial={{ height: 0, opacity: 0 }}

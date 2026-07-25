@@ -17,7 +17,7 @@ const containerVariants = {
 
 export default function TeamSection() {
   return (
-    <section id="team" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="team" aria-label="Our team" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <RevealSection>
           <motion.h2

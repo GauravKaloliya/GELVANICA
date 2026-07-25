@@ -1,156 +1,84 @@
-# Gnovium MVP (Version 1) Project Overview
+# Gnovium V1 Project Overview
 
-Gnovium MVP is a knowledge management platform that supports both Local Mode and Cloud Mode using the same knowledge model, workflows, and user experience.
+Gnovium is a knowledge management platform that treats knowledge as a connected, versioned, and evolvable system — not a collection of isolated documents.
 
-By default, Gnovium runs entirely on the user's device with offline-first storage, local AI capabilities, and complete data ownership. When collaboration, synchronization, and managed infrastructure are needed, users can switch to Cloud Mode without migrating their data or changing workflows.
+Run it entirely on your device with full data ownership, or switch to Cloud Mode for collaboration and sync. Same knowledge model. Same workflows. Same experience. No migration. No lock-in.
 
-Gnovium combines block-based editing, relational knowledge management, visual knowledge graphs, workspace versioning, and AI-assisted knowledge discovery within a unified workspace.
+Gnovium combines block-based editing, relational knowledge management, visual knowledge graphs, workspace versioning, and AI-powered discovery within a unified workspace.
 
-The MVP focuses on solving three fundamental problems:
+## Why Gnovium
 
-1. Knowledge fragmentation
-2. Loss of context and relationships
-3. Lack of safe experimentation in knowledge systems
+Gnovium solves three fundamental problems with traditional knowledge tools:
 
-Rather than building a complete Knowledge Operating System, the MVP validates the core concepts that will serve as the foundation for future organizational intelligence capabilities.
+1. **Knowledge fragmentation** — notes scattered across apps with no connections
+2. **Loss of context and relationships** — information without its surrounding meaning
+3. **Fear of experimentation** — no safe way to restructure or explore alternative ideas
 
-## MVP Objectives
+## System Objectives
 
-The MVP aims to:
-
-- Provide a modern block-based workspace.
-- Support structured relational knowledge management.
-- Visualize knowledge relationships through an interactive graph.
-- Introduce Git-inspired versioning for knowledge work.
-- Enable AI-powered workspace search and question answering.
-- Provide workspace health insights through governance checks.
-- Support Local Mode as the default deployment model.
-- Maintain compatibility with future Cloud Mode deployments.
-- Operate offline-first in Local Mode.
-- Preserve the same knowledge model across deployment modes.
+- Modern block-based workspace for composing and organizing knowledge
+- Structured relational knowledge management with typed connections
+- Interactive graph visualization of knowledge relationships
+- Git-inspired versioning for fearless experimentation
+- AI-powered search and question answering
+- Workspace health insights through governance checks
+- Local-first by default, cloud-ready when needed
+- Same experience across all deployment modes
 
 ## Deployment Modes
 
-### 🖥 Local Mode (Default)
+### Local Mode (Default)
 
 Your knowledge stays yours.
 
-Run Gnovium entirely on your device with:
+Everything runs on your device: storage, AI, and sync. Zero setup. Full ownership. Instant performance.
 
-- SQLite storage
-- Offline-first operation
-- Custom GPU-Native Inference Runtime
-- Zero setup
-- Full data ownership
-- Instant performance
+Ideal for personal knowledge bases, research, learning, and privacy-first workflows.
 
-Environment:
-```
-GNOVIUM_MODE=local
-```
-
-Ideal for:
-
-- Personal knowledge bases
-- Research
-- Learning
-- Privacy-first workflows
-
-### ☁️ Cloud Mode
+### Cloud Mode
 
 Transform personal knowledge into shared intelligence.
 
-Enable:
+Add team collaboration, synchronization, automatic backups, and managed infrastructure — while keeping the same workflows and knowledge model.
 
-- Workspace synchronization
-- Team collaboration
-- Automatic backups
-- Managed infrastructure
-- Multi-device access
+> Start local. Scale when you're ready. Just knowledge that grows with you.
 
-Environment:
-```
-GNOVIUM_MODE=cloud
-```
+## Core Features
 
-Cloud Mode preserves the same knowledge model, workflows, and experience while adding collaboration and synchronization capabilities.
+### 1. Block-Based Workspace
 
-> Start local. Scale when you're ready.
-> No migration. No lock-in.
-> Just knowledge that grows with you.
-
-## Core MVP Features
-
-### 1. 🧱 Block-Based Workspace
-
-The fundamental building block of Gnovium. Every entity (page) contains blocks — modular content units that can be arranged, nested, and reordered.
-
-#### Block Types
-
-| Block Type | Description | Content Shape |
-|------------|-------------|---------------|
-| `text` | Plain paragraph | `{"text": "..."}` |
-| `heading_1` | Large heading | `{"text": "..."}` |
-| `heading_2` | Medium heading | `{"text": "..."}` |
-| `heading_3` | Small heading | `{"text": "..."}` |
-| `bulleted_list` | Bullet point | `{"text": "..."}` |
-| `numbered_list` | Numbered item | `{"text": "..."}` |
-| `to_do` | Checkbox item | `{"text": "...", "checked": false}` |
-| `code` | Code block | `{"text": "...", "language": "python"}` |
-| `quote` | Block quote | `{"text": "..."}` |
-| `callout` | Highlighted note | `{"text": "...", "icon": "..."}` |
-| `image` | Embedded image | `{"url": "...", "alt": "..."}` |
-| `divider` | Horizontal rule | `{}` |
-| `table` | Data table | `{"rows": [...], "cols": [...]}` |
-
-#### Features
+Every page is built from blocks — modular content units you can arrange, nest, and reorder. Supports paragraphs, headings, lists, code, quotes, callouts, images, tables, and more.
 
 - Rich text editing with formatting
-- Nested pages (parent-child entity hierarchy)
-- Position-based block ordering
-- Batch reorder via dedicated endpoint
-- Move blocks between parents
+- Nested pages for hierarchical organization
+- Position-based ordering with drag-and-drop
+- Move blocks between pages
 - Soft delete with restore
 
-### 2. 🔗 Relational Knowledge System
+### 2. Relational Knowledge System
 
 Transform isolated notes into connected knowledge through typed relations, backlinks, tags, and custom properties.
-
-#### Features
 
 | Feature | Description |
 |---------|-------------|
 | **Custom Entity Types** | Define your own types with custom property schemas |
-| **Custom Properties** | Per-type property definitions (text, number, select, multi_select, date, boolean, url) |
+| **Custom Properties** | Per-type definitions (text, number, select, date, boolean, url) |
 | **Tags** | Lightweight labels for cross-cutting classification |
-| **Typed Relations** | Directed edges between entities (`refers_to`, `depends_on`, `part_of`, `related_to`, `implements`, `extends`) |
+| **Typed Relations** | Directed connections between entities (references, dependencies, parts, and more) |
 | **Backlinks** | Automatic "who links to me" view for every entity |
+| **AI Relation Suggestions** | AI discovers and suggests connections between your pages |
 
-### 3. 🕸 Visual Knowledge Graph
+### 3. Visual Knowledge Graph
 
-See your knowledge as a living network. The graph view visualizes entities as nodes and relations as edges.
+See your knowledge as a living network. The graph view visualizes entities as nodes and relations as edges, letting you discover patterns and connections you might otherwise miss.
 
-#### Graph API Operations
+### 4. Versioning System
 
-| Operation | Description |
-|-----------|-------------|
-| `GET /graph/` | Get latest materialized graph snapshot |
-| `POST /graph/materialize` | Build fresh graph from current data (full rebuild kept for recovery/debug) |
-| `POST /graph/query` | Query filtered nodes and edges |
-| `POST /graph/traverse` | BFS traversal from center node (depth ≤ 5) |
-| `POST /graph/paths` | Shortest path between two entities |
-
-**Scalability Note:** Graph materialization supports incremental updates and cached snapshots for larger workspaces. Heavy recomputations run asynchronously where possible.
-
-### 4. 🔀 Versioning System
-
-> **Canonical reference.** This section is the single source of truth for Gnovium's versioning system. All other documentation derives from this specification.
-
-Git-inspired versioning for knowledge work — the same capabilities Git gave code, applied to knowledge structures.
+Git-inspired versioning for knowledge work — the same safety net developers have for code, applied to knowledge structures.
 
 #### Philosophy
 
-Allow **experimentation without risk**. Users can explore alternative knowledge structures, make sweeping changes, or test AI-generated content — all with the safety net of versioning.
+**Experimentation without risk.** Explore alternative knowledge structures, make sweeping changes, or test AI-generated content — all with a complete safety net.
 
 #### User Experience Flow
 
@@ -158,335 +86,80 @@ Allow **experimentation without risk**. Users can explore alternative knowledge 
 Page History → Snapshots → Branches → Diffs
 ```
 
-Every interaction follows this progression: view an entity's edit history, capture workspace-wide snapshots, fork into experimental branches, and compare any state with visual diffs.
-
-#### Dual-Mode Architecture
-
-| Mode | Implementation | Storage |
-|------|---------------|---------|
-| **Local** | Append-only blocks | Every block update creates a new row (composite PK: `id + branch_id + created_at`). Full history preserved without separate version tables. Equivalent to an infinite undo log. |
-| **Cloud** | Changesets + Snapshots | Full version control with entity snapshots, changesets (JSONB deltas), visual diffs, and explicit version management via `entity_versions`, `block_versions`, `changesets`, and `snapshots` tables. |
-
-**Same user experience across modes. Different implementation under the hood.**  
-Sync follows a Git-like model (deterministic history + merges) rather than real-time CRDTs. This choice enables explicit versioning, branching workflows, and clean conflict resolution — the same model developers rely on for code — rather than eventual-consistency heuristics.
+View an entity's edit history, capture workspace-wide snapshots, fork into experimental branches, and compare any state with visual diffs.
 
 #### Core Concepts
 
-| Concept | Description | Modes |
-|---------|-------------|-------|
-| **Page History** | Automatic version creation on entity updates. View, restore, and compare past states of any entity. | Both |
-| **Snapshots** | Point-in-time captures of entire workspace state. Create, compare, restore, or delete. | Both |
-| **Branches** | Fork workspace into independent lines of development. Merge with conflict resolution. | Both |
-| **Diffs** | Visual comparison (green=added, red=deleted, amber=modified). Multi-level: block, entity, snapshot, or branch. | Cloud only |
+| Concept | Description |
+|---------|-------------|
+| **Page History** | Automatic version creation on every edit. View, restore, and compare past states. |
+| **Snapshots** | Point-in-time captures of your entire workspace. Create, compare, restore, or delete. |
+| **Branches** | Fork your workspace into independent lines of development. Merge with conflict resolution. |
+| **Diffs** | Visual comparison showing what's added, deleted, or modified across any level. |
 
-#### API Endpoints
+### 5. Workspace Administration
 
-9 versioning endpoints, all cloud-only. See [Versions Module](#versions) in the API reference and `backend/API.md` for request/response schemas.
+- **Dashboard** — Entity, block, relation, and comment counts with recently modified pages
+- **Activity Log** — Chronological audit trail of all workspace actions
+- **Backup & Restore** — Export and import entire workspaces for migration or backup
+- **File Management** — Upload, download, and manage files with entity linking
 
-### 6. 🤖 AI Workspace Assistant
+### 6. AI Workspace Assistant
 
-Intelligent retrieval powered by the local Inference Runtime or cloud AI.
-
-#### Features
+Your AI runs locally on your device — no data leaves your machine. Ask questions, search your workspace, and get answers grounded in your knowledge.
 
 | Feature | Description |
 |---------|-------------|
-| **Workspace-wide search** | Full-text, semantic, and hybrid search modes |
-| **Natural language Q&A** | Ask questions, get answers grounded in your knowledge |
-| **Summarization** | Generate concise summaries of entities and content |
-| **Related page recommendations** | AI-powered content discovery |
+| **Workspace Search** | Find anything across your knowledge base |
+| **Natural Language Q&A** | Ask questions, get answers from your content |
+| **Summarization** | Generate concise summaries of any page |
+| **Related Pages** | Discover connected content you might have missed |
 
 #### Search Modes
 
-| Mode | Description | Backend |
-|------|-------------|---------|
-| Keyword Search | Simple text match on title and content | SQLite FTS / PostgreSQL tsvector |
-| Full-text Search | Advanced full-text search with ranking | PostgreSQL only |
-| Hybrid Search | Combines keyword + semantic (default) | Both |
-| Semantic Search | Embedding-based vector similarity | Inference Runtime / Cloud |
+| Mode | Description |
+|------|-------------|
+| Keyword | Simple text matching |
+| Full-text | Advanced search with ranking |
+| Hybrid | Combines keyword + semantic (default) |
+| Semantic | Meaning-based similarity search |
 
-### 7. 📊 Governance Dashboard
+### 7. AI Governance
 
-Workspace health monitoring and quality management.
+Keep your workspace healthy with AI-powered quality checks:
 
-#### Features
+| Feature | Description |
+|---------|-------------|
+| **Health Score** | Overall workspace quality rating |
+| **Duplicate Detection** | Find pages with overlapping content |
+| **Orphan Detection** | Identify pages with no connections |
+| **Stale Content** | Surface pages that haven't been updated recently |
 
-| Feature | Description | API Endpoint |
-|---------|-------------|--------------|
-| **Health Score** | Overall workspace quality (0-100) | `GET /governance/health` |
-| **Duplicate Detection** | Find entities with identical/similar titles | `GET /governance/duplicates` |
-| **Orphan Detection** | Identify entities with zero connections | `GET /governance/orphans` |
-| **Stale Content Detection** | Find entities not updated in 90+ days | `GET /governance/stale` |
-| **Comprehensive Reports** | Full governance report with findings | `POST /governance/health-score` |
+### 8. Notifications
 
-**Implementation Note:** Heavy checks (e.g. duplicate detection, semantic similarity) run as **background jobs** with cached results. Lightweight checks (orphans, broken relations) remain on-demand. Moderate checks (stale content) are periodic.
+Alerts for mentions, comments, updates, invites, and system events. Available in both Local and Cloud modes.
 
-#### Health Score Formula
+### 9. Background Jobs
 
-```
-score = max(0, 100 - penalty)
-penalty = min(70, duplicates × 5 + orphans × 2 + stale)
-```
-
-| Score Range | Status |
-|-------------|--------|
-| **90-100** | Excellent — workspace is healthy |
-| **70-89** | Needs attention — some cleanup required |
-| **Below 70** | Requires cleanup — significant issues |
+Async processing for heavy operations like graph updates, export, and import. Cloud mode only.
 
 ## System Architecture
 
-### Frontend
-
-**Technology:** React, Next.js, TailwindCSS
-
-**Responsibilities:** Editor, Graph UI, Dashboard, Versioning UI
-
-### Backend
-
-**Technology:** Flask
-
-**Responsibilities:**
-- REST API Layer
-- Knowledge Services
-- Search & Retrieval
-- Graph Management (incremental + cached)
-- Version Management
-- AI Orchestration
-- File Management
-- Governance Services (background jobs)
-- Synchronization Services (Cloud Mode)
-
-### Database
-
-| Mode | Database |
-|------|----------|
-| Local Mode | SQLite |
-| Cloud Mode (Future) | PostgreSQL |
-
-**Design Principle:** Both deployment modes use the same data model and API contracts.
+Gnovium uses a client-server architecture with a web frontend and REST API backend. Both deployment modes share the same data model and API contracts — start local, move to cloud, nothing changes.
 
 ### Cloud Synchronization
 
-The following resources are synchronized between local and cloud instances:
-
-| Resource | Sync Direction | Notes |
-|----------|---------------|-------|
-| Workspaces | Bidirectional | Full metadata + settings |
-| Pages / Entities | Bidirectional | Content + properties |
-| Blocks | Bidirectional | Position, type, content |
-| Relations | Bidirectional | Typed edges with metadata |
-| Branches | Bidirectional | Branch structure + heads |
-| Versions | Local → Cloud | Append-only history published to cloud |
-| Embeddings | Local → Cloud | Vector representations |
-| Graph Metadata | Bidirectional | Materialized graph snapshots |
-| Files (metadata) | Bidirectional | File records; bytes stored per mode |
-| Settings | Bidirectional | Workspace + user preferences |
-
-### Top-level System Architecture
-
-```
-                User
-                 |
-          React + Next.js Frontend
-                 |
-            Flask Backend API
-                 |
-      +----------+----------+
-      |                     |
- Knowledge Services     Inference Runtime
-      |                     |
-   Graph Engine         AI Services (Embeddings, Retrieval)
-      |                     |
- SQLite / PostgreSQL   Vector Store + GPU-Native Tensor Engine
-```
+When using Cloud Mode, your knowledge stays in sync across devices — pages, blocks, relations, branches, files, and settings update automatically as you work.
 
 ### AI Layer
 
-**Technology:**
-- **Inference Runtime:** Custom GPU-Native Tensor Engine + CUDA Kernels, KV Cache Manager + basic Flash Attention, Tokenizer, Sampling, Model Loader. The runtime supports multiple instruction-tuned SLMs; recommended models evolve as the ecosystem advances. Practical MVP backends (llama.cpp, ONNX Runtime, TensorRT-LLM) provide a working AI subsystem day one; the custom GPU-native runtime remains the long-term differentiator.
-- **Agent Runtime:** Supervisor + Planner + Worker Agents with **staged safety pipeline** (Policy Validator, Permission Validator, Simulation, Diff, User Approval)
+The AI layer is a key differentiator: intelligent workspace assistance that runs entirely on your device. No cloud dependency. No data sharing. Your knowledge stays private while still getting powerful AI features.
 
-**AI Services:**
-- Embedding Generation + Vector Indexing
-- Semantic Retrieval + Graph Retrieval
-- Q&A, Summarization, Recommendations
-- Tool Calling (with safety gates — read-only tools bypass the approval stage; destructive operations require explicit confirmation)
+In Local Mode, a bundled language model and embedding service handle all AI tasks on-device. In Cloud Mode, inference runs on managed infrastructure for teams that prefer it.
 
-**Mode-Specific Execution:**
+The AI system uses a multi-agent architecture where specialized agents handle different tasks — editing, searching, graph queries, and more — coordinated by a supervisor with a safety pipeline that validates all actions before execution.
 
-| Mode | Inference | Agents | Storage |
-|------|-----------|--------|---------|
-| Local | Gnovium GPU-native runtime (CUDA, on-device) | All agents run locally | SQLite + local vector store |
-| Cloud | Cloud inference runtime (managed GPU) | Agents can coordinate across users | PostgreSQL + pgvector |
-
-## Data Model
-
-### Entity (Page)
-
-```
-Entity
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── entity_type_id: UUID (FK → entity_types)
-├── title: String
-├── icon: String (emoji or icon name)
-├── cover_image: String (URL, nullable)
-├── is_archived: Boolean
-├── archived_at: DateTime (nullable, local mode)
-├── is_deleted: Boolean
-├── deleted_at: DateTime (nullable)
-├── deleted_by: UUID (FK → users, nullable)
-├── created_by: UUID (FK → users)
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-Note: Custom property values are stored in the `entity_property_values` table, not as a JSONB column on entities. Parent-child entity relationships use the `relations` table with `relation_type = 'part_of'`.
-
-### Block
-
-**Local mode** (append-only — composite PK preserves every version):
-```
-Block
-├── id: UUID
-├── entity_id: UUID (FK → entities)
-├── branch_id: String (default: 'main')
-├── parent_block_id: UUID (nullable)
-├── block_type: String
-├── content: JSONB
-├── position: Float
-├── indent: Integer (default: 0)
-├── content_hash: String
-├── created_at: DateTime
-├── is_deleted: Boolean
-├── deleted_at: DateTime (nullable)
-├── deleted_by: UUID (FK → users, nullable)
-└── PRIMARY KEY (id, branch_id, created_at)
-```
-
-**Cloud mode** (mutable — versioning via `entity_versions`/`block_versions` tables):
-```
-Block
-├── id: UUID (primary key)
-├── entity_id: UUID (FK → entities)
-├── parent_block_id: UUID (FK → blocks, nullable)
-├── block_type: String
-├── content: JSONB
-├── position: Numeric(20,10)
-├── created_at: DateTime
-├── updated_at: DateTime
-├── is_deleted: Boolean
-├── deleted_at: DateTime (nullable)
-└── deleted_by: UUID (FK → users, nullable)
-```
-
-### Relation
-
-```
-Relation
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── source_entity_id: UUID (FK → entities)
-├── target_entity_id: UUID (FK → entities)
-├── relation_type: Enum
-├── metadata: JSONB
-├── created_by: UUID (FK → users, nullable)
-├── created_at: DateTime
-├── is_deleted: Boolean
-├── deleted_at: DateTime (nullable)
-└── deleted_by: UUID (FK → users, nullable)
-```
-
-### Version (Changeset)
-
-Cloud-only. The actual entity/block state at a changeset point is stored in `entity_versions` and `block_versions` tables.
-
-```
-Changeset
-├── id: UUID (primary key)
-├── branch_id: UUID (FK → branches)
-├── snapshot_id: UUID (FK → snapshots, nullable)
-├── message: String
-├── created_by: UUID (FK → users)
-├── created_at: DateTime
-```
-
-### Snapshot
-
-```
-Snapshot
-├── id: UUID (primary key)
-├── branch_id: UUID (FK → branches)
-├── name: String
-├── description: Text (nullable)
-├── created_by: UUID (FK → users, nullable)
-├── created_at: DateTime
-```
-
-Snapshot block membership is stored in the `snapshot_blocks` table (`snapshot_id`, `block_id`, `block_created_at`, `entity_id`).
-
-### Branch
-
-```
-Branch
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── name: String
-├── parent_branch_id: UUID (FK → branches, nullable)
-├── description: Text (nullable)
-├── is_default: Boolean
-├── is_deleted: Boolean
-├── created_at: DateTime
-└── updated_at: DateTime
-```
-
-### Tag
-
-```
-Tag
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── name: String
-├── color: String (hex, nullable)
-├── created_at: DateTime
-├── is_deleted: Boolean
-├── deleted_at: DateTime (nullable)
-└── deleted_by: UUID (FK → users, nullable)
-```
-
-### Entity Type
-
-```
-EntityType
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── name: String
-├── icon: String
-├── config: JSONB
-├── created_at: DateTime
-├── is_deleted: Boolean
-├── deleted_at: DateTime (nullable)
-└── deleted_by: UUID (FK → users, nullable)
-```
-
-### Property Definition
-
-```
-Property
-├── id: UUID (primary key)
-├── workspace_id: UUID (FK → workspaces)
-├── entity_type_id: UUID (FK → entity_types, nullable)
-├── name: String
-├── property_type: String
-├── config: JSONB
-├── created_at: DateTime
-├── is_deleted: Boolean
-├── deleted_at: DateTime (nullable)
-└── deleted_by: UUID (FK → users, nullable)
-```
-
-## MVP User Flow
+## User Flow
 
 ```
 START
@@ -539,16 +212,13 @@ START
 
 ## Success Criteria
 
-### Engineering Success Criteria (Updated)
-
-- Custom GPU-native inference runtime operational in Local Mode (with modern SLM support)
-- **Multi-agent system with staged safety pipeline** (Supervisor + Workers + Policy/Permission/Simulation/Diff/Approval)
-- Dual-mode architecture (Local ↔ Cloud) validated
-- Tool runtime and AI orchestration functional
-- Local-first AI with vector storage and synchronization working
-- Graph materialization supports incremental/cached updates
-- Governance checks use background/tiered processing
+- AI runs entirely on your device with no internet required
+- Multi-agent system with safety pipeline for trustworthy actions
+- Local and cloud modes share the same experience
+- Search and Q&A grounded in your knowledge
+- Graph visualization scales with your workspace
+- Governance checks surface issues before they grow
 
 ## Expected Outcome
 
-The MVP demonstrates that knowledge can be managed as a connected, versioned, and evolvable system rather than a collection of isolated documents. It establishes the technical and conceptual foundation for Gnovium's long-term vision as a Knowledge Operating System.
+Gnovium demonstrates that knowledge can be managed as a connected, versioned, and evolvable system rather than a collection of isolated documents. It establishes the foundation for a Knowledge Operating System where your knowledge grows with you — locally owned, globally connected.

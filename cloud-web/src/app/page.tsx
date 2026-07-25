@@ -3,11 +3,15 @@
 import { useSession } from "@/lib/session"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Network, History, FilePlus, Search, Sparkles, BookOpen, ExternalLink, Plus, Upload } from "lucide-react"
-import { getAvatarUrl } from "@/lib/avatar"
-import { docsUrl, Routes } from "@gnovium/shared"
+import { Network, History, FilePlus, Search, Sparkles, BookOpen, ExternalLink, Plus, Download } from "lucide-react"
+import { getAvatarUrl } from "@/lib/utils/avatar"
+import { docsUrl } from "@gnovium/shared"
 import { motion } from "framer-motion"
 import ParticleGraph from "./components/ParticleGraph"
+import { useWorkspaceStore } from "@/stores/workspaceStore"
+import { apiClient } from "@/lib/apiClient"
+import { formatRelativeTime } from "@/lib/utils"
+import { toast } from "sonner"
 
 const containerVariants = {
   hidden: {},
@@ -28,14 +32,29 @@ const cardVariants = {
   },
 }
 
+interface ActivityEntry {
+  id: string
+  action: string
+  details: Record<string, unknown>
+  created_at: string
+}
+
 export default function Home() {
-  const { user, isLoading, isAuthenticated } = useSession()
+  const { user, tokens, isLoading, isAuthenticated } = useSession()
   const router = useRouter()
   const [notice, setNotice] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const { stats, fetchStats, workspaces, fetchWorkspaces } = useWorkspaceStore()
+  const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+
+  useEffect(() => {
+    document.title = 'Knowledge Operating System | Gnovium'
+  }, [])
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push(Routes.cloudWeb.signIn.build({}))
+      router.push("/auth/sign-in")
     }
   }, [isLoading, isAuthenticated, router])
 
@@ -48,6 +67,33 @@ export default function Home() {
       window.history.replaceState({}, '', url.toString())
     }
   }, [])
+
+  useEffect(() => {
+    if (!tokens?.access_token) return
+
+    const loadData = async () => {
+      setLoadingData(true)
+      try {
+        await fetchWorkspaces(tokens.access_token)
+
+        const firstWorkspace = workspaces[0]
+        if (firstWorkspace) {
+          await Promise.all([
+            fetchStats(tokens.access_token, firstWorkspace.id),
+            apiClient.get<{ data: ActivityEntry[] }>(`/activity/?workspace_id=${firstWorkspace.id}&per_page=5`).then((json) => {
+              setActivity(json.data || []);
+            }),
+          ])
+        }
+      } catch {
+        // non-critical — homepage still renders
+      } finally {
+        setLoadingData(false)
+      }
+    }
+
+    loadData()
+  }, [tokens?.access_token, fetchWorkspaces, fetchStats, workspaces])
 
   if (isLoading) {
     return (
@@ -66,6 +112,8 @@ export default function Home() {
   }
 
   if (!user) return null
+
+  const firstWorkspaceId = workspaces[0]?.id
 
   return (
     <motion.div
@@ -97,9 +145,10 @@ export default function Home() {
 
         <div className="relative z-10 w-full flex items-stretch gap-6">
           <div className="relative w-[150px] shrink-0 border-2 border-[var(--foreground)] bg-[var(--sunken-bg)] shadow-[4px_4px_0px_0px_var(--shadow-color)] overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={user.avatar_url || getAvatarUrl(user.name || user.email)}
-              alt={user.name}
+              alt={user.name || user.email}
               className="h-full w-full object-cover"
             />
           </div>
@@ -150,7 +199,12 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <button className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] neo-depth-btn cursor-pointer">
+          <button
+            onClick={() => firstWorkspaceId
+              ? router.push(`/workspace/${firstWorkspaceId}/graph`)
+              : router.push("/workspaces")}
+            className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] neo-depth-btn cursor-pointer"
+          >
             Explore Graph
           </button>
         </motion.div>
@@ -165,12 +219,35 @@ export default function Home() {
               <History size={18} strokeWidth={2.5} />
               <h3 className="text-sm font-black font-mono uppercase tracking-wider text-[var(--foreground)]">Recent Activity</h3>
             </div>
-            <div className="p-4 border-2 border-dashed border-[var(--border)] bg-[var(--sunken-bg)] text-center font-mono text-[10px] text-[var(--muted)] font-black uppercase tracking-wider">
-              No pages created yet.
-            </div>
+            {loadingData ? (
+              <div className="space-y-2 py-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-6 bg-[var(--sunken-bg)] animate-pulse rounded" />
+                ))}
+              </div>
+            ) : activity.length > 0 ? (
+              <div className="space-y-1 py-2">
+                {activity.slice(0, 4).map((entry) => (
+                  <div key={entry.id} className="flex items-center gap-2 text-[10px] font-mono text-[var(--muted)]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--border)] shrink-0" />
+                    <span className="truncate">{String(entry.details?.title || entry.action)}</span>
+                    <span className="shrink-0 opacity-60">{formatRelativeTime(entry.created_at)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 border-2 border-dashed border-[var(--border)] bg-[var(--sunken-bg)] text-center font-mono text-[10px] text-[var(--muted)] font-black uppercase tracking-wider">
+                No activity yet.
+              </div>
+            )}
           </div>
           <div className="pt-4">
-            <button className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--card-bg)] text-[var(--foreground)] neo-depth-btn hover:bg-[var(--code-bg)] cursor-pointer">
+            <button
+              onClick={() => firstWorkspaceId
+                ? router.push(`/workspace/${firstWorkspaceId}/activity`)
+                : router.push("/workspaces")}
+              className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--card-bg)] text-[var(--foreground)] neo-depth-btn hover:bg-[var(--code-bg)] cursor-pointer"
+            >
               View All
             </button>
           </div>
@@ -188,15 +265,55 @@ export default function Home() {
             </div>
             <ul className="space-y-3 font-mono text-[11px] font-bold text-[var(--foreground)]">
               <li>
-                <button className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left">
+                <button
+                  className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left"
+                  onClick={() => firstWorkspaceId
+                    ? router.push(`/workspace/${firstWorkspaceId}/dashboard`)
+                    : router.push("/workspaces")}
+                >
                   <FilePlus size={12} strokeWidth={2.5} />
                   <span>Create New Page</span>
                 </button>
               </li>
               <li>
-                <button className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left">
+                <button
+                  className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left"
+                  onClick={() => firstWorkspaceId
+                    ? router.push(`/workspace/${firstWorkspaceId}/search`)
+                    : router.push("/workspaces")}
+                >
                   <Search size={12} strokeWidth={2.5} />
                   <span>AI Semantic Search</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={async () => {
+                    if (!firstWorkspaceId) {
+                      router.push("/workspaces")
+                      return
+                    }
+                    setExporting(true)
+                    try {
+                      const json = await apiClient.post<{ data: unknown }>('/backups/export', { workspace_id: firstWorkspaceId })
+                      const data = json.data || json
+                      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `gnovium-cloud-export-${new Date().toISOString().slice(0, 10)}.json`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    } catch {
+                      toast.error("Export failed. Please try again later.")
+                    } finally {
+                      setExporting(false)
+                    }
+                  }}
+                  className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left"
+                >
+                  <Download size={12} strokeWidth={2.5} />
+                  <span>{exporting ? 'Exporting...' : 'Export Data'}</span>
                 </button>
               </li>
               <li>
@@ -209,7 +326,12 @@ export default function Home() {
             </ul>
           </div>
           <div className="pt-4">
-            <button className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] neo-depth-btn cursor-pointer">
+            <button
+              onClick={() => firstWorkspaceId
+                ? router.push(`/workspace/${firstWorkspaceId}/entity/new`)
+                : router.push("/workspaces")}
+              className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] neo-depth-btn cursor-pointer"
+            >
               <Plus size={12} className="inline mr-1" />
               New Page
             </button>
@@ -229,16 +351,22 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="p-4 border-2 border-[var(--border)] bg-[var(--sunken-bg)] text-center">
-            <div className="text-2xl font-black font-mono text-[var(--foreground)]">0</div>
-            <div className="text-[9px] font-black font-mono uppercase tracking-wider text-[var(--muted)] mt-1">Pages</div>
-          </div>
-          <div className="p-4 border-2 border-[var(--border)] bg-[var(--sunken-bg)] text-center">
-            <div className="text-2xl font-black font-mono text-[var(--foreground)]">0</div>
+            <div className="text-2xl font-black font-mono text-[var(--foreground)]">
+              {loadingData ? '—' : (stats?.entity_count ?? 0)}
+            </div>
             <div className="text-[9px] font-black font-mono uppercase tracking-wider text-[var(--muted)] mt-1">Entities</div>
           </div>
           <div className="p-4 border-2 border-[var(--border)] bg-[var(--sunken-bg)] text-center">
-            <div className="text-2xl font-black font-mono text-[var(--foreground)]">0</div>
+            <div className="text-2xl font-black font-mono text-[var(--foreground)]">
+              {loadingData ? '—' : (stats?.relation_count ?? 0)}
+            </div>
             <div className="text-[9px] font-black font-mono uppercase tracking-wider text-[var(--muted)] mt-1">Connections</div>
+          </div>
+          <div className="p-4 border-2 border-[var(--border)] bg-[var(--sunken-bg)] text-center">
+            <div className="text-2xl font-black font-mono text-[var(--foreground)]">
+              {loadingData ? '—' : (stats?.member_count ?? 0)}
+            </div>
+            <div className="text-[9px] font-black font-mono uppercase tracking-wider text-[var(--muted)] mt-1">Members</div>
           </div>
         </div>
       </motion.div>

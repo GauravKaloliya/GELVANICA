@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
 import http from 'node:http';
+import net from 'node:net';
 import { spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
+const PYTHON = process.env.PYTHON || resolve(ROOT, '.venv/bin/python');
 
 // ── Configuration ────────────────────────────────────────────
 const PORTS = {
@@ -19,6 +21,7 @@ const PORTS = {
 
 const TARGETS = [
   { prefix: '/api/v1/docs', url: `http://localhost:${PORTS.docs}`, strip: false },
+  { prefix: '/app/_next',   url: `http://localhost:${PORTS['cloud-web']}`, strip: true, stripPrefix: '/app' },
   { prefix: '/app',         url: `http://localhost:${PORTS['cloud-web']}`, strip: false },
   { prefix: '/api/v1',      url: `http://localhost:${PORTS.backend}`, strip: true },
 ];
@@ -33,7 +36,8 @@ const agent = new http.Agent({ keepAlive: true, maxSockets: 64 });
 function matchTarget(path) {
   for (const t of TARGETS) {
     if (path === t.prefix || path.startsWith(t.prefix + '/')) {
-      const proxyPath = t.strip ? path.slice(t.prefix.length) || '/' : path;
+      const sp = t.stripPrefix || t.prefix;
+      const proxyPath = t.strip ? path.slice(sp.length) || '/' : path;
       return { url: t.url, path: proxyPath };
     }
   }
@@ -59,22 +63,22 @@ function start(name, command, args, opts = {}) {
   return proc;
 }
 
-async function waitForServer(name, port, healthPath = '/', timeoutMs = 30_000) {
+async function waitForServer(name, port, healthPath = '/', timeoutMs = 120_000) {
   const startTime = Date.now();
   while (Date.now() - startTime < timeoutMs) {
     try {
       await new Promise((resolve, reject) => {
-        const req = http.get(`http://localhost:${port}${healthPath}`, { agent: false, timeout: 1000 }, (res) => {
-          res.resume();
-          resolve();
-        });
-        req.on('error', reject);
-        req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+        const socket = new net.Socket();
+        socket.setTimeout(2000);
+        socket.on('connect', () => { socket.destroy(); resolve(); });
+        socket.on('timeout', () => { socket.destroy(); reject(new Error('timeout')); });
+        socket.on('error', (err) => { socket.destroy(); reject(err); });
+        socket.connect(port, 'localhost');
       });
       log(name, `ready on port ${port}`);
       return;
     } catch {
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, 1000));
     }
   }
   log(name, `WARN: not responding after ${timeoutMs}ms — continuing anyway`);
@@ -82,16 +86,15 @@ async function waitForServer(name, port, healthPath = '/', timeoutMs = 30_000) {
 
 // ── Spawn all servers ────────────────────────────────────────
 
-const NEXT_DEV = ['run', 'dev', '--turbo'];
-if (process.env.VERCEL) NEXT_DEV.pop();
+const NEXT_DEV = ['run', 'dev'];
 
 log('proxy', 'Starting dev servers...\n');
 
 const procs = [
   { name: 'landing',  cmd: 'npm', args: [...NEXT_DEV, '-w=landing', '--', '--port', String(PORTS.landing)],                               port: PORTS.landing,  health: '/' },
-  { name: 'cloud-web', cmd: 'npm', args: [...NEXT_DEV, '-w=cloud-web', '--', '--port', String(PORTS['cloud-web'])],  env: { NEXT_PUBLIC_BASE_PATH: '/app' },       port: PORTS['cloud-web'], health: '/app' },
-  { name: 'docs',     cmd: 'npm', args: [...NEXT_DEV, '-w=docs', '--', '--port', String(PORTS.docs)],          env: { NEXT_PUBLIC_BASE_PATH: '/api/v1/docs' }, port: PORTS.docs,     health: '/api/v1/docs' },
-  { name: 'backend',  cmd: 'python3', args: ['backend/run.py'],                                                                          port: PORTS.backend, health: '/' },
+  { name: 'cloud-web', cmd: 'npm', args: ['run', 'dev:next', '-w=cloud-web', '--', '--port', String(PORTS['cloud-web'])],  env: { NEXT_PUBLIC_CLOUD_WEB_BASE_PATH: '/app' },       port: PORTS['cloud-web'], health: '/app' },
+  { name: 'docs',     cmd: 'npm', args: [...NEXT_DEV, '-w=docs', '--', '--port', String(PORTS.docs)],          env: { NEXT_PUBLIC_DOCS_BASE_PATH: '/api/v1/docs' }, port: PORTS.docs,     health: '/api/v1/docs' },
+  { name: 'backend',  cmd: PYTHON, args: ['backend/run.py'],                                                                          port: PORTS.backend, health: '/' },
 ];
 
 for (const p of procs) {
@@ -157,7 +160,7 @@ const server = http.createServer((req, res) => {
   req.pipe(proxyReq);
 });
 
-// ── WebSocket proxy (required for Turbopack HMR) ──────────
+// ── WebSocket proxy (required for webpack HMR) ──────────
 
 server.on('upgrade', (req, socket, head) => {
   const { url, path: proxyPath } = matchTarget(req.url);

@@ -1,0 +1,182 @@
+{
+  "agent": "FK & Cascade Audit",
+  "score": 68,
+  "issues": [
+    {
+      "severity": "high",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "blocks",
+      "fk": "blocks.branch_id → branches.id",
+      "description": "Missing FK constraint on blocks.branch_id in SQLite schema. PostgreSQL schema (line 163) and domain.py (line 219) define `REFERENCES branches(id) ON DELETE CASCADE`, but SQLite (line 142) declares branch_id as bare TEXT. This allows orphaned block rows referencing non-existent branches. Add `REFERENCES branches(id) ON DELETE CASCADE` to SQLite schema for consistency."
+    },
+    {
+      "severity": "high",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "search_documents",
+      "fk": "search_documents.block_id → blocks.id",
+      "description": "Missing FK constraint on search_documents.block_id in SQLite schema (line 171: bare TEXT). PostgreSQL (line 343) and domain.py (line 555) define `REFERENCES blocks(id) ON DELETE CASCADE`. Can produce search entries pointing to deleted blocks. Add FK to SQLite schema."
+    },
+    {
+      "severity": "high",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "comments",
+      "fk": "comments.author_id → users.id",
+      "description": "Missing FK constraint on comments.author_id in SQLite schema (line 552: bare TEXT NOT NULL). PostgreSQL (line 410) and domain.py (line 666) define `REFERENCES users(id) ON DELETE RESTRICT`. Without the FK, orphan author references can accumulate. Add FK with ON DELETE RESTRICT (or SET NULL if anonymous comments are acceptable) to SQLite schema."
+    },
+    {
+      "severity": "high",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "blocks",
+      "fk": "blocks.parent_block_id → blocks.id",
+      "description": "Self-referential FK `ON DELETE CASCADE` references `blocks(id)` but blocks has a COMPOSITE PK `(id, branch_id, created_at)` in SQLite (line 155). The column `id` alone is not unique across the table — the same block id can appear on multiple rows with different branch_id/created_at values (append-only design). SQLite allows this lax reference, but it's semantically incorrect: should reference the full composite key. PostgreSQL avoids this issue because blocks uses a simple UUID PK there (line 157). This is a cross-schema consistency risk."
+    },
+    {
+      "severity": "medium",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "activity_log",
+      "fk": "activity_log.entity_id → entities.id",
+      "description": "Missing FK constraint on activity_log.entity_id in SQLite schema (line 622: bare TEXT). PostgreSQL (line 423) defines `REFERENCES entities(id) ON DELETE RESTRICT`. This means the SQLite schema allows activity log entries referencing non-existent entities. Add FK with ON DELETE RESTRICT (history-protection pattern) to SQLite."
+    },
+    {
+      "severity": "medium",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "activity_log",
+      "fk": "activity_log.block_id → blocks.id",
+      "description": "Missing FK constraint on activity_log.block_id in SQLite schema (line 623: bare TEXT). PostgreSQL (line 424) defines `REFERENCES blocks(id) ON DELETE RESTRICT`. Same history-protection gap as entity_id. Add FK to SQLite."
+    },
+    {
+      "severity": "medium",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "notifications",
+      "fk": "notifications.user_id → users.id",
+      "description": "Missing FK constraint on notifications.user_id in SQLite schema (line 568: bare TEXT NOT NULL). PostgreSQL (line 444) defines `REFERENCES users(id) ON DELETE CASCADE`. Without FK, notifications can have orphan user references. Add FK with ON DELETE CASCADE to SQLite."
+    },
+    {
+      "severity": "medium",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "activity_log",
+      "fk": "activity_log.user_id → users.id",
+      "description": "Missing FK constraint on activity_log.user_id in SQLite schema (line 621: bare TEXT). PostgreSQL (line 422) defines `REFERENCES users(id) ON DELETE SET NULL`. Add FK to SQLite for consistency."
+    },
+    {
+      "severity": "medium",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "entity_files",
+      "fk": "entity_files.block_id → blocks.id",
+      "description": "Missing FK constraint on entity_files.block_id in SQLite schema (line 421: bare TEXT). PostgreSQL (line 379) and domain.py (line 618) define `REFERENCES blocks(id) ON DELETE SET NULL`. Add FK to SQLite."
+    },
+    {
+      "severity": "medium",
+      "file": "backend/app/models/domain.py",
+      "table": "notifications",
+      "fk": "notifications.user_id → users.id ON DELETE CASCADE",
+      "description": "When a user is hard-deleted, their notifications cascade away via `ON DELETE CASCADE`. This is acceptable since notifications are transient, but it differs from the standard pattern where user FKs use `SET NULL` or `RESTRICT` (e.g., EntityEvent.user_id uses SET NULL, Comment.author_id uses RESTRICT). Ensure the app layer does not rely on notification retention after user deletion."
+    },
+    {
+      "severity": "low",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "entities",
+      "fk": "entities.created_by → users.id",
+      "description": "Missing FK constraint on entities.created_by in SQLite schema (line 123: bare TEXT). PostgreSQL (line 126) and domain.py (line 184) define `REFERENCES users(id) ON DELETE SET NULL`. While local SQLite intentionally omits user-reference FKs (schema doc line 7-8), this creates drift: the domain model enforces it but the local schema does not, risking inconsistent data on sync."
+    },
+    {
+      "severity": "low",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "branches",
+      "fk": "branches.created_by → users.id",
+      "description": "Missing FK constraint on branches.created_by in SQLite (line 334: bare TEXT). PostgreSQL (line 142) and domain.py (line 339) define `REFERENCES users(id) ON DELETE SET NULL`. Same local-vs-cloud schema drift pattern."
+    },
+    {
+      "severity": "low",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "changesets",
+      "fk": "changesets.created_by → users.id",
+      "description": "Missing FK constraint on changesets.created_by in SQLite (line 375: bare TEXT). PostgreSQL (line 247) and domain.py (line 375) define `REFERENCES users(id) ON DELETE SET NULL`."
+    },
+    {
+      "severity": "low",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "files",
+      "fk": "files.uploaded_by → users.id",
+      "description": "Missing FK constraint on files.uploaded_by in SQLite (line 407: bare TEXT). PostgreSQL (line 365) and domain.py (line 587) define `REFERENCES users(id) ON DELETE SET NULL`."
+    },
+    {
+      "severity": "low",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "branch_merges",
+      "fk": "branch_merges.created_by → users.id",
+      "description": "Missing FK constraint on branch_merges.created_by in SQLite (line 460: bare TEXT). PostgreSQL (line 282) and domain.py (line 452) define `REFERENCES users(id) ON DELETE SET NULL`."
+    },
+    {
+      "severity": "low",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "merge_conflicts",
+      "fk": "merge_conflicts.resolved_by → users.id",
+      "description": "Missing FK constraint on merge_conflicts.resolved_by in SQLite (line 476: bare TEXT). PostgreSQL (line 298) and domain.py define `REFERENCES users(id) ON DELETE SET NULL`."
+    },
+    {
+      "severity": "low",
+      "file": "backend/SQLITE_SCHEMA.sql",
+      "table": "workspaces",
+      "fk": "workspaces.deleted_by → users.id",
+      "description": "Missing FK on workspaces.deleted_by in SQLite (line 89: bare TEXT). PostgreSQL (line 80) defines `REFERENCES users(id) ON DELETE SET NULL`. Low risk since this is purely audit trail."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "entity_versions",
+      "fk": "entity_versions.entity_id → entities.id ON DELETE RESTRICT",
+      "description": "ON DELETE RESTRICT prevents hard-deleting (purging) any entity that has version history. If a purge job `DELETE FROM entities WHERE is_deleted = 1` runs, entities with versions will fail to delete unless entity_versions are deleted first. This is intentional 'history protection' but imposes a strict ordering requirement on purge jobs. Review purge-job logic to ensure it handles this ordering (e.g., delete versions first, or use SET NULL + app-level cleanup)."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "block_versions",
+      "fk": "block_versions.block_id → blocks.id ON DELETE RESTRICT",
+      "description": "Same history-protection pattern as entity_versions. Purge jobs must delete block_versions before blocks, or the DELETE will fail."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "entity_events",
+      "fk": "entity_events.entity_id → entities.id ON DELETE RESTRICT",
+      "description": "History protection on events table. Purge jobs must delete events before entities. Same ordering constraint."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "activity_log",
+      "fk": "activity_log.entity_id → entities.id ON DELETE RESTRICT",
+      "description": "History protection on activity log. Same purge-ordering constraint."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "activity_log",
+      "fk": "activity_log.block_id → blocks.id ON DELETE RESTRICT",
+      "description": "History protection on activity log block references. Same purge-ordering constraint."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "workspace_members",
+      "fk": "workspace_members.user_id → users.id ON DELETE RESTRICT",
+      "description": "Cannot delete a user who is a workspace member without first removing them. This is secure by design but creates operational friction for user deactivation flows. Consider whether ON DELETE SET NULL (or an app-level 'deactivate user' flow that removes memberships first) would better serve the use case."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "comments",
+      "fk": "comments.author_id → users.id ON DELETE RESTRICT",
+      "description": "Cannot delete a user who has authored comments. If user deletion is ever required, comments must be re-assigned or deleted first. App-level deactivation flow must account for this."
+    },
+    {
+      "severity": "low",
+      "file": "backend/POSTGRESQL_SCHEMA.sql",
+      "table": "sync_operations",
+      "fk": "sync_operations.entity_id (intentionally omitted)",
+      "description": "sync_operations.entity_id intentionally has NO FK (line 496 comment: 'No FK: sync operations may reference entities not yet created [offline-first]'). This is a valid design choice for offline-first sync. No action needed."
+    }
+  ],
+  "detail": "The FK and cascade design is architecturally sound with consistent patterns: workspace content cascades (workspace→entities→blocks→children), history is protected via RESTRICT (entity_versions, block_versions, entity_events), user references use SET NULL for audit retention, and self-referential FKs use appropriate rules (CASCADE for block parents/comment threads, SET NULL for branch parents). The primary issue is SIGNIFICANT SCHEMA DRIFT between the SQLite local schema and the PostgreSQL/domain.py model: 15+ columns have FK constraints in PostgreSQL/domain.py that are missing in SQLite. The most critical gaps are blocks.branch_id, search_documents.block_id, comments.author_id, and activity_log FKs — these are content references that should have FKs in both schemas. The SQLite-only self-referential FK on blocks.parent_block_id references a non-unique column (composite PK id only). The RESTRICT/FK constraints on entity_versions, block_versions, entity_events, and activity_log create a strict ordering dependency for any hard-delete purge jobs that must be documented and enforced in the purge-job implementation. Overall the design is well-considered but the SQLite and PostgreSQL schemas have diverged and need reconciliation."
+}

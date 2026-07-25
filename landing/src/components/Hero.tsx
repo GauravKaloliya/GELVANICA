@@ -8,7 +8,7 @@ import { Routes, cloudWebUrl } from '@gnovium/shared';
 
 export default function Hero() {
   return (
-    <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
+    <section id="hero" aria-label="Introduction" className="relative min-h-screen flex items-center overflow-hidden">
       <ParticleGraph className="opacity-50" />
 
       <div
@@ -63,6 +63,7 @@ export default function Hero() {
             >
               <Link
                 href={Routes.landing.download.build({})}
+                aria-label="Download Gnovium desktop app"
                 className="text-step-1 font-black font-mono uppercase tracking-wider px-6 py-3 border-2 border-[var(--foreground)] neo-depth-btn text-[var(--foreground)] bg-[var(--card-bg)] hover:bg-[var(--code-bg)] transition-all flex items-center gap-2"
               >
                 <HardDrive className="h-4 w-4" />
@@ -70,6 +71,7 @@ export default function Hero() {
               </Link>
               <Link
                 href={cloudWebUrl()}
+                aria-label="Get started with Gnovium cloud"
                 className="text-step-1 font-black font-mono uppercase tracking-wider px-6 py-3 border-2 border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--code-bg)] transition-all flex items-center gap-2 bg-[var(--card-bg)]"
               >
                 Get Started

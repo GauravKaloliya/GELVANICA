@@ -28,7 +28,7 @@ const sections = [
 
 export default function Footer() {
   return (
-    <footer className="border-t-2 border-[var(--border)] py-16">
+    <footer className="border-t-2 border-[var(--border)] py-16" aria-label="Site footer">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid gap-8 md:grid-cols-4">
           <div>
@@ -41,11 +41,11 @@ export default function Footer() {
           </div>
 
           {sections.map((s) => (
-            <div key={s.title}>
+            <nav key={s.title} aria-label={`${s.title} links`}>
               <h4 className="font-mono text-step-0 font-black uppercase tracking-widest text-[var(--muted)] mb-3">
                 {s.title}
               </h4>
-              <ul className="space-y-2">
+              <ul role="list" className="space-y-2">
                 {s.links.map((l) => (
                   <li key={l.href}>
                     <Link
@@ -57,7 +57,7 @@ export default function Footer() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
           ))}
         </div>
 

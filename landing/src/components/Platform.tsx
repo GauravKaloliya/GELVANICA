@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Monitor, Globe, Braces, ArrowRight } from 'lucide-react';
+import { Monitor, Globe, Braces } from 'lucide-react';
 import ParticleGraph from './ParticleGraph';
 import { RevealSection } from './RevealSection';
 
@@ -47,7 +47,7 @@ const platforms = [
 
 export default function Platform() {
   return (
-    <section id="platform" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="platform" aria-label="Platform overview" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <ParticleGraph className="opacity-40" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mb-14 text-center">
@@ -65,11 +65,14 @@ export default function Platform() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          role="list"
           className="grid gap-8 md:grid-cols-3"
         >
           {platforms.map((p) => (
             <motion.div
               key={p.title}
+              role="listitem"
+              aria-label={p.title}
               variants={cardVariants}
               whileHover={{ scale: 1.002, transition: { type: 'spring' as const, stiffness: 300, damping: 25 } }}
               className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth flex flex-col"

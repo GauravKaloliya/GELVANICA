@@ -62,7 +62,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="relative min-h-screen flex items-center overflow-hidden py-16">
+    <section id="features" aria-label="Features" className="relative min-h-screen flex items-center overflow-hidden py-16">
       <ParticleGraph className="opacity-40" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mb-16 text-center">
@@ -82,11 +82,14 @@ export default function Features() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
+            role="list"
             className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
           {features.map((f) => (
             <motion.div
               key={f.title}
+              role="listitem"
+              aria-label={f.title}
               variants={cardVariants}
               whileHover={{ scale: 1.002, transition: { type: 'spring' as const, stiffness: 300, damping: 25 } }}
               className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth flex flex-col"

@@ -27,8 +27,8 @@ export default function ParticleGraph({ className = '' }: { className?: string }
     const edges: Edge[] = [];
     const NODE_COUNT = 40;
     const EDGE_COUNT = 35;
-    const W = canvas.width = canvas.offsetWidth * devicePixelRatio;
-    const H = canvas.height = canvas.offsetHeight * devicePixelRatio;
+    canvas.width = canvas.offsetWidth * devicePixelRatio;
+    canvas.height = canvas.offsetHeight * devicePixelRatio;
     ctx.scale(devicePixelRatio, devicePixelRatio);
     const w = canvas.offsetWidth;
     const h = canvas.offsetHeight;
@@ -96,10 +96,12 @@ export default function ParticleGraph({ className = '' }: { className?: string }
   }, [theme]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={`absolute inset-0 pointer-events-none ${className}`}
-      style={{ width: '100%', height: '100%' }}
-    />
+    <div aria-hidden="true" role="presentation">
+      <canvas
+        ref={canvasRef}
+        className={`absolute inset-0 pointer-events-none ${className}`}
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
   );
 }

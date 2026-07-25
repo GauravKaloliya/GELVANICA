@@ -200,7 +200,7 @@ export default function DownloadContent({ changelogHref = docsUrl(Routes.docs.ch
 
     if (!isArm) {
       try {
-        const uaData = (navigator as any).userAgentData;
+        const uaData = (navigator as Navigator & { userAgentData?: { architecture?: string } }).userAgentData;
         if (uaData?.architecture === 'arm') isArm = true;
       } catch {}
     }

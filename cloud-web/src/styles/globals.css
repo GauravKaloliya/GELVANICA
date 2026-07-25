@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@source "../../../packages/shared/components/";
+@source "../../../packages/shared/index.ts";
+@import "../../../packages/shared/styles/base.css";
+
+@layer base {
+  *:focus-visible {
+    @apply outline-none ring-2 ring-white/20;
+  }
+}
+
+:root {
+  --accent: #6366f1;
+}

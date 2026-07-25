@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 
 type Theme = 'dark' | 'light' | 'sepia' | 'high-contrast' | 'ocean' | 'midnight';
 
@@ -20,25 +20,15 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export const useTheme = () => useContext(ThemeContext);
 
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  const stored = localStorage.getItem('gnovium-theme') as Theme | null;
-  if ((stored as string) && THEMES.includes(stored as Theme)) return stored as Theme;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [mounted, setMounted] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    const stored = localStorage.getItem('gnovium-theme') as Theme | null;
+    if ((stored as string) && THEMES.includes(stored as Theme)) return stored as Theme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   useEffect(() => {
-    const initialTheme = getInitialTheme();
-    setThemeState(initialTheme);
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
     const root = document.documentElement;
 
     root.classList.add('theme-transitioning');
@@ -51,10 +41,9 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [theme, mounted]);
+  }, [theme]);
 
   useEffect(() => {
-    if (!mounted) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
       const stored = localStorage.getItem('gnovium-theme');
@@ -64,7 +53,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     };
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [mounted]);
+  }, []);
 
   const toggle = useCallback(() => {
     setThemeState((t) => THEMES[(THEMES.indexOf(t) + 1) % THEMES.length]);
@@ -73,14 +62,6 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
   }, []);
-
-  if (!mounted) {
-    return (
-      <ThemeContext.Provider value={{ theme: 'dark', toggle, setTheme }}>
-        {children}
-      </ThemeContext.Provider>
-    );
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggle, setTheme }}>

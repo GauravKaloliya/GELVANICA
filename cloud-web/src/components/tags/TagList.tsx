@@ -23,8 +23,8 @@ export function TagList({
   if (tags.length === 0) {
     return (
       <div className={cn("flex items-center gap-2 py-2", className)}>
-        <Inbox className="h-4 w-4 text-zinc-600" />
-        <p className="text-xs text-zinc-500">No tags</p>
+        <Inbox className="h-4 w-4 text-muted" />
+        <p className="text-xs text-muted">No tags</p>
       </div>
     );
   }

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
 import { useGovernance } from "@/hooks/useGovernance";
-import type { GovernanceHealth, GovernanceReport as GovernanceReportType, DuplicateGroup, Entity, Job } from "@/lib/types";
+import type { GovernanceHealthScore, GovernanceReport as GovernanceReportType, Job } from "@/lib/types";
 import { useWorkspaceContext } from "@/lib/workspace-context";
 import { GovernanceReport } from "@/components/governance/GovernanceReport";
 import { HealthScore } from "@/components/governance/HealthScore";
@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import ApprovalCard from "@/components/governance/ApprovalCard";
 import ReviewWorkflow from "@/components/governance/ReviewWorkflow";
 import { useAuthStore } from "@/stores/authStore";
-import { GOVERNANCE_THRESHOLDS } from "@/lib/config/constants";
+import { configService } from "@/lib/services/configService";
 
 export default function GovernancePage() {
   const params = useParams();
@@ -35,10 +35,10 @@ export default function GovernancePage() {
   const workspaceId = params.id as string;
   const { currentWorkspace } = useWorkspaceContext();
 
-  const [health, setHealth] = useState<GovernanceHealth | null>(null);
-  const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
-  const [orphans, setOrphans] = useState<Entity[]>([]);
-  const [stale, setStale] = useState<Entity[]>([]);
+  const [health, setHealth] = useState<GovernanceHealthScore | null>(null);
+  const [duplicates, setDuplicates] = useState<Array<{ name: string; count: number; entity_ids?: string[] }>>([]);
+  const [orphans, setOrphans] = useState<Array<{ id: string; name: string | null; updated_at: string }>>([]);
+  const [stale, setStale] = useState<Array<{ id: string; name: string | null; updated_at: string }>>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [brokenLinks, setBrokenLinks] = useState<Array<{ entity_id: string; entity_title: string; broken_ref: string }>>([]);
   const [namingIssues, setNamingIssues] = useState<Array<{ entity_id: string; entity_title: string; issue: string }>>([]);
@@ -47,6 +47,7 @@ export default function GovernancePage() {
   const [schedule, setSchedule] = useState("off");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [governanceThresholds, setGovernanceThresholds] = useState({ excellent: 90, needs_attention: 70 });
 
   const { getHealth, getDuplicates, getOrphans, getStale, generateReport } = useGovernance(workspaceId);
 
@@ -70,13 +71,13 @@ export default function GovernancePage() {
         getStale(),
       ]);
       if (dupData) {
-        setDuplicates(dupData?.duplicates ?? dupData ?? []);
+        setDuplicates(dupData?.duplicate_entities ?? []);
       }
       if (orphanData) {
-        setOrphans(orphanData?.orphans ?? orphanData ?? []);
+        setOrphans(orphanData?.orphans ?? []);
       }
       if (staleData) {
-        setStale(staleData?.stale ?? staleData ?? []);
+        setStale(staleData?.stale ?? []);
       }
     } catch {
       // handle error
@@ -86,20 +87,20 @@ export default function GovernancePage() {
   const fetchExtraCategories = useCallback(async () => {
     if (!tokens?.access_token) return;
     Promise.allSettled([
-      apiClient.get<{ data: Array<{ entity_id: string; entity_title: string; broken_ref: string }> }>(`/governance/broken-links?workspace_id=${workspaceId}`),
-      apiClient.get<{ data: Array<{ entity_id: string; entity_title: string; issue: string }> }>(`/governance/naming-issues?workspace_id=${workspaceId}`),
-      apiClient.get<{ data: Array<{ entity_id: string; entity_title: string; block_count: number }> }>(`/governance/size-warnings?workspace_id=${workspaceId}`),
+      apiClient.get<{ data: { items: Array<{ entity_id: string; entity_title: string; broken_ref: string }> } }>(`/workspaces/${workspaceId}/governance/broken-links`),
+      apiClient.get<{ data: { items: Array<{ entity_id: string; entity_title: string; issue: string }> } }>(`/workspaces/${workspaceId}/governance/naming-issues`),
+      apiClient.get<{ data: { items: Array<{ entity_id: string; entity_title: string; block_count: number }> } }>(`/workspaces/${workspaceId}/governance/size-warnings`),
     ]).then(([bl, ni, sw]) => {
-      if (bl.status === "fulfilled" && bl.value.data) setBrokenLinks(bl.value.data);
-      if (ni.status === "fulfilled" && ni.value.data) setNamingIssues(ni.value.data);
-      if (sw.status === "fulfilled" && sw.value.data) setSizeWarnings(sw.value.data);
+      if (bl.status === "fulfilled" && bl.value.data?.items) setBrokenLinks(bl.value.data.items);
+      if (ni.status === "fulfilled" && ni.value.data?.items) setNamingIssues(ni.value.data.items);
+      if (sw.status === "fulfilled" && sw.value.data?.items) setSizeWarnings(sw.value.data.items);
     });
   }, [tokens, workspaceId]);
 
   const fetchJobs = useCallback(async () => {
     if (!tokens?.access_token) return;
     try {
-      const json = await apiClient.get<{ data: Job[] }>(`/jobs/?workspace_id=${workspaceId}&status=completed`);
+      const json = await apiClient.get<{ data: Job[] }>(`/workspaces/${workspaceId}/jobs?status=completed`);
       setJobs(json.data ?? []);
     } catch {
       // handle error
@@ -109,8 +110,8 @@ export default function GovernancePage() {
   const fetchSchedule = useCallback(async () => {
     if (!tokens?.access_token) return;
     try {
-      const json = await apiClient.get<{ data?: { schedule?: string } }>(`/governance/schedule?workspace_id=${workspaceId}`);
-      setSchedule(json.data?.schedule ?? "off");
+      const json = await apiClient.get<{ schedule?: string }>(`/workspaces/${workspaceId}/settings/governance`);
+      setSchedule(json?.schedule ?? "off");
     } catch {
       setSchedule("off");
     }
@@ -120,12 +121,18 @@ export default function GovernancePage() {
     const previous = schedule;
     setSchedule(value);
     try {
-      await apiClient.put("/governance/schedule", { workspace_id: workspaceId, schedule: value.toLowerCase() });
+      await apiClient.put(`/workspaces/${workspaceId}/settings/governance`, { schedule: value.toLowerCase() });
     } catch {
       setSchedule(previous);
       toast.error("Failed to update scan schedule");
     }
   };
+
+  useEffect(() => {
+    configService.get(workspaceId).then((c) => {
+      if (c?.governance_thresholds) setGovernanceThresholds(c.governance_thresholds);
+    });
+  }, [workspaceId]);
 
   useEffect(() => {
     fetchHealth();
@@ -155,7 +162,6 @@ Generated: ${new Date().toISOString()}
 ## Health Score: ${health?.health_score || 0}/100
 
 ## Summary
-- Entities: ${health?.entity_count || 0}
 - Duplicates: ${health?.duplicate_count || 0}
 - Orphans: ${health?.orphan_count || 0}
 - Stale: ${health?.stale_count || 0}
@@ -164,13 +170,13 @@ Generated: ${new Date().toISOString()}
 - Size Warnings: ${sizeWarnings.length}
 
 ## Duplicates
-${duplicates.map((d) => `- ${d.title} (${d.count} duplicates)`).join("\n") || "None"}
+${duplicates.map((d) => `- ${d.name} (${d.count} duplicates)`).join("\n") || "None"}
 
 ## Orphans
-${orphans.map((o) => `- ${o.title || "Untitled"}`).join("\n") || "None"}
+${orphans.map((o) => `- ${o.name || "Untitled"}`).join("\n") || "None"}
 
 ## Stale Content
-${stale.map((s) => `- ${s.title || "Untitled"} (last updated: ${s.updated_at})`).join("\n") || "None"}
+${stale.map((s) => `- ${s.name || "Untitled"} (last updated: ${s.updated_at})`).join("\n") || "None"}
 
 ## Broken Links
 ${brokenLinks.map((b) => `- ${b.entity_title}: references ${b.broken_ref}`).join("\n") || "None"}
@@ -194,12 +200,16 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
     ? {
         id: "",
         workspace_id: workspaceId,
-        health_score: health.health_score,
-        duplicate_count: health.duplicate_count,
-        orphan_count: health.orphan_count,
-        stale_count: health.stale_count,
-        report: { duplicates, orphans, stale, entity_count: health.entity_count },
-        created_at: health.created_at,
+        type: "compliance",
+        title: "Governance Report",
+        status: "completed",
+        data: { health_score: health.health_score, duplicate_count: health.duplicate_count, orphan_count: health.orphan_count, stale_count: health.stale_count, duplicates, orphans, stale, entity_count: health.entity_count, block_count: health.block_count, relation_count: health.relation_count },
+        params: {},
+        created_by: null,
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+        deleted_at: null,
+        deleted_by: null,
       }
     : null;
 
@@ -208,7 +218,7 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
   const allIssues = [
     ...duplicates.map((d, i) => ({
       id: `dup-${i}`,
-      title: d.title,
+      title: d.name,
       category: "duplicate" as const,
       severity: "medium" as const,
       description: `${d.count} similar versions found`,
@@ -216,21 +226,21 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
     })),
     ...orphans.map((o) => ({
       id: `orphan-${o.id}`,
-      title: o.title || "Untitled entity",
+      title: o.name || "Untitled entity",
       category: "orphan" as const,
       severity: "low" as const,
       description: "No relations connected",
       entity_id: o.id,
-      entity_title: o.title || undefined,
+      entity_title: o.name || undefined,
     })),
     ...stale.map((s) => ({
       id: `stale-${s.id}`,
-      title: s.title || "Untitled entity",
+      title: s.name || "Untitled entity",
       category: "stale" as const,
       severity: "low" as const,
       description: `Last updated ${formatRelativeTime(s.updated_at)}`,
       entity_id: s.id,
-      entity_title: s.title || undefined,
+      entity_title: s.name || undefined,
     })),
     ...brokenLinks.map((bl, i) => ({
       id: `bl-${i}`,
@@ -263,21 +273,21 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Governance</h1>
-          <p className="mt-1 text-sm text-zinc-500">Workspace health and data quality</p>
+          <h1 className="text-2xl font-bold text-foreground display-heading">Governance</h1>
+          <p className="mt-1 text-step-3 text-muted">Workspace health and data quality</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 text-sm font-semibold text-black hover:bg-surface disabled:opacity-50"
           >
             <RefreshCw className={cn("h-4 w-4", generating && "animate-spin")} />
             {generating ? "Generating..." : "Run Audit"}
           </button>
           <button
             onClick={handleExportReport}
-            className="flex items-center gap-2 rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800"
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-foreground hover:bg-surface"
           >
             <Download className="h-4 w-4" />
             Export Report
@@ -297,31 +307,31 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
         </div>
       ) : !health ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Shield className="h-12 w-12 text-zinc-700" />
-          <p className="mt-3 text-sm text-zinc-400">No governance report yet</p>
-          <p className="mt-1 text-xs text-zinc-600">Run an audit to analyze workspace health</p>
+          <Shield className="h-12 w-12 text-muted" />
+          <p className="mt-3 text-step-3 text-muted">No governance report yet</p>
+          <p className="mt-1 text-step-1 text-muted">Run an audit to analyze workspace health</p>
         </div>
       ) : (
         <>
           {/* Health Score Card */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+          <div className="rounded-xl border border-border bg-card p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <HealthScore score={healthScore} size="lg" />
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Health Score</h2>
-                  <p className="text-sm text-zinc-400">
-                    {healthScore >= GOVERNANCE_THRESHOLDS.EXCELLENT
+                  <h2 className="text-lg font-semibold text-foreground">Health Score</h2>
+                  <p className="text-step-3 text-muted">
+                    {healthScore >= governanceThresholds.excellent
                       ? "Excellent — your workspace is in great shape"
-                      : healthScore >= GOVERNANCE_THRESHOLDS.NEEDS_ATTENTION
+                      : healthScore >= governanceThresholds.needs_attention
                         ? "Needs attention — some issues detected"
                         : "Poor — significant issues need resolution"}
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs text-zinc-500">Last audit</p>
-                <p className="text-sm text-zinc-300">{formatRelativeTime(health.created_at)}</p>
+                <p className="text-step-1 text-muted">Last audit</p>
+                <p className="text-step-3 text-foreground">{formatRelativeTime(new Date().toISOString())}</p>
               </div>
             </div>
           </div>
@@ -331,72 +341,72 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
 
            {/* Stats Grid */}
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Copy className="h-4 w-4 text-amber-400" />
-                  <span className="text-sm text-zinc-400">Duplicates</span>
+                  <span className="text-step-3 text-muted">Duplicates</span>
                 </div>
-                <span className="text-lg font-bold text-white">{health.duplicate_count}</span>
+                <span className="text-lg font-bold text-foreground">{health.duplicate_count}</span>
               </div>
-              <p className="mt-1 text-[11px] text-zinc-600">Potential duplicate entities</p>
+              <p className="mt-1 text-[11px] text-muted">Potential duplicate entities</p>
             </div>
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-400" />
-                  <span className="text-sm text-zinc-400">Orphans</span>
+                  <span className="text-step-3 text-muted">Orphans</span>
                 </div>
-                <span className="text-lg font-bold text-white">{health.orphan_count}</span>
+                <span className="text-lg font-bold text-foreground">{health.orphan_count}</span>
               </div>
-              <p className="mt-1 text-[11px] text-zinc-600">Entities with no relations</p>
+              <p className="mt-1 text-[11px] text-muted">Entities with no relations</p>
             </div>
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-blue-400" />
-                  <span className="text-sm text-zinc-400">Stale</span>
+                  <span className="text-step-3 text-muted">Stale</span>
                 </div>
-                <span className="text-lg font-bold text-white">{health.stale_count}</span>
+                <span className="text-lg font-bold text-foreground">{health.stale_count}</span>
               </div>
-              <p className="mt-1 text-[11px] text-zinc-600">Not updated in 90+ days</p>
+              <p className="mt-1 text-[11px] text-muted">Not updated in 90+ days</p>
             </div>
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Link className="h-4 w-4 text-orange-400" />
-                  <span className="text-sm text-zinc-400">Broken Links</span>
+                  <span className="text-step-3 text-muted">Broken Links</span>
                 </div>
-                <span className="text-lg font-bold text-white">{brokenLinks.length}</span>
+                <span className="text-lg font-bold text-foreground">{brokenLinks.length}</span>
               </div>
-              <p className="mt-1 text-[11px] text-zinc-600">References to missing entities</p>
+              <p className="mt-1 text-[11px] text-muted">References to missing entities</p>
             </div>
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Type className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm text-zinc-400">Naming Issues</span>
+                  <span className="text-step-3 text-muted">Naming Issues</span>
                 </div>
-                <span className="text-lg font-bold text-white">{namingIssues.length}</span>
+                <span className="text-lg font-bold text-foreground">{namingIssues.length}</span>
               </div>
-              <p className="mt-1 text-[11px] text-zinc-600">Inconsistent or invalid names</p>
+              <p className="mt-1 text-[11px] text-muted">Inconsistent or invalid names</p>
             </div>
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <HardDrive className="h-4 w-4 text-purple-400" />
-                  <span className="text-sm text-zinc-400">Size Warnings</span>
+                  <span className="text-step-3 text-muted">Size Warnings</span>
                 </div>
-                <span className="text-lg font-bold text-white">{sizeWarnings.length}</span>
+                <span className="text-lg font-bold text-foreground">{sizeWarnings.length}</span>
               </div>
-              <p className="mt-1 text-[11px] text-zinc-600">Entities exceeding size limits</p>
+              <p className="mt-1 text-[11px] text-muted">Entities exceeding size limits</p>
             </div>
           </div>
 
           {/* Issues */}
           {allIssues.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">Issues</h2>
+              <h2 className="text-lg font-semibold text-foreground">Issues</h2>
               <div className="grid gap-2 sm:grid-cols-2">
                 {allIssues.map((issue) => (
                   <IssueCard
@@ -413,15 +423,15 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
           )}
 
           {/* Compliance Report */}
-          {governanceReport && <GovernanceReport report={governanceReport as GovernanceReportType} />}
+          {governanceReport && <GovernanceReport report={governanceReport as GovernanceReportType} workspaceId={params.id as string} />}
 
           {/* Approval Card — Unified Issues */}
           {governanceReport && <ApprovalCard report={governanceReport} workspaceId={workspaceId} />}
 
           {/* Scan Schedule */}
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-            <h3 className="text-sm font-medium text-white">Scan Schedule</h3>
-            <p className="mt-1 text-xs text-zinc-500">Automatically run governance audits on a schedule</p>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h3 className="text-sm font-medium text-foreground display-heading">Scan Schedule</h3>
+            <p className="mt-1 text-step-1 text-muted">Automatically run governance audits on a schedule</p>
             <div className="mt-3 flex gap-2">
               {["Off", "Daily", "Weekly", "Monthly"].map((freq) => {
                 const isActive = schedule === freq.toLowerCase();
@@ -432,8 +442,8 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
                     className={cn(
                       "rounded-lg border px-3 py-1.5 text-xs transition-colors",
                       isActive
-                        ? "border-white bg-white text-black font-medium"
-                        : "border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                        ? "border-white bg-card text-black font-medium"
+                        : "border-border text-muted hover:bg-surface hover:text-foreground"
                     )}
                   >
                     {freq}
@@ -448,28 +458,28 @@ ${sizeWarnings.map((s) => `- ${s.entity_title}: ${s.block_count} blocks`).join("
       {/* Jobs Section */}
       {jobs.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-white">Completed Jobs</h2>
+          <h2 className="text-lg font-semibold text-foreground">Completed Jobs</h2>
           <div className="space-y-2">
             {jobs.map((job) => (
               <div
                 key={job.id}
-                className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500/10">
                     <CheckCircle className="h-3.5 w-3.5 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white capitalize">
-                      {job.job_type.replace(/_/g, " ")}
+                    <p className="text-step-3 font-medium text-foreground capitalize">
+                      {job.type.replace(/_/g, " ")}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-step-1 text-muted">
                       Completed {formatRelativeTime(job.completed_at ?? job.created_at)}
                     </p>
                   </div>
                 </div>
                 {job.result && (
-                  <p className="max-w-xs truncate text-xs text-zinc-500">
+                  <p className="max-w-xs truncate text-step-1 text-muted">
                     {JSON.stringify(job.result).slice(0, 80)}
                   </p>
                 )}

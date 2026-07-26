@@ -52,7 +52,7 @@ export function MobileNav({ open, onClose, workspaceId }: MobileNavProps) {
       <SheetHeader onClose={onClose}>
         <div>
           <p className="text-sm font-semibold text-white">{currentWorkspace?.name || "Workspace"}</p>
-          <p className="text-[11px] text-zinc-500">{currentWorkspace?.deployment_mode || "cloud"}</p>
+          <p className="text-[11px] text-muted">{currentWorkspace?.deployment_mode || "cloud"}</p>
         </div>
       </SheetHeader>
       <SheetContent>
@@ -77,8 +77,8 @@ export function MobileNav({ open, onClose, workspaceId }: MobileNavProps) {
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-zinc-800 text-white"
-                      : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+                      ? "bg-surface text-foreground"
+                      : "text-muted hover:bg-surface hover:text-foreground"
                   )}
                 >
                   <item.icon className="h-4 w-4 shrink-0" />

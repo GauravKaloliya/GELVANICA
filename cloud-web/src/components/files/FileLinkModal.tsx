@@ -25,15 +25,15 @@ export function FileLinkModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-sm mx-4 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+      <div className="relative z-50 w-full max-w-sm mx-4 rounded-xl border-border bg-background neo-depth p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-white">Link to Entity</h3>
-          <button onClick={onClose} className="rounded p-1 text-zinc-500 hover:text-white" aria-label="Close">
+          <button onClick={onClose} className="rounded p-1 text-muted hover:text-foreground" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
-        <p className="text-xs text-zinc-500 mb-3">
-          Link <span className="text-zinc-300">{file.file_name}</span> to an entity.
+        <p className="text-xs text-muted mb-3">
+          Link <span className="text-foreground">{file.file_name}</span> to an entity.
         </p>
         {linkSuccess === file.id ? (
           <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-400">
@@ -47,7 +47,7 @@ export function FileLinkModal({
               value={entityIdInput}
               onChange={(e) => onEntityIdChange(e.target.value)}
               placeholder="Enter entity ID"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && entityIdInput.trim()) {
                   onLink(file.id, entityIdInput.trim());
@@ -58,14 +58,14 @@ export function FileLinkModal({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="rounded-lg px-3 py-1.5 text-sm text-zinc-400 hover:text-white"
+                className="rounded-lg px-3 py-1.5 text-sm text-muted hover:text-foreground"
               >
                 Cancel
               </button>
               <button
                 onClick={() => onLink(file.id, entityIdInput.trim())}
                 disabled={!entityIdInput.trim() || linking}
-                className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-surface disabled:opacity-50"
               >
                 {linking && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Link

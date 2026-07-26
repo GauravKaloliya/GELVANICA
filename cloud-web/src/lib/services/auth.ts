@@ -1,105 +1,66 @@
-import { AUTH_API_BASE } from "@/lib/config/constants";
+import { apiClient } from "../apiClient";
 import type { User, AuthTokens } from "../types";
 
-interface FetchOptions extends RequestInit {
-  token?: string;
-}
-
-interface AuthData {
+type AuthResponseData = {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
   user: User;
-  tokens: AuthTokens;
-}
+};
 
-interface AuthResponse {
-  data: AuthData;
-}
+export const authService = {
+  register: (email: string, password: string, name?: string) =>
+    apiClient.post<{data: AuthResponseData}>("/auth/register", { email, password, name }),
 
-async function request<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { token, ...fetchOptions } = options;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  };
+  login: (email: string, password: string) =>
+    apiClient.post<{data: AuthResponseData}>("/auth/login", { email, password }),
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${AUTH_API_BASE}${endpoint}`, {
-    ...fetchOptions,
-    headers,
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: { message: "Request failed" } }));
-    throw new Error(error.error?.message || `HTTP ${res.status}`);
-  }
-
-  return res.json();
-}
-
-export const authApi = {
-  register: async (email: string, password: string, name?: string): Promise<AuthData> => {
-    const res = await request<AuthResponse>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password, name }),
-    });
-    return res.data;
-  },
-
-  login: async (email: string, password: string): Promise<AuthData> => {
-    const res = await request<AuthResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    return res.data;
-  },
-
-  googleLogin: async (credential: string): Promise<AuthData> => {
-    const res = await request<AuthResponse>("/auth/google", {
-      method: "POST",
-      body: JSON.stringify({ credential }),
-    });
-    return res.data;
-  },
+  googleLogin: (credential: string) =>
+    apiClient.post<{data: AuthResponseData}>("/auth/google", { credential }),
 
   checkEmail: (email: string) =>
-    request<{ data: { available: boolean } }>(
-      `/auth/check-email?email=${encodeURIComponent(email)}`
-    ),
+    apiClient.get<{data: {available: boolean}}>(`/auth/check-email?email=${encodeURIComponent(email)}`),
 
-  getMe: (token: string) =>
-    request<{ data: User }>("/auth/me", { token }),
+  getMe: () =>
+    apiClient.get<{data: User}>("/auth/me"),
 
-  updateMe: (token: string, data: { name?: string; avatar_url?: string; profile_image_url?: string }) =>
-    request<{ data: User }>("/auth/me", {
-      method: "PATCH",
-      token,
-      body: JSON.stringify(data),
-    }),
+  updateMe: (data: { name?: string; avatar_url?: string; profile_image_url?: string }) =>
+    apiClient.patch<{data: User}>("/auth/me", data),
 
   refresh: (refreshToken: string) =>
-    request<{ data: { access_token: string } }>("/auth/refresh", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${refreshToken}` },
-    }),
+    apiClient.post<{data: {access_token: string; refresh_token: string; token_type: string; expires_in: number}}>("/auth/refresh", {}, refreshToken),
 
   logout: (refreshToken: string) =>
-    request("/auth/logout", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${refreshToken}` },
-    }),
+    apiClient.post("/auth/logout", {}, refreshToken),
 
-  exchangeCode: async (accessToken: string): Promise<{ code: string }> => {
-    const res = await fetch(`${AUTH_API_BASE}/auth/exchange-code`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    if (!res.ok) throw new Error("Failed to generate exchange code");
-    const json = await res.json();
-    return json.data;
+  exchangeCode: (accessToken: string) =>
+    apiClient.post<{data: {code: string}}>("/auth/exchange-code", {}, accessToken),
+
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    apiClient.post<{data: {success: boolean}}>("/auth/change-password", data),
+
+  forgotPassword: (email: string) =>
+    apiClient.post<{data: {message: string}}>("/auth/forgot-password", { email }),
+
+  resetPassword: (data: { token: string; password: string }) =>
+    apiClient.post<{data: {message: string}}>("/auth/reset-password", data),
+
+  authorize: (params: { client_id: string; redirect_uri: string; response_type: string }) =>
+    apiClient.get<{data: {code: string; state?: string}}>(`/auth/authorize?${new URLSearchParams(params as Record<string, string>)}`),
+
+  authorizePost: (data: { client_id: string; redirect_uri: string; response_type: string; state?: string }) =>
+    apiClient.post<{data: {code: string; state?: string}}>("/auth/authorize", data),
+
+  exchange: (data: { code: string; client_id: string; client_secret: string }) =>
+    apiClient.post<{data: {access_token: string; refresh_token: string; token_type: string; expires_in: number}}>("/auth/exchange", data),
+
+  avatar: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.postFormData<{data: {avatar_url: string}}>("/auth/avatar", formData);
   },
+
+  profileChanged: () =>
+    apiClient.post<{data: {changed: boolean}}>("/auth/profile-changed"),
 };

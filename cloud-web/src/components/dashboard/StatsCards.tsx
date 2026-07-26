@@ -14,14 +14,14 @@ interface StatsCardProps {
 
 export function StatsCard({ label, value, icon: Icon, color, trend, className }: StatsCardProps) {
   return (
-    <div className={cn("rounded-lg border border-zinc-800 bg-zinc-900/50 p-4", className)}>
+    <div className={cn("rounded-lg border border-card-border bg-card p-4 neo-depth-zinc card-hover hover-glow", className)}>
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-400">{label}</p>
+        <p className="text-step-3 text-muted">{label}</p>
         <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", color.replace("text-", "bg-").replace("400", "500/10"))}>
           <Icon className={cn("h-4 w-4", color)} />
         </div>
       </div>
-      <p className="mt-2 text-2xl font-bold text-white">{value.toLocaleString()}</p>
+      <p className="mt-2 text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
       {trend && (
         <p className={cn("mt-1 text-[11px] font-medium", trend.isPositive ? "text-green-400" : "text-red-400")}>
           {trend.isPositive ? "+" : ""}{trend.value}% from last month

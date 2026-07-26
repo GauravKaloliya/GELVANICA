@@ -77,9 +77,9 @@ export function getRoleBadgeColor(role: Role): string {
     case "editor":
       return "bg-green-500/20 text-green-400 border-green-500/30";
     case "viewer":
-      return "bg-zinc-500/20 text-zinc-400 border-zinc-500/30";
+      return "bg-surface text-muted border-border";
     default:
-      return "bg-zinc-500/20 text-zinc-400 border-zinc-500/30";
+      return "bg-surface text-muted border-border";
   }
 }
 

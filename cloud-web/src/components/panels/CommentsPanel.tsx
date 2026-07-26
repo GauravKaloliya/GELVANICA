@@ -24,8 +24,8 @@ export default function CommentsPanel({ token, entityId, workspaceId }: Comments
   const { members, fetchMembers } = useWorkspaceStore();
 
   useEffect(() => {
-    commentService.listByEntity(token, entityId).then(setComments).catch(() => {});
-  }, [token, entityId]);
+    commentService.listByEntity(workspaceId, entityId).then((res) => setComments(res.data)).catch(() => {});
+  }, [entityId, workspaceId]);
 
   useEffect(() => {
     if (tokens?.access_token) {
@@ -35,20 +35,19 @@ export default function CommentsPanel({ token, entityId, workspaceId }: Comments
 
   const mentionUsers = (members || []).map((m) => ({
     id: m.user_id,
-    name: m.user?.name || "",
-    email: m.user?.email || "",
-    avatar_url: m.user?.avatar_url || m.user?.profile_image_url || null,
+    name: m.display_name || "",
+    email: m.email || "",
+    avatar_url: m.avatar_url || null,
   }));
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
-      const comment = await commentService.create(token, {
-        workspace_id: workspaceId,
+      const res = await commentService.create(workspaceId, {
         entity_id: entityId,
         content: newComment.trim(),
       });
-      setComments((prev) => [...prev, comment]);
+      setComments((prev) => [...prev, res.data]);
       setNewComment("");
       toast.success("Comment added");
     } catch {
@@ -58,7 +57,7 @@ export default function CommentsPanel({ token, entityId, workspaceId }: Comments
 
   const handleDeleteComment = async (commentId: string) => {
     try {
-      await commentService.delete(token, commentId);
+      await commentService.delete(workspaceId, commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
       toast.success("Comment deleted");
     } catch {
@@ -69,10 +68,10 @@ export default function CommentsPanel({ token, entityId, workspaceId }: Comments
   const handleEditComment = async (commentId: string) => {
     if (!editingCommentContent.trim()) return;
     try {
-      const updated = await commentService.update(token, commentId, {
+      const res = await commentService.update(workspaceId, commentId, {
         content: editingCommentContent.trim(),
       });
-      setComments((prev) => prev.map((c) => (c.id === commentId ? updated : c)));
+      setComments((prev) => prev.map((c) => (c.id === commentId ? res.data : c)));
       toast.success("Comment updated");
     } catch {
       toast.error("Failed to update comment");
@@ -100,18 +99,18 @@ export default function CommentsPanel({ token, entityId, workspaceId }: Comments
       </div>
       <div className="space-y-2">
         {comments.map((comment) => (
-          <div key={comment.id} className="group/comment rounded-md border border-zinc-800 p-2.5 space-y-1">
+          <div key={comment.id} className="group/comment rounded-md border border-border p-2.5 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-zinc-500">{new Date(comment.created_at).toLocaleDateString()}</span>
+              <span className="text-[10px] text-muted">{new Date(comment.created_at).toLocaleDateString()}</span>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => startEditComment(comment)}
-                  className="text-zinc-600 hover:text-zinc-300 hidden group-hover/comment:inline-block"
+                  className="text-muted hover:text-foreground hidden group-hover/comment:inline-block"
                   aria-label="Edit comment"
                 >
                   <Pencil className="h-3 w-3" />
                 </button>
-                <button onClick={() => handleDeleteComment(comment.id)} className="text-zinc-600 hover:text-red-400" aria-label="Delete comment">
+                <button onClick={() => handleDeleteComment(comment.id)} className="text-muted hover:text-red-400" aria-label="Delete comment">
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
@@ -130,15 +129,15 @@ export default function CommentsPanel({ token, entityId, workspaceId }: Comments
                   }
                 }}
                 autoFocus
-                className="w-full rounded-md border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs text-white outline-none focus:border-zinc-500"
+                className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-foreground outline-none focus:border-accent"
               />
             ) : (
-              <p className="text-xs text-zinc-300">{comment.content}</p>
+              <p className="text-xs text-foreground">{comment.content}</p>
             )}
           </div>
         ))}
         {comments.length === 0 && (
-          <p className="text-xs text-zinc-600 text-center py-4">No comments yet.</p>
+          <p className="text-xs text-muted text-center py-4">No comments yet.</p>
         )}
       </div>
     </div>

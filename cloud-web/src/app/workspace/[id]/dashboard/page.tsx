@@ -60,12 +60,12 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Entities */}
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5">
+        <div className="rounded-lg border border-border bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold text-white">Recent Entities</h2>
+            <h2 className="font-semibold text-foreground display-heading">Recent Entities</h2>
             <Link
               href={`/workspace/${workspaceId}/search`}
-              className="text-xs text-zinc-400 hover:text-white"
+              className="text-step-1 text-muted hover:text-foreground"
             >
               View all
             </Link>
@@ -74,8 +74,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Activity Feed */}
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5">
-          <h2 className="mb-4 font-semibold text-white">Recent Activity</h2>
+        <div className="rounded-lg border border-border bg-card p-5">
+          <h2 className="mb-4 font-semibold text-foreground display-heading">Recent Activity</h2>
           <ActivityFeed workspaceId={workspaceId} limit={15} />
         </div>
       </div>

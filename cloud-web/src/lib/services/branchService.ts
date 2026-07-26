@@ -24,44 +24,51 @@ interface ConflictResponse {
 
 export const branchService = {
   list: (workspaceId: string, params?: { entity_id?: string }) => {
-    const sp = new URLSearchParams({ workspace_id: workspaceId });
+    const sp = new URLSearchParams();
     if (params?.entity_id) sp.set("entity_id", params.entity_id);
-    return apiClient.get<BranchListResponse>(`/branches/?${sp}`);
+    const qs = sp.toString();
+    return apiClient.get<BranchListResponse>(`/workspaces/${workspaceId}/branches${qs ? `?${qs}` : ""}`);
   },
 
-  get: (branchId: string) =>
-    apiClient.get<BranchResponse>(`/branches/${branchId}`),
+  get: (workspaceId: string, branchId: string) =>
+    apiClient.get<BranchResponse>(`/workspaces/${workspaceId}/branches/${branchId}`),
 
-  create: (data: {
-    workspace_id: string;
+  create: (workspaceId: string, data: {
     entity_id?: string;
     name: string;
     description?: string;
     from_branch_id?: string;
-  }) => apiClient.post<BranchResponse>("/branches/", data),
+  }) => apiClient.post<BranchResponse>(`/workspaces/${workspaceId}/branches`, data),
 
-  delete: (branchId: string) =>
-    apiClient.delete(`/branches/${branchId}`),
+  update: (workspaceId: string, branchId: string, data: { name?: string; description?: string; is_locked?: boolean }) =>
+    apiClient.patch<BranchResponse>(`/workspaces/${workspaceId}/branches/${branchId}`, data),
 
-  merge: (data: {
+  delete: (workspaceId: string, branchId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/branches/${branchId}`),
+
+  restore: (workspaceId: string, branchId: string) =>
+    apiClient.post<BranchResponse>(`/workspaces/${workspaceId}/branches/${branchId}/restore`),
+
+  merge: (workspaceId: string, data: {
     source_branch_id: string;
     target_branch_id: string;
     strategy?: "theirs" | "ours" | "manual";
-  }) => apiClient.post<MergeResponse>("/branches/merge", data),
+  }) => apiClient.post<MergeResponse>(`/workspaces/${workspaceId}/branches/merge`, data),
 
-  mergeFromBranch: (branchId: string, data: {
+  mergeFromBranch: (workspaceId: string, branchId: string, data: {
     target_branch_id: string;
     strategy?: "theirs" | "ours" | "manual";
-  }) => apiClient.post<MergeResponse>(`/branches/${branchId}/merge`, data),
+  }) => apiClient.post<MergeResponse>(`/workspaces/${workspaceId}/branches/${branchId}/merge`, data),
 
   listConflicts: (workspaceId: string, params?: { merge_id?: string }) => {
     const sp = new URLSearchParams();
     if (params?.merge_id) sp.set("merge_id", params.merge_id);
-    return apiClient.get<ConflictListResponse>(`/branches/merge-conflicts?${sp}`);
+    const qs = sp.toString();
+    return apiClient.get<ConflictListResponse>(`/workspaces/${workspaceId}/branches/merge-conflicts${qs ? `?${qs}` : ""}`);
   },
 
-  resolveConflict: (conflictId: string, data: {
+  resolveConflict: (workspaceId: string, conflictId: string, data: {
     resolution: "theirs" | "ours" | "manual";
     merged_data?: Record<string, unknown>;
-  }) => apiClient.post<ConflictResponse>(`/branches/merge-conflicts/${conflictId}/resolve`, data),
+  }) => apiClient.patch<ConflictResponse>(`/workspaces/${workspaceId}/branches/merge-conflicts/${conflictId}/resolve`, data),
 };

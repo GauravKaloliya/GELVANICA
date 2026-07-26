@@ -59,7 +59,7 @@ export function ConfirmDialog({
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white leading-none tracking-tight">{title}</h2>
-            <p className="mt-1 text-sm text-zinc-400">{description}</p>
+            <p className="mt-1 text-sm text-muted">{description}</p>
           </div>
         </div>
       </ModalHeader>

@@ -32,7 +32,7 @@ export default function IssueCard({ category, title, description, entityTitle, o
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-left transition-colors hover:border-zinc-700",
+        "flex w-full items-start gap-3 rounded-lg border-border bg-card p-3 text-left transition-colors card-hover hover-glow",
         className
       )}
     >
@@ -45,11 +45,11 @@ export default function IssueCard({ category, title, description, entityTitle, o
             {config.label}
           </span>
           {entityTitle && (
-            <span className="truncate text-[11px] text-zinc-600">{entityTitle}</span>
+            <span className="truncate text-[11px] text-muted">{entityTitle}</span>
           )}
         </div>
         <p className="mt-1 text-sm text-white truncate">{title}</p>
-        {description && <p className="mt-0.5 text-xs text-zinc-500 truncate">{description}</p>}
+        {description && <p className="mt-0.5 text-xs text-muted truncate">{description}</p>}
       </div>
     </button>
   );

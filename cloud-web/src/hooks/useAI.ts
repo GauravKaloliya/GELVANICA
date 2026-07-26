@@ -91,7 +91,7 @@ export function useAI(workspaceId: string) {
     if (!tokens?.access_token) return;
     try {
       const res = await fetch(
-        `${API_BASE}/ai/suggestions?workspace_id=${workspaceId}`,
+        `${API_BASE}/workspaces/${workspaceId}/ai/suggestions`,
         { headers: { Authorization: `Bearer ${tokens.access_token}` } }
       );
       if (res.ok) {

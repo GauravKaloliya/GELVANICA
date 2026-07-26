@@ -43,18 +43,8 @@ export default function ProfilePage() {
     try {
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("workspace_id", "avatars")
-      const uploadJson = await apiClient.postFormData<{ data: { object_key?: string; id?: string } }>("/files/upload", formData, tokens.access_token)
-      const fileData = uploadJson.data
-      const avatarUrl = fileData.object_key
-        ? `/api/v1/files/download/${encodeURIComponent(fileData.object_key)}`
-        : fileData.id
-          ? `/api/v1/files/${fileData.id}/download`
-          : null
-      if (!avatarUrl) throw new Error("No URL returned")
-
-      const patchJson = await apiClient.patch<{ data: { avatar_url: string } }>("/auth/me", { avatar_url: avatarUrl })
-      updateUser({ ...user, ...patchJson.data })
+      const uploadJson = await apiClient.postFormData<{ data: { avatar_url: string } }>("/auth/avatar", formData, tokens.access_token)
+      updateUser({ ...user, avatar_url: uploadJson.data.avatar_url })
       setMessage("Avatar updated")
     } catch {
       setMessage("Avatar upload failed")
@@ -66,15 +56,15 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl p-6 space-y-8">
       <div className="flex items-center gap-3">
-        <Link href="/" className="text-zinc-400 hover:text-white">
+        <Link href="/" className="text-muted hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-white">Profile</h1>
+        <h1 className="text-2xl font-bold text-foreground display-heading">Profile</h1>
       </div>
 
       {/* Avatar */}
       <div className="flex items-center gap-6">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-zinc-700">
+        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={user.avatar_url || getAvatarUrl(user.name || user.email)}
@@ -84,9 +74,9 @@ export default function ProfilePage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={saving}
-            className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 hover:opacity-100 transition-opacity"
+            className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 hover:opacity-100 transition-opacity"
           >
-            <Camera className="h-5 w-5 text-white" />
+            <Camera className="h-5 w-5 text-foreground" />
           </button>
           <input
             ref={fileInputRef}
@@ -97,20 +87,20 @@ export default function ProfilePage() {
           />
         </div>
         <div>
-          <p className="text-sm text-zinc-400">{user.email}</p>
-          <p className="text-xs text-zinc-600">Member since {new Date(user.created_at).toLocaleDateString()}</p>
+          <p className="text-step-3 text-muted">{user.email}</p>
+          <p className="text-step-1 text-muted">Member since {new Date(user.created_at).toLocaleDateString()}</p>
         </div>
       </div>
 
       {/* Name */}
       <div className="space-y-2">
-        <label htmlFor="profile-display-name" className="text-sm font-medium text-zinc-300">Display Name</label>
+        <label htmlFor="profile-display-name" className="text-sm font-medium text-foreground">Display Name</label>
         <input
           id="profile-display-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-500"
+          className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
           placeholder="Your name"
         />
       </div>
@@ -120,7 +110,7 @@ export default function ProfilePage() {
         <button
           onClick={handleSave}
           disabled={saving || name === (user.name || "")}
-          className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-surface disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save Changes

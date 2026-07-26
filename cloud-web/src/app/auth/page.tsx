@@ -1,21 +1,29 @@
-import { redirect } from "next/navigation";
+"use client";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import gnoviumLogo from "@gnovium/shared/assets/logo/logo.png";
+import Image from "next/image";
 
-export default async function AuthPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const params = await searchParams;
-  const target = new URLSearchParams();
+export default function AuthPage() {
+  const searchParams = useSearchParams();
+  const source = searchParams.get("source");
+  const query = source ? `?source=${source}` : "";
 
-  for (const [key, value] of Object.entries(params)) {
-    if (Array.isArray(value)) {
-      for (const item of value) target.append(key, item);
-    } else if (value !== undefined) {
-      target.set(key, value);
-    }
-  }
-
-  const query = target.toString();
-  redirect(`/auth/sign-in${query ? `?${query}` : ""}`);
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 grid-bg">
+      <div className="relative h-16 w-16 mb-8">
+        <Image src={gnoviumLogo} alt="Gnovium" fill className="object-contain" />
+      </div>
+      <h1 className="text-2xl font-black font-mono uppercase text-white mb-2 display-heading">Gnovium</h1>
+      <p className="text-step-1 text-muted font-mono mb-8">Knowledge Operating System</p>
+      <div className="flex gap-4">
+        <Link href={`/auth/sign-in${query}`} className="rounded-lg bg-card px-6 py-2 text-sm font-semibold text-foreground hover:bg-surface transition-colors">
+          Sign In
+        </Link>
+        <Link href={`/auth/sign-up${query}`} className="rounded-lg border border-border px-6 py-2 text-sm font-semibold text-foreground hover:bg-surface transition-colors">
+          Sign Up
+        </Link>
+      </div>
+    </div>
+  );
 }

@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useAuthStore } from "@/stores/authStore";
-import { notificationService } from "@/lib/services/notifications";
+import { settingsService } from "@/lib/services/settingsService";
+import { configService } from "@/lib/services/configService";
+import type { NotificationPref } from "@/lib/services/configService";
 import { Switch } from "@/components/ui/Switch";
 import { ArrowLeft, Save, Loader2, Check, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,100 +24,50 @@ interface LocalPrefs {
   quiet_hours_end: string | null;
 }
 
-const DEFAULT_PREFS: LocalPrefs = {
-  email_notifications: true,
-  push_notifications: true,
-  mention_notifications: true,
-  comment_notifications: true,
-  update_notifications: true,
-  governance_notifications: true,
-  sync_notifications: true,
-  quiet_hours_start: null,
-  quiet_hours_end: null,
-};
-
-const PREF_ITEMS: Array<{
-  key: keyof Omit<LocalPrefs, "quiet_hours_start" | "quiet_hours_end">;
-  label: string;
-  description: string;
-}> = [
-  {
-    key: "email_notifications",
-    label: "Email Notifications",
-    description: "Receive notifications via email",
-  },
-  {
-    key: "push_notifications",
-    label: "Push Notifications",
-    description: "Browser push notifications",
-  },
-  {
-    key: "mention_notifications",
-    label: "Mentions",
-    description: "When someone @mentions you in a comment",
-  },
-  {
-    key: "comment_notifications",
-    label: "Comments",
-    description: "New comments on entities you own or follow",
-  },
-  {
-    key: "update_notifications",
-    label: "Entity Updates",
-    description: "When entities you follow are created, updated, or deleted",
-  },
-  {
-    key: "governance_notifications",
-    label: "Governance Alerts",
-    description: "Health score changes and compliance issues",
-  },
-  {
-    key: "sync_notifications",
-    label: "Sync Conflicts",
-    description: "When sync conflicts need your resolution",
-  },
-];
-
 export default function NotificationSettingsPage() {
   const params = useParams();
-  const { tokens } = useAuthStore();
   const workspaceId = params.id as string;
-  const [prefs, setPrefs] = useState<LocalPrefs>(DEFAULT_PREFS);
+  const [prefs, setPrefs] = useState<LocalPrefs | null>(null);
+  const [prefItems, setPrefItems] = useState<NotificationPref[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadPrefs = useCallback(async () => {
-    if (!tokens?.access_token) return;
     try {
-      const data = await notificationService.getPreferences(tokens.access_token, workspaceId);
+      const [res, cfg] = await Promise.all([
+        settingsService.get(workspaceId, "notifications"),
+        configService.get(workspaceId),
+      ]);
+      setPrefItems(cfg.notification_prefs ?? []);
+      const p = res.data as Record<string, unknown>;
       setPrefs({
-        email_notifications: data.email_notifications ?? true,
-        push_notifications: data.push_notifications ?? true,
-        mention_notifications: data.mention_notifications ?? true,
-        comment_notifications: data.comment_notifications ?? true,
-        update_notifications: data.update_notifications ?? true,
-        governance_notifications: data.governance_notifications ?? true,
-        sync_notifications: data.sync_notifications ?? true,
-        quiet_hours_start: data.quiet_hours_start ?? null,
-        quiet_hours_end: data.quiet_hours_end ?? null,
+        email_notifications: (p.email_notifications as boolean) ?? false,
+        push_notifications: (p.push_notifications as boolean) ?? false,
+        mention_notifications: (p.mention_notifications as boolean) ?? false,
+        comment_notifications: (p.comment_notifications as boolean) ?? false,
+        update_notifications: (p.update_notifications as boolean) ?? false,
+        governance_notifications: (p.governance_notifications as boolean) ?? false,
+        sync_notifications: (p.sync_notifications as boolean) ?? false,
+        quiet_hours_start: (p.quiet_hours_start as string | null) ?? null,
+        quiet_hours_end: (p.quiet_hours_end as string | null) ?? null,
       });
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
     }
-  }, [tokens, workspaceId]);
+  }, [workspaceId]);
 
   useEffect(() => {
     loadPrefs();
   }, [loadPrefs]);
 
   const handleSave = async () => {
-    if (!tokens?.access_token) return;
+    if (!prefs) return;
     setSaving(true);
     try {
-      await notificationService.updatePreferences(tokens.access_token, workspaceId, prefs);
+      await settingsService.update(workspaceId, "notifications", prefs as unknown as Record<string, unknown>);
       setSaved(true);
       toast.success("Notification preferences saved");
       setTimeout(() => setSaved(false), 2000);
@@ -129,10 +80,10 @@ export default function NotificationSettingsPage() {
 
   if (loading)
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-8">
+      <div className="mx-auto max-w-4xl p-6 space-y-8">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-8 w-56" />
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-1">
+        <div className="rounded-xl border border-border bg-card p-6 space-y-1">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex items-center justify-between rounded-lg p-3">
               <div className="space-y-1.5">
@@ -148,43 +99,43 @@ export default function NotificationSettingsPage() {
     );
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-8">
-      <div className="flex items-center gap-2 text-sm text-zinc-500">
+    <div className="mx-auto max-w-4xl p-6 space-y-8">
+      <div className="flex items-center gap-2 text-sm text-muted">
         <Link
           href={`/workspace/${workspaceId}/settings`}
-          className="hover:text-white"
+          className="hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <Link
           href={`/workspace/${workspaceId}/settings`}
-          className="hover:text-white"
+          className="hover:text-foreground"
         >
           Settings
         </Link>
         <span>/</span>
-        <span className="text-zinc-300">Notifications</span>
+        <span className="text-foreground">Notifications</span>
       </div>
       <div>
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-foreground display-heading">
           Notification Preferences
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-step-3 text-muted">
           Choose which notifications you want to receive
         </p>
       </div>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-1">
-        {PREF_ITEMS.map((item) => (
+      <div className="rounded-xl border border-border bg-card p-6 space-y-1">
+        {prefItems.map((item) => (
           <div
             key={item.key}
-            className="flex items-center justify-between rounded-lg p-3 hover:bg-zinc-800/30"
+            className="flex items-center justify-between rounded-lg p-3 hover:bg-surface/30"
           >
             <Switch
               label={item.label}
               description={item.description}
-              checked={prefs[item.key]}
+              checked={prefs ? (prefs as Record<string, boolean>)[item.key] ?? false : false}
               onCheckedChange={(checked) =>
-                setPrefs((p) => ({ ...p, [item.key]: checked }))
+                setPrefs((p) => p ? { ...p, [item.key]: checked } : p)
               }
             />
           </div>
@@ -192,32 +143,32 @@ export default function NotificationSettingsPage() {
       </div>
 
       {/* Quiet Hours */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-zinc-400" />
-          <h2 className="text-sm font-semibold text-white">Quiet Hours</h2>
+          <Clock className="h-4 w-4 text-muted" />
+          <h2 className="text-sm font-semibold text-foreground display-heading">Quiet Hours</h2>
         </div>
-        <p className="text-xs text-zinc-500">Pause notifications during specific hours</p>
+        <p className="text-step-1 text-muted">Pause notifications during specific hours</p>
         <div className="flex items-center gap-4">
           <div className="space-y-1.5">
-            <label htmlFor="quiet-start" className="text-xs text-zinc-400">Start</label>
+            <label htmlFor="quiet-start" className="text-step-1 text-muted">Start</label>
             <input
               id="quiet-start"
               type="time"
-              value={prefs.quiet_hours_start || ""}
-              onChange={(e) => setPrefs((p) => ({ ...p, quiet_hours_start: e.target.value || null }))}
-              className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-white focus:border-zinc-500 focus:outline-none"
+              value={prefs?.quiet_hours_start || ""}
+              onChange={(e) => setPrefs((p) => p ? { ...p, quiet_hours_start: e.target.value || null } : p)}
+              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:border-accent focus:outline-none"
             />
           </div>
-          <span className="text-zinc-600 mt-5">to</span>
+          <span className="text-muted mt-5">to</span>
           <div className="space-y-1.5">
-            <label htmlFor="quiet-end" className="text-xs text-zinc-400">End</label>
+            <label htmlFor="quiet-end" className="text-step-1 text-muted">End</label>
             <input
               id="quiet-end"
               type="time"
-              value={prefs.quiet_hours_end || ""}
-              onChange={(e) => setPrefs((p) => ({ ...p, quiet_hours_end: e.target.value || null }))}
-              className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-white focus:border-zinc-500 focus:outline-none"
+              value={prefs?.quiet_hours_end || ""}
+              onChange={(e) => setPrefs((p) => p ? { ...p, quiet_hours_end: e.target.value || null } : p)}
+              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:border-accent focus:outline-none"
             />
           </div>
         </div>
@@ -229,8 +180,8 @@ export default function NotificationSettingsPage() {
         className={cn(
           "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
           saved
-            ? "bg-green-600 text-white"
-            : "bg-white text-black hover:bg-zinc-200"
+            ? "bg-green-600 text-foreground"
+            : "bg-card text-foreground hover:bg-surface"
         )}
       >
         {saving ? (

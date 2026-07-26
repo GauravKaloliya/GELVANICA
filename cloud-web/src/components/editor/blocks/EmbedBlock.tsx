@@ -35,20 +35,20 @@ export default function EmbedBlock({ content }: EmbedBlockProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Globe className="h-4 w-4 text-zinc-500" />
+        <Globe className="h-4 w-4 text-muted" />
         <input
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste URL to embed..."
-          className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-600"
+          className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
         />
         {url && (
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded p-1 text-zinc-500 hover:text-white"
+            className="rounded p-1 text-muted hover:text-foreground"
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
@@ -56,7 +56,7 @@ export default function EmbedBlock({ content }: EmbedBlockProps) {
       </div>
 
       {url && !isEmbeddable && !isImage && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+        <div className="rounded-lg border border-border bg-card/50 p-3">
           <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline break-all">
             {title || url}
           </a>
@@ -64,7 +64,7 @@ export default function EmbedBlock({ content }: EmbedBlockProps) {
       )}
 
       {embedUrl && (
-        <div className="overflow-hidden rounded-lg border border-zinc-800">
+        <div className="overflow-hidden rounded-lg border border-border">
           <iframe
             src={embedUrl}
             className="h-64 w-full"
@@ -76,13 +76,13 @@ export default function EmbedBlock({ content }: EmbedBlockProps) {
       )}
 
       {isImage && (
-        <div className="overflow-hidden rounded-lg border border-zinc-800">
+        <div className="overflow-hidden rounded-lg border border-border">
           <Image src={url} alt={title || "Embedded image"} width={0} height={0} unoptimized className="max-h-64 w-full object-cover" />
         </div>
       )}
 
       {title && (
-        <p className="text-xs text-zinc-500">{title}</p>
+        <p className="text-xs text-muted">{title}</p>
       )}
     </div>
   );

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/stores/authStore";
 import { tagService } from "@/lib/services/tagService";
 import type { Tag as TagType } from "@/lib/types";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -26,7 +25,6 @@ const PRESET_COLORS = [
 
 export default function TagsPage() {
   const params = useParams();
-  const { tokens } = useAuthStore();
   const workspaceId = params.id as string;
 
   const [tags, setTags] = useState<TagType[]>([]);
@@ -34,22 +32,20 @@ export default function TagsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingColor, setEditingColor] = useState("");
-  const [tagEntityCounts, setTagEntityCounts] = useState<Record<string, number>>({});
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchTags = useCallback(async () => {
-    if (!tokens?.access_token) return;
     setLoading(true);
     try {
-      const data = await tagService.list(tokens.access_token, workspaceId);
-      setTags(data);
+      const res = await tagService.list(workspaceId);
+      setTags(res.data);
     } catch {
       toast.error("Failed to load tags");
     } finally {
       setLoading(false);
     }
-  }, [tokens, workspaceId]);
+  }, [workspaceId]);
 
   useEffect(() => {
     document.title = 'Tags | Gnovium'
@@ -59,27 +55,10 @@ export default function TagsPage() {
     fetchTags();
   }, [fetchTags]);
 
-  useEffect(() => {
-    if (!tokens?.access_token || tags.length === 0) return;
-    const fetchCounts = async () => {
-      const counts: Record<string, number> = {};
-      for (const tag of tags) {
-        try {
-          const entities = await tagService.listEntities(tokens.access_token, tag.id, workspaceId);
-          counts[tag.id] = entities.length;
-        } catch {
-          counts[tag.id] = 0;
-        }
-      }
-      setTagEntityCounts(counts);
-    };
-    fetchCounts();
-  }, [tags, tokens, workspaceId]);
-
   const handleUpdate = async (tagId: string) => {
-    if (!tokens?.access_token || !editingName.trim()) return;
+    if (!editingName.trim()) return;
     try {
-      await tagService.update(tokens.access_token, tagId, {
+      await tagService.update(workspaceId, tagId, {
         name: editingName.trim(),
         color: editingColor,
       });
@@ -92,9 +71,8 @@ export default function TagsPage() {
   };
 
   const handleDelete = async (tagId: string) => {
-    if (!tokens?.access_token) return;
     try {
-      await tagService.delete(tokens.access_token, tagId);
+      await tagService.delete(workspaceId, tagId);
       setTags((prev) => prev.filter((t) => t.id !== tagId));
       setDeleteTarget(null);
       toast.success("Tag deleted");
@@ -108,14 +86,14 @@ export default function TagsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Tags</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <h1 className="text-2xl font-bold text-foreground display-heading">Tags</h1>
+          <p className="mt-1 text-step-3 text-muted">
             {tags.length} tag{tags.length !== 1 ? "s" : ""}
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200"
+          className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface"
         >
           <Plus className="h-4 w-4" />
           Create Tag
@@ -126,7 +104,7 @@ export default function TagsPage() {
       {loading ? (
         <div className="space-y-2 py-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+            <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
               <Skeleton variant="circular" width={16} height={16} />
               <Skeleton className="h-4 flex-1" />
               <Skeleton className="h-4 w-16" />
@@ -145,7 +123,7 @@ export default function TagsPage() {
           {tags.map((tag) => (
             <div
               key={tag.id}
-              className="group flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 transition-colors hover:border-zinc-700"
+              className="group flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-border"
             >
               {editingId === tag.id ? (
                 <div className="flex flex-1 items-center gap-2">
@@ -154,7 +132,7 @@ export default function TagsPage() {
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleUpdate(tag.id)}
-                    className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-white outline-none"
+                    className="flex-1 rounded border border-border bg-surface px-2 py-1 text-sm text-foreground outline-none"
                     autoFocus
                   />
                   <div className="flex gap-1">
@@ -173,13 +151,13 @@ export default function TagsPage() {
                   </div>
                   <button
                     onClick={() => handleUpdate(tag.id)}
-                    className="rounded px-2 py-1 text-xs text-green-400 hover:bg-zinc-800"
+                    className="rounded px-2 py-1 text-xs text-green-400 hover:bg-surface"
                   >
                     Save
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
-                    className="rounded px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800"
+                    className="rounded px-2 py-1 text-xs text-muted hover:bg-surface"
                   >
                     Cancel
                   </button>
@@ -187,12 +165,7 @@ export default function TagsPage() {
               ) : (
                 <>
                   <TagBadge name={tag.name} color={tag.color} size="md" />
-                  {tagEntityCounts[tag.id] !== undefined && (
-                    <span className="text-xs text-zinc-600">
-                      {tagEntityCounts[tag.id]} entities
-                    </span>
-                  )}
-                  <span className="text-[11px] text-zinc-600">
+                  <span className="text-[11px] text-muted">
                     {formatRelativeTime(tag.created_at)}
                   </span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -202,14 +175,14 @@ export default function TagsPage() {
                         setEditingName(tag.name);
                         setEditingColor(tag.color || PRESET_COLORS[0]);
                       }}
-                      className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white"
+                      className="rounded p-1 text-muted hover:bg-surface hover:text-foreground"
                       aria-label={`Edit ${tag.name}`}
                     >
                       <Edit3 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteTarget(tag.id)}
-                      className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-red-400"
+                      className="rounded p-1 text-muted hover:bg-surface hover:text-red-400"
                       aria-label={`Delete ${tag.name}`}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

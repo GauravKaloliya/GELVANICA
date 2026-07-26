@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
 import { useAuthStore } from "@/stores/authStore";
 import type { User, AuthTokens } from "@/lib/types";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function AuthCallbackPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuthStore();
   const [error, setError] = useState("");
@@ -24,18 +23,19 @@ export default function AuthCallbackPage() {
 
     const handleCallback = async () => {
       try {
-        const json = await apiClient.post<{ data: { user: User; tokens: AuthTokens } }>("/auth/google", { credential: credential || code });
+        const res = await apiClient.post<{ data: { access_token: string; refresh_token: string; token_type: string; expires_in: number; user: User } }>("/auth/google", { credential: credential || code });
 
-        login(json.data.user, json.data.tokens);
-        router.push("/workspaces");
+        const tokens: AuthTokens = { access_token: res.data.access_token, refresh_token: res.data.refresh_token, token_type: res.data.token_type, expires_in: res.data.expires_in };
+        login(res.data.user, tokens);
+        window.location.href = "/app/workspaces";
       } catch {
         setError("Authentication failed. Redirecting to sign in...");
-        setTimeout(() => router.push("/auth/sign-in"), 3000);
+        setTimeout(() => window.location.href = "/app/auth/sign-in", 3000);
       }
     };
 
     handleCallback();
-  }, [searchParams, login, router]);
+  }, [searchParams, login]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">

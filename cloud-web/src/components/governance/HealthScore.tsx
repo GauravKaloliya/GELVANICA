@@ -53,7 +53,7 @@ export function HealthScore({
   }, [score]);
 
   return (
-    <div className={cn("flex flex-col items-center gap-1", className)}>
+    <div className={cn("flex flex-col items-center gap-1 hover-glow", className)}>
       <div className="relative" style={{ width: dimension, height: dimension }}>
         <svg
           width={dimension}
@@ -65,7 +65,7 @@ export function HealthScore({
             cy={dimension / 2}
             r={radius}
             fill="none"
-            stroke="#27272a"
+            stroke="var(--border)"
             strokeWidth={strokeWidth}
           />
           <circle
@@ -98,7 +98,7 @@ export function HealthScore({
       {showLabel && (
         <p
           className={cn(
-            "font-medium text-zinc-500",
+            "font-medium text-muted",
             size === "sm" && "text-[10px]",
             size === "md" && "text-xs",
             size === "lg" && "text-sm"

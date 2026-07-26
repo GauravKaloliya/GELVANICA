@@ -18,11 +18,11 @@ const Checkbox = React.forwardRef<
     <CheckboxPrimitive.Root
       ref={ref}
       className={cn(
-        "peer h-4 w-4 shrink-0 rounded border border-zinc-700 bg-zinc-800/50",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
+        "peer h-4 w-4 shrink-0 rounded border border-border bg-surface",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-white",
-        "data-[state=indeterminate]:bg-zinc-600 data-[state=indeterminate]:text-white data-[state=indeterminate]:border-zinc-600",
+        "data-[state=checked]:bg-accent data-[state=checked]:text-foreground data-[state=checked]:border-accent",
+        "data-[state=indeterminate]:bg-surface-2 data-[state=indeterminate]:text-foreground data-[state=indeterminate]:border-border",
         "transition-colors",
         className
       )}
@@ -43,8 +43,8 @@ const Checkbox = React.forwardRef<
       <label className="flex items-start gap-3 cursor-pointer">
         <div className="mt-0.5">{checkbox}</div>
         <div className="flex-1">
-          {label && <p className="text-sm font-medium text-white leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{label}</p>}
-          {description && <p className="text-xs text-zinc-500 mt-1">{description}</p>}
+          {label && <p className="text-sm font-medium text-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{label}</p>}
+          {description && <p className="text-xs text-muted mt-1">{description}</p>}
         </div>
       </label>
     );

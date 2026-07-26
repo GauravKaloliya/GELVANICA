@@ -1,5 +1,5 @@
 import { apiClient } from "../apiClient";
-import type { Entity, EntityType, PropertyType, EntityVersion } from "../types";
+import type { Entity, EntityType, PropertyType, EntityProperty } from "../types";
 
 interface EntityListResponse {
   data: Entity[];
@@ -18,82 +18,90 @@ interface PropertyResponse {
   data: PropertyType[];
 }
 
-interface VersionListResponse {
-  data: EntityVersion[];
-  meta?: { total: number };
-}
-
 export const entityService = {
   list: (workspaceId: string, params?: { entity_type_id?: string; parent_id?: string; page?: number; per_page?: number }) => {
-    const sp = new URLSearchParams({ workspace_id: workspaceId });
+    const sp = new URLSearchParams();
     if (params?.entity_type_id) sp.set("entity_type_id", params.entity_type_id);
     if (params?.parent_id) sp.set("parent_id", params.parent_id);
     if (params?.page) sp.set("page", String(params.page));
     if (params?.per_page) sp.set("per_page", String(params.per_page));
-    return apiClient.get<EntityListResponse>(`/entities/?${sp}`);
+    const qs = sp.toString();
+    return apiClient.get<EntityListResponse>(`/workspaces/${workspaceId}/entities/${qs ? `?${qs}` : ""}`);
   },
 
-  create: (data: {
-    workspace_id: string;
-    title?: string;
+  create: (workspaceId: string, data: {
+    name?: string;
     entity_type_id?: string;
     parent_id?: string;
     properties?: Record<string, unknown>;
-  }) => apiClient.post<EntityResponse>("/entities/", data),
+  }) => apiClient.post<EntityResponse>(`/workspaces/${workspaceId}/entities/`, data),
 
-  get: (entityId: string) =>
-    apiClient.get<EntityResponse>(`/entities/${entityId}`),
+  get: (workspaceId: string, entityId: string) =>
+    apiClient.get<{ data: { entity: Entity } }>(`/workspaces/${workspaceId}/entities/${entityId}`),
 
-  update: (entityId: string, data: {
-    title?: string;
-    entity_type_id?: string;
-    status?: string;
-    properties?: Record<string, unknown>;
-  }) => apiClient.patch<EntityResponse>(`/entities/${entityId}`, data),
-
-  delete: (entityId: string) =>
-    apiClient.delete(`/entities/${entityId}`),
-
-  restore: (entityId: string) =>
-    apiClient.post<EntityResponse>(`/entities/${entityId}/restore`),
-
-  archive: (entityId: string) =>
-    apiClient.post<EntityResponse>(`/entities/${entityId}/archive`),
-
-  duplicate: (entityId: string) =>
-    apiClient.post<EntityResponse>(`/entities/${entityId}/duplicate`),
-
-  listChildren: (entityId: string) =>
-    apiClient.get<EntityListResponse>(`/entities/${entityId}/children`),
-
-  createChild: (entityId: string, data: {
-    title?: string;
+  update: (workspaceId: string, entityId: string, data: {
+    name?: string;
     entity_type_id?: string;
     properties?: Record<string, unknown>;
-  }) => apiClient.post<EntityResponse>(`/entities/${entityId}/children`, data),
+  }) => apiClient.patch<EntityResponse>(`/workspaces/${workspaceId}/entities/${entityId}`, data),
 
-  listVersions: (entityId: string) =>
-    apiClient.get<VersionListResponse>(`/entities/${entityId}/versions`),
+  delete: (workspaceId: string, entityId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/entities/${entityId}`),
 
-  createEntityType: (data: {
-    workspace_id: string;
+  permanentDelete: (workspaceId: string, entityId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/entities/${entityId}/permanent`),
+
+  restore: (workspaceId: string, entityId: string) =>
+    apiClient.post<EntityResponse>(`/workspaces/${workspaceId}/entities/${entityId}/restore`),
+
+  archive: (workspaceId: string, entityId: string) =>
+    apiClient.post<EntityResponse>(`/workspaces/${workspaceId}/entities/${entityId}/archive`),
+
+  duplicate: (workspaceId: string, entityId: string) =>
+    apiClient.post<EntityResponse>(`/workspaces/${workspaceId}/entities/${entityId}/duplicate`),
+
+  listChildren: (workspaceId: string, entityId: string) =>
+    apiClient.get<EntityListResponse>(`/workspaces/${workspaceId}/entities/${entityId}/children`),
+
+  createChild: (workspaceId: string, entityId: string, data: {
+    title?: string;
+    entity_type_id?: string;
+    properties?: Record<string, unknown>;
+  }) => apiClient.post<EntityResponse>(`/workspaces/${workspaceId}/entities/${entityId}/children`, data),
+
+  listVersions: (workspaceId: string, entityId: string) =>
+    apiClient.get<EntityListResponse>(`/workspaces/${workspaceId}/versions/entities/${entityId}`),
+
+  listEntityTypes: (workspaceId: string) =>
+    apiClient.get<EntityTypeResponse>(`/workspaces/${workspaceId}/entities/types`),
+
+  createEntityType: (workspaceId: string, data: {
     name: string;
     color?: string;
     icon?: string;
     schema?: Record<string, unknown>;
-  }) => apiClient.post("/entities/types", data),
+  }) => apiClient.post(`/workspaces/${workspaceId}/entities/types`, data),
 
-  listEntityTypes: (workspaceId: string) =>
-    apiClient.get<EntityTypeResponse>(`/entities/types?workspace_id=${workspaceId}`),
+  getEntityType: (workspaceId: string, typeId: string) =>
+    apiClient.get<{ data: EntityType }>(`/workspaces/${workspaceId}/entities/types/${typeId}`),
 
-  createProperty: (data: {
-    workspace_id: string;
+  updateEntityType: (workspaceId: string, typeId: string, data: Partial<{ name: string; color: string; icon: string; schema: Record<string, unknown> }>) =>
+    apiClient.patch<{ data: EntityType }>(`/workspaces/${workspaceId}/entities/types/${typeId}`, data),
+
+  deleteEntityType: (workspaceId: string, typeId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/entities/types/${typeId}`),
+
+  listEntityProperties: (workspaceId: string) =>
+    apiClient.get<{ data: EntityProperty[] }>(`/workspaces/${workspaceId}/entities/properties`),
+
+  createEntityProperty: (workspaceId: string, data: {
     name: string;
-    type: string;
-    entity_type_id?: string;
+    entity_type_id?: string | null;
+    type: PropertyType;
+    description?: string | null;
+    required?: boolean;
     options?: Record<string, unknown>;
-  }) => apiClient.post("/entities/properties", data),
-
-  listProperties: (workspaceId: string) =>
-    apiClient.get<PropertyResponse>(`/entities/properties?workspace_id=${workspaceId}`),
+    config?: Record<string, unknown>;
+    default_value?: unknown;
+  }) => apiClient.post<{ data: EntityProperty }>(`/workspaces/${workspaceId}/entities/properties`, data),
 };

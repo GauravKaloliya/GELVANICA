@@ -11,7 +11,7 @@ function Skeleton({ className, variant = "text", width, height, lines = 1, ...pr
   if (variant === "circular") {
     return (
       <div
-        className={cn("animate-pulse rounded-full bg-zinc-800", className)}
+        className={cn("skeleton rounded-full", className)}
         style={{ width: width || 40, height: height || 40 }}
         {...props}
       />
@@ -21,7 +21,7 @@ function Skeleton({ className, variant = "text", width, height, lines = 1, ...pr
   if (variant === "rectangular") {
     return (
       <div
-        className={cn("animate-pulse rounded-lg bg-zinc-800", className)}
+        className={cn("skeleton rounded-lg", className)}
         style={{ width: width || "100%", height: height || 200 }}
         {...props}
       />
@@ -33,7 +33,7 @@ function Skeleton({ className, variant = "text", width, height, lines = 1, ...pr
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
-          className="animate-pulse rounded-md bg-zinc-800"
+          className="skeleton rounded-md"
           style={{
             width: i === lines - 1 ? "60%" : width || "100%",
             height: height || 12,
@@ -48,7 +48,7 @@ function SkeletonCard({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   return (
     <div
       className={cn(
-        "rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3",
+        "rounded-xl border border-border bg-card p-4 space-y-3",
         className
       )}
       {...props}
@@ -68,7 +68,7 @@ function SkeletonCard({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 function SkeletonTable({ rows = 5, cols = 4, className, ...props }: { rows?: number; cols?: number } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn("space-y-2", className)} {...props}>
-      <div className="flex gap-4 border-b border-zinc-800 pb-2">
+      <div className="flex gap-4 border-b border-border pb-2">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} width={`${100 / cols}%`} height={12} />
         ))}

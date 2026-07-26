@@ -58,7 +58,7 @@ export default function ImageBlock({ content, onChange, readOnly }: ImageBlockPr
           style={{ maxHeight: 400 }}
         />
         {content.alt && (
-          <p className="mt-1 text-center text-[11px] text-zinc-500">{content.alt}</p>
+          <p className="mt-1 text-center text-[11px] text-muted">{content.alt}</p>
         )}
         {!readOnly && (
           <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
@@ -68,13 +68,13 @@ export default function ImageBlock({ content, onChange, readOnly }: ImageBlockPr
                 setAltInput(content.alt || "");
                 setEditing(true);
               }}
-              className="rounded-md bg-zinc-900/80 p-1.5 text-zinc-400 backdrop-blur hover:text-white"
+              className="rounded-md bg-surface/80 p-1.5 text-muted backdrop-blur hover:text-foreground"
             >
               <Link className="h-3 w-3" />
             </button>
             <button
               onClick={() => onChange({ url: "", alt: "" })}
-              className="rounded-md bg-zinc-900/80 p-1.5 text-zinc-400 backdrop-blur hover:text-red-400"
+              className="rounded-md bg-surface/80 p-1.5 text-muted backdrop-blur hover:text-red-400"
             >
               <X className="h-3 w-3" />
             </button>
@@ -91,15 +91,15 @@ export default function ImageBlock({ content, onChange, readOnly }: ImageBlockPr
       onDrop={handleDrop}
       className={cn(
         "rounded-lg border-2 border-dashed p-6 text-center transition-colors",
-        dragOver ? "border-blue-500 bg-blue-500/5" : "border-zinc-700 hover:border-zinc-600"
+        dragOver ? "border-blue-500 bg-blue-500/5" : "border-border hover:border-border/80"
       )}
     >
       {loading ? (
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-zinc-500" />
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted" />
       ) : (
         <>
-          <ImageIcon className="mx-auto h-8 w-8 text-zinc-600" />
-          <p className="mt-2 text-xs text-zinc-500">
+          <ImageIcon className="mx-auto h-8 w-8 text-muted" />
+          <p className="mt-2 text-xs text-muted">
             Paste an image URL or drag &amp; drop
           </p>
 
@@ -110,7 +110,7 @@ export default function ImageBlock({ content, onChange, readOnly }: ImageBlockPr
               onChange={(e) => setUrlInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSave()}
               placeholder="https://example.com/image.png"
-              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
             />
             <input
               type="text"
@@ -118,17 +118,17 @@ export default function ImageBlock({ content, onChange, readOnly }: ImageBlockPr
               onChange={(e) => setAltInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSave()}
               placeholder="Alt text (optional)"
-              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
             />
             <div className="flex gap-2">
               <button
                 onClick={handleSave}
                 disabled={!urlInput.trim()}
-                className="flex-1 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-zinc-200 disabled:opacity-30"
+                className="flex-1 rounded-md bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:opacity-90 disabled:opacity-30"
               >
                 Set Image
               </button>
-              <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-300">
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:border-border/80 hover:text-foreground">
                 <Upload className="h-3 w-3" />
                 Upload
                 <input

@@ -28,7 +28,7 @@ function Spinner({ message }: { message?: string }) {
         <Skeleton variant="circular" width={12} height={12} className="animate-bounce [animation-delay:150ms]" />
         <Skeleton variant="circular" width={12} height={12} className="animate-bounce [animation-delay:300ms]" />
       </div>
-      {message && <p className="text-sm text-zinc-500">{message}</p>}
+        {message && <p className="text-sm text-muted">{message}</p>}
     </div>
   );
 }
@@ -62,7 +62,7 @@ function DashboardSkeleton() {
 function EditorSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <Skeleton className="h-4 w-16" />
         <Skeleton className="h-4 w-4" />
         <Skeleton className="h-4 w-24" />
@@ -76,7 +76,7 @@ function EditorSkeleton() {
             ))}
           </div>
         </div>
-        <div className="w-80 border-l border-zinc-800 p-4">
+        <div className="w-80 border-l border-border p-4">
           <Skeleton className="mb-4 h-6 w-24" />
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="mb-2 h-10 rounded-lg" />
@@ -90,7 +90,7 @@ function EditorSkeleton() {
 function GraphSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <Skeleton className="h-6 w-40" />
         <div className="flex gap-2">
           <Skeleton className="h-8 w-24" />
@@ -184,7 +184,7 @@ function FullPageSpinner({ message }: { message?: string }) {
           <Skeleton variant="circular" width={12} height={12} className="animate-bounce [animation-delay:150ms]" />
           <Skeleton variant="circular" width={12} height={12} className="animate-bounce [animation-delay:300ms]" />
         </div>
-        {message && <p className="text-sm text-zinc-500">{message}</p>}
+      {message && <p className="text-sm text-muted">{message}</p>}
       </div>
     </div>
   );

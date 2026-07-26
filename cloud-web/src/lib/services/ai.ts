@@ -64,8 +64,7 @@ export const aiService = {
       throw new Error(check.reason || "Query blocked by safety filter");
     }
 
-    const res = await apiClient.post<AIQueryResponse>("/ai/query", {
-      workspace_id: workspaceId,
+    const res = await apiClient.post<AIQueryResponse>(`/workspaces/${workspaceId}/ai/query`, {
       question,
       limit,
     });
@@ -76,17 +75,29 @@ export const aiService = {
   },
 
   summarize: async (_token: string, data: { entity_id: string; workspace_id: string }) => {
-    const res = await apiClient.post<{ data: { summary: string } }>("/ai/summarize", data);
+    const res = await apiClient.post<{ data: { summary: string } }>(`/workspaces/${data.workspace_id}/ai/summarize`, data);
     return { summary: sanitizeResponse(res.data.summary) };
   },
 
   suggestRelations: async (_token: string, data: { entity_id: string; workspace_id: string }) => {
     const res = await apiClient.post<{ data: Array<{ target_entity_id: string; relation_type: string; confidence: number }> }>(
-      "/ai/suggest-relations",
+      `/workspaces/${data.workspace_id}/ai/suggest-relations`,
       data
     );
     return res.data;
   },
+
+  chat: async (_token: string, data: { workspace_id: string; message: string; history?: Array<{ role: string; content: string }> }) =>
+    apiClient.post<{ data: { reply: string } }>(`/workspaces/${data.workspace_id}/ai/chat`, data),
+
+  complete: async (_token: string, data: { workspace_id: string; text: string; max_tokens?: number }) =>
+    apiClient.post<{ data: { completion: string } }>(`/workspaces/${data.workspace_id}/ai/complete`, data),
+
+  embed: async (_token: string, data: { workspace_id: string; text: string }) =>
+    apiClient.post<{ data: { embedding: number[] } }>(`/workspaces/${data.workspace_id}/ai/embed`, data),
+
+  semanticSearch: async (_token: string, data: { workspace_id: string; query: string; limit?: number }) =>
+    apiClient.post<{ data: { results: Array<{ entity_id: string; score: number }> } }>(`/workspaces/${data.workspace_id}/ai/semantic-search`, data),
 
   safetyCheck: clientSafetyCheck,
 
@@ -102,14 +113,13 @@ export const aiService = {
     }
 
     const { API_BASE } = await import("@/lib/config/constants");
-    const res = await fetch(`${API_BASE}/ai/query`, {
+    const res = await fetch(`${API_BASE}/workspaces/${params.workspaceId}/ai/query`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        workspace_id: params.workspaceId,
         question: params.question,
         limit: params.limit ?? 8,
       }),

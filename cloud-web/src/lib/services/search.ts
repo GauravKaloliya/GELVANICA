@@ -1,5 +1,5 @@
-import { API_BASE } from "@/lib/config/constants";
-import type { SearchResult, SearchMode } from "@/lib/types";
+import { apiClient } from "../apiClient";
+import type { SearchResult, SearchMode } from "../types";
 
 export interface SearchFilters {
   entityType?: string;
@@ -24,31 +24,9 @@ interface SearchResponse {
   data: SearchResult[];
 }
 
-async function searchApi<T>(endpoint: string, token: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: { message: "Search failed" } }));
-    throw new Error(error.error?.message || `HTTP ${res.status}`);
-  }
-
-  return res.json();
-}
-
 export const searchService = {
-  search: async (
-    token: string,
-    { workspaceId, query, mode = "hybrid", limit = 20, filters }: SearchParams
-  ): Promise<SearchResult[]> => {
+  search: ({ workspaceId, query, mode = "hybrid", limit = 20, filters }: SearchParams) => {
     const params = new URLSearchParams({
-      workspace_id: workspaceId,
       q: query,
       mode,
       limit: String(limit),
@@ -63,30 +41,26 @@ export const searchService = {
     if (filters?.relationType) params.set("relation_type", filters.relationType);
     if (filters?.fileAttachment !== undefined) params.set("file_attachment", String(filters.fileAttachment));
 
-    const res = await searchApi<SearchResponse>(`/search/?${params}`, token);
-    return res.data;
+    return apiClient.get<SearchResponse>(`/workspaces/${workspaceId}/search?${params}`);
   },
+
+  rebuildIndex: (workspaceId: string) =>
+    apiClient.post<{ data: { success: boolean } }>(`/workspaces/${workspaceId}/search/rebuild-index`),
+
+  getHistory: (workspaceId: string, limit = 20) =>
+    apiClient.get<{ data: Array<{ id: string; query: string; created_at: string }> }>(
+      `/workspaces/${workspaceId}/search/history?limit=${limit}`
+    ),
+
+  suggest: (workspaceId: string, query: string) =>
+    apiClient.get<{ data: string[] }>(
+      `/workspaces/${workspaceId}/search/suggest?q=${encodeURIComponent(query)}`
+    ),
 
   highlightText: (text: string, query: string): string => {
     if (!query.trim()) return text;
     const words = query.split(/\s+/).filter(Boolean);
     const pattern = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
     return text.replace(new RegExp(`(${pattern})`, "gi"), '<mark class="bg-yellow-500/30 text-yellow-200 rounded px-0.5">$1</mark>');
-  },
-
-  getHistory: async (token: string, workspaceId: string, limit = 20) => {
-    const res = await searchApi<{ data: Array<{ id: string; query: string; created_at: string }> }>(
-      `/search/history?workspace_id=${workspaceId}&limit=${limit}`,
-      token
-    );
-    return res.data;
-  },
-
-  suggest: async (token: string, workspaceId: string, query: string) => {
-    const res = await searchApi<{ data: string[] }>(
-      `/search/suggest?workspace_id=${workspaceId}&q=${encodeURIComponent(query)}`,
-      token
-    );
-    return res.data;
   },
 };

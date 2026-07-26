@@ -3,7 +3,9 @@ export interface Tag {
   workspace_id: string;
   name: string;
   color: string | null;
+  entity_count: number;
   created_at: string;
+  updated_at: string;
   is_deleted: boolean;
   deleted_at: string | null;
   deleted_by: string | null;

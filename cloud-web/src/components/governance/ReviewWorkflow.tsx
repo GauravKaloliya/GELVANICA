@@ -23,7 +23,7 @@ export default function ReviewWorkflow({ workspaceId }: ReviewWorkflowProps) {
     const fetchHistory = async () => {
       try {
         const json = await apiClient.get<{ data: HistoricalScore[] }>(
-          `/governance/${workspaceId}/history`
+          `/workspaces/${workspaceId}/governance/health-score`
         );
         setHistory(json.data || []);
       } catch {
@@ -60,8 +60,8 @@ export default function ReviewWorkflow({ workspaceId }: ReviewWorkflowProps) {
   if (history.length < 2) {
     return (
       <div className="py-6 text-center">
-        <Shield className="mx-auto h-6 w-6 text-zinc-600" />
-        <p className="mt-2 text-xs text-zinc-500">Run at least 2 audits to see score trends</p>
+        <Shield className="mx-auto h-6 w-6 text-muted" />
+        <p className="mt-2 text-xs text-muted">Run at least 2 audits to see score trends</p>
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function ReviewWorkflow({ workspaceId }: ReviewWorkflowProps) {
   const previous = history[history.length - 2];
   const diff = latest.score - previous.score;
   const TrendIcon = diff > 0 ? TrendingUp : diff < 0 ? TrendingDown : Minus;
-  const trendColor = diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-zinc-400";
+  const trendColor = diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-muted";
 
   return (
     <div className="space-y-4">
@@ -98,7 +98,7 @@ export default function ReviewWorkflow({ workspaceId }: ReviewWorkflowProps) {
                     : h.score >= 70
                     ? "bg-amber-400"
                     : "bg-red-400"
-                  : "bg-zinc-700"
+                  : "bg-surface-2"
               )}
               style={{ height: `${Math.max(height, 8)}%` }}
               title={`${h.score} — ${formatRelativeTime(h.created_at)}`}
@@ -108,7 +108,7 @@ export default function ReviewWorkflow({ workspaceId }: ReviewWorkflowProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-[10px] text-zinc-500">
+      <div className="flex items-center gap-4 text-[10px] text-muted">
         <span className="flex items-center gap-1">
           <div className="h-2 w-2 rounded-sm bg-green-400" /> 90+
         </span>

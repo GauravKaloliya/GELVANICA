@@ -44,7 +44,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
   const fetchBackups = useCallback(async () => {
     setLoading(true);
     try {
-      const json = await apiClient.get<{ data: Backup[] | Backup }>('/backups/?workspace_id=' + workspaceId);
+      const json = await apiClient.get<{ data: Backup[] | Backup }>('/workspaces/' + workspaceId + '/backups');
       const items = Array.isArray(json.data) ? json.data : json.data ? [json.data] : [];
       setBackups(items);
     } catch {
@@ -62,7 +62,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
     if (creating) return;
     setCreating(true);
     try {
-      await apiClient.post("/backups/export-to-s3", { workspace_id: workspaceId });
+      await apiClient.post("/workspaces/" + workspaceId + "/backups/export-to-disk", { workspace_id: workspaceId });
       showMessage("success", "Backup created successfully");
       fetchBackups();
     } catch {
@@ -77,7 +77,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
       if (restoringId) return;
       setRestoringId(backupId);
       try {
-        await apiClient.post(`/backups/${backupId}/restore`, { workspace_id: workspaceId });
+        await apiClient.post(`/workspaces/${workspaceId}/backups/${backupId}/restore`);
         showMessage("success", "Workspace restored successfully");
       } catch {
         showMessage("error", "Failed to restore from backup");
@@ -97,7 +97,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
       case "failed":
         return "text-red-400";
       default:
-        return "text-zinc-400";
+        return "text-muted";
     }
   };
 
@@ -125,7 +125,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
         <button
           onClick={handleCreate}
           disabled={creating}
-          className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-surface disabled:opacity-50"
         >
           {creating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -137,7 +137,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
         <button
           onClick={fetchBackups}
           disabled={loading}
-          className="rounded-lg p-2 text-zinc-500 transition-colors hover:text-white disabled:opacity-50"
+          className="rounded-lg p-2 text-muted transition-colors hover:text-foreground disabled:opacity-50"
           title="Refresh"
           aria-label="Refresh backups"
         >
@@ -149,7 +149,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+              <div key={i} className="flex items-center justify-between rounded-lg border-border bg-card px-4 py-3">
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2">
                     <Skeleton width={80} height={14} />
@@ -166,17 +166,17 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
             ))}
           </div>
         ) : backups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-zinc-800 bg-zinc-800/20 py-10">
-            <HardDrive className="h-8 w-8 text-zinc-600" />
-            <p className="mt-2 text-sm text-zinc-500">No backups yet</p>
-            <p className="text-xs text-zinc-600">Create your first backup to protect your data</p>
+          <div className="flex flex-col items-center justify-center rounded-lg border-border bg-surface py-10">
+            <HardDrive className="h-8 w-8 text-muted" />
+            <p className="mt-2 text-sm text-muted">No backups yet</p>
+            <p className="text-xs text-muted">Create your first backup to protect your data</p>
           </div>
         ) : (
           <div className="space-y-2">
             {backups.map((backup) => (
               <div
                 key={backup.id}
-                className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
+                className="flex items-center justify-between rounded-lg border-border bg-card px-4 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
                       {backup.status}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-3 text-xs text-zinc-500">
+                  <div className="mt-0.5 flex items-center gap-3 text-xs text-muted">
                     <span>{formatRelativeTime(backup.created_at)}</span>
                     {backup.size != null && <span>{formatFileSize(backup.size)}</span>}
                     {backup.entity_count != null && <span>{backup.entity_count} entities</span>}
@@ -197,7 +197,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
                       href={backup.download_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+                      className="flex items-center gap-1.5 rounded-lg border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors card-hover"
                     >
                       <Download className="h-3 w-3" />
                       Download
@@ -206,7 +206,7 @@ export function BackupPanel({ workspaceId }: BackupPanelProps) {
                   <button
                     onClick={() => handleRestore(backup.id)}
                     disabled={restoringId === backup.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors card-hover disabled:opacity-50"
                   >
                     {restoringId === backup.id ? (
                       <Loader2 className="h-3 w-3 animate-spin" />

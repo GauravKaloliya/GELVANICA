@@ -67,7 +67,7 @@ export function SearchBar({
 
   return (
     <div className="relative">
-      <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" />
+      <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
       <input
         ref={inputRef}
         type="text"
@@ -75,18 +75,18 @@ export function SearchBar({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-zinc-800 bg-zinc-900/50 py-3 pl-12 pr-12 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
+        className="w-full rounded-xl border-border bg-card py-3 pl-12 pr-12 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
       />
       {isLoading ? (
         <div className="absolute right-4 top-1/2 -translate-y-1/2">
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted" />
         </div>
       ) : (
         localValue && (
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-500 hover:text-white"
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted hover:text-foreground"
             aria-label="Clear search"
           >
             <X className="h-4 w-4" />

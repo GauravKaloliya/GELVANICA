@@ -52,6 +52,12 @@ export const TagCreateSchema = z.object({
   color: z.string().nullable().optional(),
 });
 
+export const InviteCreateSchema = z.object({
+  workspace_id: z.string().uuid(),
+  email: z.string().email(),
+  role: z.enum(["viewer", "editor", "admin"]).optional().default("viewer"),
+});
+
 export const CommentCreateSchema = z.object({
   workspace_id: z.string().uuid(),
   entity_id: z.string().uuid().nullable().optional(),
@@ -89,6 +95,7 @@ export type BlockCreateInput = z.infer<typeof BlockCreateSchema>;
 export type RelationCreateInput = z.infer<typeof RelationCreateSchema>;
 export type TagCreateInput = z.infer<typeof TagCreateSchema>;
 export type CommentCreateInput = z.infer<typeof CommentCreateSchema>;
+export type InviteCreateInput = z.infer<typeof InviteCreateSchema>;
 export type BranchCreateInput = z.infer<typeof BranchCreateSchema>;
 export type SearchQueryInput = z.infer<typeof SearchQuerySchema>;
 export type AIQueryInput = z.infer<typeof AIQuerySchema>;

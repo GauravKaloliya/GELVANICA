@@ -11,10 +11,10 @@ interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-zinc-800 text-zinc-300 border-zinc-700",
-  secondary: "bg-zinc-800/50 text-zinc-400 border-transparent",
+  default: "bg-surface text-muted border-border",
+  secondary: "bg-surface text-muted border-transparent",
   destructive: "bg-red-500/10 text-red-400 border-red-500/20",
-  outline: "bg-transparent text-zinc-400 border-zinc-700",
+  outline: "bg-transparent text-muted border-border",
   success: "bg-green-500/10 text-green-400 border-green-500/20",
   warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   info: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -52,9 +52,9 @@ function Badge({
             variant === "warning" && "bg-amber-400",
             variant === "destructive" && "bg-red-400",
             variant === "info" && "bg-blue-400",
-            variant === "default" && "bg-zinc-400",
-            variant === "secondary" && "bg-zinc-500",
-            variant === "outline" && "bg-zinc-500"
+            variant === "default" && "bg-surface-2",
+            variant === "secondary" && "bg-surface-2",
+            variant === "outline" && "bg-surface-2"
           )}
         />
       )}

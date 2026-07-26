@@ -15,14 +15,11 @@ export function useNotifications() {
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const fetchNotifications = useCallback(async () => {
-    if (!tokens?.access_token) return;
+    if (!tokens?.access_token || !currentWorkspace?.id) return;
     setIsLoading(true);
     try {
-      const data = await notificationService.list(
-        tokens.access_token,
-        currentWorkspace?.id
-      );
-      setNotifications(data);
+      const res = await notificationService.list(currentWorkspace.id);
+      setNotifications(res.data);
     } catch {
       // ignore
     } finally {
@@ -64,18 +61,18 @@ export function useNotifications() {
 
   const markAsRead = useCallback(
     async (id: string) => {
-      if (!tokens?.access_token) return;
-      await notificationService.markAsRead(tokens.access_token, id);
+      if (!tokens?.access_token || !currentWorkspace?.id) return;
+      await notificationService.markAsRead(currentWorkspace.id, id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
     },
-    [tokens]
+    [tokens, currentWorkspace]
   );
 
   const markAllAsRead = useCallback(async () => {
     if (!tokens?.access_token || !currentWorkspace?.id) return;
-    await notificationService.markAllAsRead(tokens.access_token, currentWorkspace.id);
+    await notificationService.markAllAsRead(currentWorkspace.id);
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
   }, [tokens, currentWorkspace]);
 

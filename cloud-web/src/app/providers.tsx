@@ -45,9 +45,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     aria-atomic="false"
                     toastOptions={{
                       style: {
-                        background: "rgb(24 24 27)",
-                        border: "1px solid rgb(63 63 70)",
-                        color: "rgb(255 255 255)",
+                        background: "var(--card-bg)",
+                        border: "1px solid var(--border-color)",
+                        color: "var(--foreground)",
                       },
                     }}
                   />

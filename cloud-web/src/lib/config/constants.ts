@@ -58,75 +58,10 @@ export const ROUTES = {
   workspaceNotifications: (id: string) => `/workspace/${id}/settings/notifications`,
 } as const;
 
-export const ENTITY_TYPES = {
-  PAGE: "page",
-  NOTE: "note",
-  TASK: "task",
-  DOCUMENT: "document",
-  BOOKMARK: "bookmark",
-  FILE: "file",
-} as const;
-
-export const BLOCK_TYPES = [
-  "text",
-  "heading_1",
-  "heading_2",
-  "heading_3",
-  "bulleted_list",
-  "numbered_list",
-  "to_do",
-  "code",
-  "quote",
-  "callout",
-  "image",
-  "divider",
-  "table",
-  "toggle",
-  "embed",
-  "equation",
-  "mention",
-  "ai",
-] as const;
-
-export const RELATION_TYPES = [
-  "refers_to",
-  "depends_on",
-  "part_of",
-  "related_to",
-  "implements",
-  "extends",
-  "blocks",
-  "follows",
-] as const;
-
-export const MEMBER_ROLES = ["owner", "admin", "editor", "viewer"] as const;
-
-export const SEARCH_MODES = ["keyword", "full_text", "hybrid", "semantic"] as const;
-
-export const NOTIFICATION_TYPES = ["mention", "comment", "update", "entity_update", "relation_created", "backup_complete", "sync_conflict", "invite", "system"] as const;
-
-export const SYNC_OPERATION_TYPES = [
-  "entity_create",
-  "entity_update",
-  "entity_delete",
-  "block_create",
-  "block_update",
-  "block_delete",
-  "relation_create",
-  "relation_delete",
-] as const;
-
-export const PROPERTY_TYPES = ["text", "number", "select", "multi_select", "date", "checkbox", "url", "email", "phone", "rich_text"] as const;
-
-export const GOVERNANCE_THRESHOLDS = {
-  EXCELLENT: 90,
-  NEEDS_ATTENTION: 70,
-} as const;
-
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_PER_PAGE: 50,
-  MAX_PER_PAGE: 50,
+  MAX_PER_PAGE: 100,
 } as const;
 
 export const RATE_LIMITS = {
@@ -147,4 +82,17 @@ export const FILE_UPLOAD = {
 export const TOKEN = {
   ACCESS_EXPIRY_MS: 30 * 60 * 1000,
   REFRESH_EXPIRY_MS: 30 * 24 * 60 * 60 * 1000,
+} as const;
+
+export const AUTH = {
+  MAX_LOGIN_ATTEMPTS: 5,
+  LOGIN_WINDOW_SECONDS: 300,
+  PASSWORD_MIN_LENGTH: 8,
+  PASSWORD_MAX_LENGTH: 128,
+  PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;':",.<>\/?`~])[A-Za-z\d!@#$%^&*()_+\-=\[\]{}|;':",.<>\/?`~]{8,128}$/,
+} as const;
+
+export const GRAPH = {
+  MAX_ITERATIONS: 10000,
+  DEFAULT_DEPTH: 2,
 } as const;

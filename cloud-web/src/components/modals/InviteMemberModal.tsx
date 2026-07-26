@@ -6,15 +6,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
-import { MEMBER_ROLES } from "@/lib/config/constants";
+import { useConfig } from "@/hooks/useConfig";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 interface InviteMemberModalProps {
   open: boolean;
   onClose: () => void;
   onInvite: (email: string, role: string) => Promise<void>;
+  workspaceId?: string;
 }
 
-export function InviteMemberModal({ open, onClose, onInvite }: InviteMemberModalProps) {
+export function InviteMemberModal({ open, onClose, onInvite, workspaceId }: InviteMemberModalProps) {
+  const { config } = useConfig(workspaceId || "");
+  const memberRoles = config?.member_roles ?? [];
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("editor");
   const [loading, setLoading] = useState(false);
@@ -63,7 +67,7 @@ export function InviteMemberModal({ open, onClose, onInvite }: InviteMemberModal
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="invite-email" className="text-sm font-medium text-zinc-400">Email address</label>
+            <label htmlFor="invite-email" className="text-step-3 font-medium text-muted">Email address</label>
             <Input
               id="invite-email"
               type="email"
@@ -75,25 +79,25 @@ export function InviteMemberModal({ open, onClose, onInvite }: InviteMemberModal
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="invite-role" className="text-sm font-medium text-zinc-400">Role</label>
+            <label htmlFor="invite-role" className="text-step-3 font-medium text-muted">Role</label>
             <div className="grid grid-cols-2 gap-2">
-              {MEMBER_ROLES.filter((r) => r !== "owner").map((r) => (
+              {memberRoles.filter((r) => r !== "owner").map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
                   className={cn(
-                    "rounded-lg border px-3 py-2 text-sm font-medium capitalize transition-colors",
+                    "rounded-lg border px-3 py-2 text-step-3 font-medium capitalize transition-colors",
                     role === r
                       ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-400"
-                      : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                      : "border-border text-muted card-hover"
                   )}
                 >
                   {r}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-zinc-600">
+            <p className="text-step-1 text-muted">
               {role === "viewer" && "Can view and comment, but cannot edit content"}
               {role === "editor" && "Can create, edit, and delete entities and content"}
               {role === "admin" && "Can manage members, settings, and all content"}
@@ -101,7 +105,7 @@ export function InviteMemberModal({ open, onClose, onInvite }: InviteMemberModal
           </div>
 
           {error && (
-            <p className="text-xs text-red-400">{error}</p>
+            <p className="text-step-1 text-red-400">{error}</p>
           )}
 
           <div className="flex justify-end gap-3 pt-2">

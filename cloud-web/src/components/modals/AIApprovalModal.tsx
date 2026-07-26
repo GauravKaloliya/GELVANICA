@@ -82,7 +82,7 @@ export function AIApprovalModal({
             </div>
             <div>
               <DialogTitle>AI Suggestions</DialogTitle>
-              <p className="text-xs text-zinc-500">{suggestions.length} suggestion{suggestions.length !== 1 ? "s" : ""} to review</p>
+              <p className="text-xs text-muted">{suggestions.length} suggestion{suggestions.length !== 1 ? "s" : ""} to review</p>
             </div>
           </div>
         </DialogHeader>
@@ -90,18 +90,18 @@ export function AIApprovalModal({
         <ScrollArea className="flex-1 -mx-6 px-6">
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted" />
             </div>
           ) : suggestions.length === 0 ? (
             <div className="py-12 text-center">
-              <Brain className="mx-auto h-8 w-8 text-zinc-600" />
-              <p className="mt-2 text-sm text-zinc-500">No suggestions at this time</p>
+              <Brain className="mx-auto h-8 w-8 text-muted" />
+              <p className="mt-2 text-sm text-muted">No suggestions at this time</p>
             </div>
           ) : (
             <div className="space-y-6">
               {Object.entries(grouped).map(([type, items]) => (
                 <div key={type}>
-                  <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
                     {TYPE_LABELS[type] || type}
                   </h4>
                   <div className="space-y-2">
@@ -112,7 +112,7 @@ export function AIApprovalModal({
                           "rounded-lg border p-4 transition-colors",
                           suggestion.id === processingId
                             ? "border-indigo-500/30 bg-indigo-500/5"
-                            : "border-zinc-800 bg-zinc-800/30 hover:border-zinc-700"
+                            : "border-border bg-surface card-hover"
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -123,13 +123,13 @@ export function AIApprovalModal({
                                 {type}
                               </Badge>
                             </div>
-                            <p className="mt-0.5 text-xs text-zinc-400">{suggestion.description}</p>
+                            <p className="mt-0.5 text-xs text-muted">{suggestion.description}</p>
                             <div className="mt-2 flex items-center gap-2">
                               <Progress
                                 value={suggestion.confidence * 100}
                                 className="h-1.5 w-16"
                               />
-                              <span className="text-xs text-zinc-500">
+                              <span className="text-xs text-muted">
                                 {Math.round(suggestion.confidence * 100)}% confidence
                               </span>
                             </div>

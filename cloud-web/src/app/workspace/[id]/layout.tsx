@@ -74,8 +74,8 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
   }));
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-950 text-white">
-      <ErrorBoundary fallback={<div className="flex h-screen w-64 items-center justify-center bg-zinc-950"><p className="text-xs text-zinc-600">Sidebar error</p></div>}>
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      <ErrorBoundary fallback={<div className="flex h-screen w-64 items-center justify-center bg-background"><p className="text-xs text-muted">Sidebar error</p></div>}>
         <Sidebar workspaceId={workspaceId} />
       </ErrorBoundary>
 

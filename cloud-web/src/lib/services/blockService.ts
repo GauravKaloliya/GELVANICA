@@ -11,39 +11,45 @@ interface BlockResponse {
 }
 
 export const blockService = {
-  list: (entityId: string) =>
-    apiClient.get<BlockListResponse>(`/blocks/?entity_id=${entityId}`),
+  list: (workspaceId: string, entityId: string) =>
+    apiClient.get<BlockListResponse>(`/workspaces/${workspaceId}/blocks/?entity_id=${entityId}`),
 
-  create: (data: {
+  create: (workspaceId: string, data: {
     entity_id: string;
-    block_type: string;
-    content: Record<string, unknown>;
-    position?: number;
+    type: string;
+    branch_id: string;
+    position: string;
+    content?: Record<string, unknown>;
     parent_block_id?: string;
-  }) => apiClient.post<BlockResponse>("/blocks/", data),
+    indent?: number;
+  }) => apiClient.post<BlockResponse>(`/workspaces/${workspaceId}/blocks/`, data),
 
-  get: (blockId: string) =>
-    apiClient.get<BlockResponse>(`/blocks/${blockId}`),
+  get: (workspaceId: string, blockId: string) =>
+    apiClient.get<BlockResponse>(`/workspaces/${workspaceId}/blocks/${blockId}`),
 
-  update: (blockId: string, data: {
+  update: (workspaceId: string, blockId: string, data: {
     content?: Record<string, unknown>;
     position?: number;
-  }) => apiClient.patch<BlockResponse>(`/blocks/${blockId}`, data),
+  }) => apiClient.patch<BlockResponse>(`/workspaces/${workspaceId}/blocks/${blockId}`, data),
 
-  delete: (blockId: string) =>
-    apiClient.delete(`/blocks/${blockId}`),
+  delete: (workspaceId: string, blockId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/blocks/${blockId}`),
 
-  move: (blockId: string, data: {
+  move: (workspaceId: string, blockId: string, data: {
     parent_block_id?: string;
     position: number;
     entity_id?: string;
-  }) => apiClient.post<BlockResponse>(`/blocks/${blockId}/move`, data),
+  }) => apiClient.post<BlockResponse>(`/workspaces/${workspaceId}/blocks/${blockId}/move`, data),
 
-  reorder: (data: {
+  reorder: (workspaceId: string, data: {
     entity_id: string;
-    block_ids: string[];
-  }) => apiClient.post("/blocks/reorder", data),
+    blocks: Array<{ id: string; position: number }>;
+  }) => apiClient.post(`/workspaces/${workspaceId}/blocks/reorder`, data),
 
-  listByEntity: (entityId: string) =>
-    apiClient.get<BlockListResponse>(`/blocks/entity/${entityId}`),
+  listByEntity: (workspaceId: string, entityId: string) =>
+    apiClient.get<BlockListResponse>(`/workspaces/${workspaceId}/blocks/entity/${entityId}`),
+
+  restore: (workspaceId: string, blockId: string) =>
+    apiClient.post<BlockResponse>(`/workspaces/${workspaceId}/blocks/${blockId}/restore`),
+
 };

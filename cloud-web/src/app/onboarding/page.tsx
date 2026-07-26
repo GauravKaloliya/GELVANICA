@@ -72,7 +72,7 @@ export default function OnboardingPage() {
       const emails = inviteEmails.split(",").map((e) => e.trim()).filter(Boolean);
       await Promise.all(
         emails.map((email) =>
-          apiClient.post(`/workspaces/${createdWorkspaceId}/members`, {
+          apiClient.post(`/workspaces/${createdWorkspaceId}/members/invite`, {
             email,
             role: "editor",
           })
@@ -88,7 +88,7 @@ export default function OnboardingPage() {
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="flex min-h-screen items-center justify-center px-4 grid-bg">
         <div className="w-full max-w-lg space-y-8">
           <div className="space-y-3 text-center">
             <Skeleton className="mx-auto h-9 w-64" />
@@ -105,7 +105,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center px-4 grid-bg">
       <div className="w-full max-w-lg space-y-8">
         {/* Progress indicator */}
         <div className="flex items-center justify-center gap-2">
@@ -114,10 +114,10 @@ export default function OnboardingPage() {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                   step === s
-                    ? "bg-white text-black"
+                    ? "bg-card text-black"
                     : i < (["workspace", "customize", "invite"] as Step[]).indexOf(step)
                     ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-zinc-800 text-zinc-500"
+                    : "bg-surface-2 text-muted"
                 }`}
               >
                 {i < (["workspace", "customize", "invite"] as Step[]).indexOf(step) ? (
@@ -126,14 +126,14 @@ export default function OnboardingPage() {
                   i + 1
                 )}
               </div>
-              {i < 2 && <div className="w-8 h-px bg-zinc-700" />}
+              {i < 2 && <div className="w-8 h-px bg-border" />}
             </div>
           ))}
         </div>
 
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white">Welcome to Gnovium</h1>
-          <p className="mt-2 text-sm text-zinc-400">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground display-heading">Welcome to Gnovium</h1>
+          <p className="mt-2 text-step-3 text-muted">
             {step === "workspace"
               ? "Create your first workspace to get started"
               : step === "customize"
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
             )}
 
             <div>
-              <label htmlFor="onboarding-workspace-name" className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label htmlFor="onboarding-workspace-name" className="block text-sm font-medium text-foreground mb-1.5">
                 Workspace Name
               </label>
               <input
@@ -161,13 +161,13 @@ export default function OnboardingPage() {
                 value={workspaceName}
                 onChange={(e) => setWorkspaceName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
                 placeholder="My Knowledge Base"
               />
             </div>
 
             <div>
-              <label htmlFor="onboarding-description" className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label htmlFor="onboarding-description" className="block text-sm font-medium text-foreground mb-1.5">
                 Description (optional)
               </label>
               <textarea
@@ -175,7 +175,7 @@ export default function OnboardingPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none resize-none"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none resize-none"
                 placeholder="What is this workspace for?"
               />
             </div>
@@ -183,7 +183,7 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={loading || !workspaceName.trim()}
-              className="w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full rounded-lg bg-card py-2.5 text-sm font-semibold text-black hover:bg-surface disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Continue <ArrowRight size={14} /></>}
             </button>
@@ -194,7 +194,7 @@ export default function OnboardingPage() {
         {step === "customize" && (
           <div className="space-y-6">
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
                 <Palette size={16} />
                 Accent Color
               </label>
@@ -206,13 +206,13 @@ export default function OnboardingPage() {
                     className={`relative w-full aspect-square rounded-lg border-2 transition-all flex items-center justify-center ${
                       accentColor === color.value
                         ? `border-white ring-2 ${color.ring}`
-                        : "border-zinc-700 hover:border-zinc-500"
+                        : "border-border hover:border-accent"
                     }`}
                     style={{ backgroundColor: color.value + "20" }}
                   >
                     <div className={`w-8 h-8 rounded-full ${color.bg}`} />
                     {accentColor === color.value && (
-                      <div className="absolute top-1 right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-card rounded-full flex items-center justify-center">
                         <Check size={10} className="text-black" />
                       </div>
                     )}
@@ -223,14 +223,14 @@ export default function OnboardingPage() {
 
             <button
               onClick={() => setStep("invite")}
-              className="w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-black hover:bg-zinc-200 flex items-center justify-center gap-2"
+              className="w-full rounded-lg bg-card py-2.5 text-sm font-semibold text-black hover:bg-surface flex items-center justify-center gap-2"
             >
               Continue <ArrowRight size={14} />
             </button>
 
             <button
               onClick={() => router.push(`/workspace/${createdWorkspaceId}/dashboard`)}
-              className="w-full text-center text-sm text-zinc-400 hover:text-white"
+              className="w-full text-center text-sm text-muted hover:text-foreground"
             >
               Skip for now
             </button>
@@ -241,7 +241,7 @@ export default function OnboardingPage() {
         {step === "invite" && (
           <div className="space-y-6">
             <div>
-              <label htmlFor="invite-emails" className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label htmlFor="invite-emails" className="block text-sm font-medium text-foreground mb-1.5">
                 Invite Team Members
               </label>
               <textarea
@@ -249,23 +249,23 @@ export default function OnboardingPage() {
                 value={inviteEmails}
                 onChange={(e) => setInviteEmails(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none resize-none"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none resize-none"
                 placeholder="Enter emails separated by commas&#10;alice@example.com, bob@example.com"
               />
-              <p className="mt-1 text-xs text-zinc-500">Members will receive an email invitation with the Editor role.</p>
+              <p className="mt-1 text-step-1 text-muted">Members will receive an email invitation with the Editor role.</p>
             </div>
 
             <button
               onClick={handleInviteMembers}
               disabled={loading}
-              className="w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full rounded-lg bg-card py-2.5 text-sm font-semibold text-black hover:bg-surface disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Invites & Go to Dashboard"}
             </button>
 
             <button
               onClick={() => router.push(`/workspace/${createdWorkspaceId}/dashboard`)}
-              className="w-full text-center text-sm text-zinc-400 hover:text-white"
+              className="w-full text-center text-sm text-muted hover:text-foreground"
             >
               Skip for now
             </button>

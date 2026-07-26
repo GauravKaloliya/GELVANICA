@@ -72,7 +72,7 @@ function Modal({ open, onClose, children, className }: ModalProps) {
         aria-modal="true"
         aria-labelledby="modal-title"
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl",
+          "relative z-50 w-full max-w-lg rounded-xl border border-border bg-background p-6 neo-depth",
           "animate-in fade-in-0 zoom-in-95 duration-200",
           className
         )}
@@ -97,7 +97,7 @@ function ModalHeader({ children, className, onClose }: ModalHeaderProps) {
         <button
           onClick={onClose}
           aria-label="Close dialog"
-          className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="rounded-lg p-1 text-muted hover:bg-surface hover:text-foreground transition-colors"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

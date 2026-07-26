@@ -17,7 +17,7 @@ export default function TagsPanel({ workspaceId, entityId }: TagsPanelProps) {
 
   useEffect(() => {
     const loadEntityTags = async () => {
-      const json = await apiClient.get<{ data: TagType[] }>(`/tags/?workspace_id=${workspaceId}&entity_id=${entityId}`);
+      const json = await apiClient.get<{ data: TagType[] }>(`/workspaces/${workspaceId}/tags/?entity_id=${entityId}`);
       setEntityTags(json.data || []);
     };
     loadEntityTags();
@@ -29,10 +29,10 @@ export default function TagsPanel({ workspaceId, entityId }: TagsPanelProps) {
     const toRemove = currentIds.filter((id) => !newTagIds.includes(id));
 
     for (const tagId of toAdd) {
-      await apiClient.post(`/tags/${tagId}/entities/${entityId}`);
+      await apiClient.post(`/workspaces/${workspaceId}/tags/${tagId}/entities/${entityId}`);
     }
     for (const tagId of toRemove) {
-      await apiClient.delete(`/tags/${tagId}/entities/${entityId}`);
+      await apiClient.delete(`/workspaces/${workspaceId}/tags/${tagId}/entities/${entityId}`);
     }
 
     setEntityTags((prev) => {

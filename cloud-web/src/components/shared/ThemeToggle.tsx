@@ -27,7 +27,7 @@ export function ThemeToggle({ className, variant = "button" }: ThemeToggleProps)
       <button
         onClick={toggleTheme}
         className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-zinc-800",
+          "flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-surface",
           className
         )}
         title={`Current: ${theme}. Click to cycle.`}
@@ -52,8 +52,8 @@ export function ThemeToggle({ className, variant = "button" }: ThemeToggleProps)
           className={cn(
             "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
             theme === id
-              ? "bg-zinc-800 text-white"
-              : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
+              ? "bg-surface text-foreground"
+              : "text-muted hover:bg-surface/50 hover:text-foreground"
           )}
         >
           <Icon className="h-4 w-4" />

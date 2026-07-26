@@ -7,7 +7,6 @@ import { apiClient } from "@/lib/apiClient";
 import { AIApprovalModal } from "@/components/modals";
 import { Switch } from "@/components/ui/Switch";
 import { Slider } from "@/components/ui/Slider";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import {
   Brain,
@@ -34,17 +33,6 @@ interface AIConfig {
   auto_suggest: boolean;
 }
 
-const AVAILABLE_MODELS = [
-  { label: "GPT-4", value: "gpt-4" },
-  { label: "GPT-4 Turbo", value: "gpt-4-turbo" },
-  { label: "GPT-4o", value: "gpt-4o" },
-  { label: "GPT-4o Mini", value: "gpt-4o-mini" },
-  { label: "Claude 3 Opus", value: "claude-3-opus" },
-  { label: "Claude 3 Sonnet", value: "claude-3-sonnet" },
-  { label: "Claude 3 Haiku", value: "claude-3-haiku" },
-  { label: "Claude 3.5 Sonnet", value: "claude-3.5-sonnet" },
-];
-
 export function AISettings({ workspaceId }: AISettingsProps) {
   const { canUseAI } = usePermissions();
   const { suggestions, fetchSuggestions, approveSuggestion, dismissSuggestion } = useAI(workspaceId);
@@ -65,8 +53,8 @@ export function AISettings({ workspaceId }: AISettingsProps) {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const json = await apiClient.get<{ data?: AIConfig }>(`/ai/config?workspace_id=${workspaceId}`);
-        if (json.data) setConfig(json.data);
+        const json = await apiClient.get<AIConfig>(`/workspaces/${workspaceId}/settings/ai`);
+        if (json) setConfig(json);
       } catch { /* config may not exist yet */ }
     };
     fetchConfig();
@@ -79,7 +67,7 @@ export function AISettings({ workspaceId }: AISettingsProps) {
   const handleSaveConfig = async () => {
     setSaving(true);
     try {
-      await apiClient.post("/ai/config", { workspace_id: workspaceId, ...config });
+      await apiClient.put(`/workspaces/${workspaceId}/settings/ai`, config);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch { /* handle error */ } finally {
@@ -102,9 +90,9 @@ export function AISettings({ workspaceId }: AISettingsProps) {
         </div>
       )}
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-          <Settings className="h-5 w-5 text-zinc-400" />
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+          <Settings className="h-5 w-5 text-muted" />
           Model Settings
         </h2>
         <div className="mt-6 space-y-5">
@@ -115,17 +103,10 @@ export function AISettings({ workspaceId }: AISettingsProps) {
             onCheckedChange={(checked) => setConfig((c) => ({ ...c, enabled: checked }))}
           />
           <div>
-            <label htmlFor="ai-model" className="block text-sm font-medium text-zinc-400 mb-1.5">Model</label>
-            <Select value={config.model} onValueChange={(value) => setConfig((c) => ({ ...c, model: value }))}>
-              <SelectTrigger id="ai-model">
-                <SelectValue placeholder="Select a model" />
-              </SelectTrigger>
-              <SelectContent>
-                {AVAILABLE_MODELS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <label htmlFor="ai-model" className="block text-sm font-medium text-muted mb-1.5">Model</label>
+            <div className="rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground">
+              Qwen2.5-3B-Instruct
+            </div>
           </div>
           <Slider
             label="Temperature"
@@ -138,7 +119,7 @@ export function AISettings({ workspaceId }: AISettingsProps) {
             onValueChange={(value) => setConfig((c) => ({ ...c, temperature: value[0] }))}
           />
           <div>
-            <label htmlFor="ai-max-tokens" className="block text-sm font-medium text-zinc-400 mb-1.5">Max Tokens</label>
+            <label htmlFor="ai-max-tokens" className="block text-sm font-medium text-muted mb-1.5">Max Tokens</label>
             <input
               id="ai-max-tokens"
               type="number"
@@ -147,7 +128,7 @@ export function AISettings({ workspaceId }: AISettingsProps) {
               min={256}
               max={8192}
               step={256}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
             />
           </div>
           <Switch
@@ -163,7 +144,7 @@ export function AISettings({ workspaceId }: AISettingsProps) {
             disabled={saving}
             className={cn(
               "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
-              saved ? "bg-green-600 text-white" : "bg-white text-black hover:bg-zinc-200"
+              saved ? "bg-green-600 text-white" : "bg-card text-foreground hover:bg-surface"
             )}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
@@ -172,12 +153,12 @@ export function AISettings({ workspaceId }: AISettingsProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-          <Sparkles className="h-5 w-5 text-indigo-400" />
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+          <Sparkles className="h-5 w-5 text-accent" />
           Test AI Query
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">Ask questions about your knowledge base</p>
+        <p className="mt-1 text-sm text-muted">Ask questions about your knowledge base</p>
         <div className="mt-4">
           <div className="flex gap-2">
             <input
@@ -186,38 +167,38 @@ export function AISettings({ workspaceId }: AISettingsProps) {
               onChange={(e) => setQueryInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleQuery()}
               placeholder="Ask something..."
-              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+              className="flex-1 rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
             />
             <button
               onClick={handleQuery}
               disabled={aiLoading || isStreamLoading || !queryInput.trim()}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-foreground hover:brightness-110 disabled:opacity-50"
             >
               {aiLoading || isStreamLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Ask
             </button>
           </div>
           {isStreamLoading && streamingAnswer && (
-            <div className="mt-4 rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-4">
+            <div className="mt-4 rounded-lg border border-accent/20 bg-accent/5 p-4">
               <div className="flex items-start gap-2">
-                <Brain className="h-4 w-4 shrink-0 text-indigo-400 mt-0.5" />
-                <div className="text-sm text-zinc-300 whitespace-pre-wrap">{streamingAnswer}</div>
+                <Brain className="h-4 w-4 shrink-0 text-accent mt-0.5" />
+                <div className="text-sm text-foreground whitespace-pre-wrap">{streamingAnswer}</div>
               </div>
             </div>
           )}
           {response && !isStreamLoading && (
-            <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-800/30 p-4">
+            <div className="mt-4 rounded-lg border-border bg-surface p-4">
               <div className="flex items-start gap-2">
-                <Brain className="h-4 w-4 shrink-0 text-indigo-400 mt-0.5" />
-                <p className="text-sm text-zinc-300 whitespace-pre-wrap">{response.answer}</p>
+                <Brain className="h-4 w-4 shrink-0 text-accent mt-0.5" />
+                <p className="text-sm text-foreground whitespace-pre-wrap">{response.answer}</p>
               </div>
               {response.sources.length > 0 && (
                 <div className="mt-3">
-                  <p className="mb-2 text-xs text-zinc-500">Sources:</p>
+                  <p className="mb-2 text-xs text-muted">Sources:</p>
                   {response.sources.map((source, i) => (
-                    <div key={i} className="rounded border border-zinc-800 px-3 py-2 text-xs">
-                      <p className="font-medium text-white">{source.title}</p>
-                      <p className="text-zinc-500 line-clamp-1">{source.content}</p>
+                    <div key={i} className="rounded border-border px-3 py-2 text-xs">
+                      <p className="font-medium text-foreground">{source.title}</p>
+                      <p className="text-muted line-clamp-1">{source.content}</p>
                     </div>
                   ))}
                 </div>
@@ -233,32 +214,32 @@ export function AISettings({ workspaceId }: AISettingsProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
         <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
             <Lightbulb className="h-5 w-5 text-amber-400" />
             AI Suggestions
           </h2>
           <button
             onClick={() => setShowSuggestions(true)}
-            className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700"
+            className="rounded-lg bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-2"
           >
             View All ({suggestions.length})
           </button>
         </div>
-        <p className="mt-1 text-sm text-zinc-500">Review AI-generated improvements</p>
+        <p className="mt-1 text-sm text-muted">Review AI-generated improvements</p>
         {suggestions.filter((s) => s.status === "pending").length === 0 ? (
           <div className="mt-4 py-8 text-center">
-            <Lightbulb className="mx-auto h-6 w-6 text-zinc-600" />
-            <p className="mt-2 text-xs text-zinc-500">No pending suggestions</p>
+            <Lightbulb className="mx-auto h-6 w-6 text-muted" />
+            <p className="mt-2 text-xs text-muted">No pending suggestions</p>
           </div>
         ) : (
           <div className="mt-4 space-y-2">
             {suggestions.filter((s) => s.status === "pending").slice(0, 3).map((suggestion) => (
-              <div key={suggestion.id} className="flex items-center justify-between rounded-lg border border-zinc-800 p-3">
+              <div key={suggestion.id} className="flex items-center justify-between rounded-lg border-border p-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-white">{suggestion.title}</p>
-                  <p className="text-xs text-zinc-500">{suggestion.description}</p>
+                  <p className="text-sm text-foreground">{suggestion.title}</p>
+                  <p className="text-xs text-muted">{suggestion.description}</p>
                 </div>
                 <div className="flex gap-1 shrink-0 ml-3">
                   <button onClick={() => approveSuggestion(suggestion.id)} className="rounded p-1 text-green-400 hover:bg-green-500/10" aria-label="Approve suggestion">

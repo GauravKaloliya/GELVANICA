@@ -11,11 +11,12 @@ interface Message {
 }
 
 interface AIPanelProps {
+  workspaceId: string;
   entityId: string;
   entityTitle: string;
 }
 
-export default function AIPanel({ entityId, entityTitle }: AIPanelProps) {
+export default function AIPanel({ workspaceId, entityId, entityTitle }: AIPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,8 +39,8 @@ export default function AIPanel({ entityId, entityTitle }: AIPanelProps) {
     setLoading(true);
 
     try {
-      const json = await apiClient.post<{ data?: { answer?: string } }>("/ai/query", {
-        workspace_id: entityId.split("-")[0],
+      const json = await apiClient.post<{ data?: { answer?: string } }>(`/workspaces/${workspaceId}/ai/query`, {
+        workspace_id: workspaceId,
         question: q,
         limit: 5,
       });
@@ -82,11 +83,11 @@ export default function AIPanel({ entityId, entityTitle }: AIPanelProps) {
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-3">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <div className="rounded-full bg-zinc-800 p-3">
+            <div className="rounded-full bg-surface p-3">
               <Sparkles className="h-5 w-5 text-violet-400" />
             </div>
-            <p className="mt-3 text-xs font-medium text-zinc-300">AI Assistant</p>
-            <p className="mt-1 text-[11px] text-zinc-500">
+            <p className="mt-3 text-xs font-medium text-foreground">AI Assistant</p>
+            <p className="mt-1 text-[11px] text-muted">
               Ask questions about &ldquo;{entityTitle}&rdquo;
             </p>
             <div className="mt-4 space-y-1.5">
@@ -94,7 +95,7 @@ export default function AIPanel({ entityId, entityTitle }: AIPanelProps) {
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="block w-full rounded-md border border-zinc-800 px-3 py-1.5 text-[11px] text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
+                  className="block w-full rounded-md border border-border px-3 py-1.5 text-[11px] text-muted hover:border-border/80 hover:text-foreground"
                 >
                   {s}
                 </button>
@@ -113,15 +114,15 @@ export default function AIPanel({ entityId, entityTitle }: AIPanelProps) {
                 className={cn(
                   "max-w-[85%] rounded-lg px-3 py-2 text-xs",
                   msg.role === "user"
-                    ? "bg-zinc-800 text-zinc-200"
-                    : "bg-zinc-900 text-zinc-300"
+                    ? "bg-surface text-foreground"
+                    : "bg-card text-foreground"
                 )}
               >
                 <pre className="whitespace-pre-wrap break-words font-sans">{msg.content}</pre>
                 {msg.role === "assistant" && (
                   <button
                     onClick={() => copyMessage(msg.content, i)}
-                    className="mt-1.5 hidden text-zinc-600 hover:text-zinc-400 group-hover:block"
+                    className="mt-1.5 hidden text-muted hover:text-foreground group-hover:block"
                   >
                     {copiedIdx === i ? (
                       <Check className="h-3 w-3 text-green-400" />
@@ -139,15 +140,15 @@ export default function AIPanel({ entityId, entityTitle }: AIPanelProps) {
             <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/10">
               <Bot className="h-3 w-3 text-violet-400" />
             </div>
-            <div className="rounded-lg bg-zinc-900 px-3 py-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500" />
+            <div className="rounded-lg bg-card px-3 py-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" />
             </div>
           </div>
         )}
       </div>
 
       {/* Input */}
-      <div className="border-t border-zinc-800 p-3">
+      <div className="border-t border-border p-3">
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
@@ -156,12 +157,12 @@ export default function AIPanel({ entityId, entityTitle }: AIPanelProps) {
             onKeyDown={handleKeyDown}
             placeholder="Ask about this entity..."
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+            className="flex-1 resize-none rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
           />
           <button
             onClick={() => send()}
             disabled={!input.trim() || loading}
-            className="rounded-lg bg-white p-2 text-black hover:bg-zinc-200 disabled:opacity-30"
+            className="rounded-lg bg-card p-2 text-foreground hover:opacity-90 disabled:opacity-30"
           >
             <Send className="h-3.5 w-3.5" />
           </button>

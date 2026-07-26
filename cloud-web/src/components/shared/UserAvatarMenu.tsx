@@ -83,17 +83,17 @@ export function UserAvatarMenu({ className }: UserAvatarMenuProps) {
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label="User menu"
-        className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-zinc-800"
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-surface"
       >
         {user.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
         ) : (
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-xs font-bold">
             {initials}
           </div>
         )}
-        <ChevronDown className={cn("h-3 w-3 text-zinc-400 transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("h-3 w-3 text-muted transition-transform", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
@@ -101,16 +101,16 @@ export function UserAvatarMenu({ className }: UserAvatarMenuProps) {
           ref={menuRef}
           role="menu"
           aria-label="User menu"
-          className="absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-zinc-800 bg-zinc-900 py-1 shadow-xl animate-in fade-in-0 zoom-in-95 duration-100"
+          className="absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-border bg-card py-1 shadow-xl animate-in fade-in-0 zoom-in-95 duration-100"
         >
-          <div className="border-b border-zinc-800 px-3 py-2">
-            <p className="text-sm font-medium text-white">{user.name || "User"}</p>
-            <p className="text-xs text-zinc-400">{user.email}</p>
+          <div className="border-b border-border px-3 py-2">
+            <p className="text-sm font-medium text-foreground">{user.name || "User"}</p>
+            <p className="text-xs text-muted">{user.email}</p>
           </div>
 
           {menuItems.map((item, idx) => (
             <React.Fragment key={item.label}>
-              {idx === 2 && <div role="separator" className="border-t border-zinc-800" />}
+              {idx === 2 && <div role="separator" className="border-t border-border" />}
               <button
                 role="menuitem"
                 data-menu-index={idx}
@@ -118,8 +118,8 @@ export function UserAvatarMenu({ className }: UserAvatarMenuProps) {
                 onClick={() => { item.action(); closeMenu(); }}
                 onMouseEnter={() => setFocusIndex(idx)}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-zinc-800",
-                  item.danger ? "text-red-400" : "text-zinc-300"
+                  "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-surface",
+                  item.danger ? "text-red-400" : "text-foreground"
                 )}
               >
                 <item.icon className="h-4 w-4" aria-hidden="true" />

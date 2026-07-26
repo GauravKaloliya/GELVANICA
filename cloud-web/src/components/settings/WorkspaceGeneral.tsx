@@ -38,7 +38,7 @@ export function WorkspaceGeneral({ workspaceId }: WorkspaceGeneralProps) {
         name: name.trim(),
         description: description.trim() || undefined,
       });
-      await apiClient.put("/settings/general", {
+      await apiClient.patch(`/workspaces/${workspaceId}/settings`, {
         workspace_id: workspaceId,
         name: name.trim(),
         description: description.trim() || undefined,
@@ -56,56 +56,56 @@ export function WorkspaceGeneral({ workspaceId }: WorkspaceGeneralProps) {
   }, [tokens, workspaceId, name, description, accentColor, slug, updateWorkspace, setWorkspaceAccentColor]);
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-      <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-        <Settings className="h-5 w-5 text-zinc-400" />
+    <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+      <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+        <Settings className="h-5 w-5 text-muted" />
         General
       </h2>
 
       <div className="mt-6 space-y-4">
         <div>
-          <label htmlFor="workspace-name" className="block text-sm font-medium text-zinc-400 mb-1.5">Name</label>
+          <label htmlFor="workspace-name" className="block text-sm font-medium text-muted mb-1.5">Name</label>
           <input
             id="workspace-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={!canManageSettings}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-50"
+            className="w-full rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-50"
           />
         </div>
         <div>
-          <label htmlFor="workspace-description" className="block text-sm font-medium text-zinc-400 mb-1.5">Description</label>
+          <label htmlFor="workspace-description" className="block text-sm font-medium text-muted mb-1.5">Description</label>
           <textarea
             id="workspace-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={!canManageSettings}
             rows={3}
-            className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-50"
+            className="w-full resize-none rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-50"
             placeholder="Optional description"
           />
         </div>
         <div>
-          <label htmlFor="workspace-deployment-mode" className="block text-sm font-medium text-zinc-400 mb-1.5">Deployment Mode</label>
-          <div id="workspace-deployment-mode" className="rounded-lg border border-zinc-800 bg-zinc-800/30 px-3 py-2 text-sm text-zinc-300">
+          <label htmlFor="workspace-deployment-mode" className="block text-sm font-medium text-muted mb-1.5">Deployment Mode</label>
+          <div id="workspace-deployment-mode" className="rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground">
             {currentWorkspace?.deployment_mode || "cloud"}
           </div>
         </div>
         <div>
-          <label htmlFor="workspace-slug" className="block text-sm font-medium text-zinc-400 mb-1.5">Slug</label>
+          <label htmlFor="workspace-slug" className="block text-sm font-medium text-muted mb-1.5">Slug</label>
           <input
             id="workspace-slug"
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             disabled={!canManageSettings}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white font-mono placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-50"
+            className="w-full rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground font-mono placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-50"
             placeholder="workspace-slug"
           />
         </div>
         <div>
-          <label htmlFor="workspace-accent-color" className="block text-sm font-medium text-zinc-400 mb-1.5">Accent Color</label>
+          <label htmlFor="workspace-accent-color" className="block text-sm font-medium text-muted mb-1.5">Accent Color</label>
           <div className="flex items-center gap-3">
             <input
               id="workspace-accent-color"
@@ -113,7 +113,7 @@ export function WorkspaceGeneral({ workspaceId }: WorkspaceGeneralProps) {
               value={accentColor}
               onChange={(e) => setAccentColor(e.target.value)}
               disabled={!canManageSettings}
-              className="h-8 w-8 rounded border border-zinc-700 bg-transparent cursor-pointer disabled:opacity-50"
+              className="h-8 w-8 rounded border-border bg-transparent cursor-pointer disabled:opacity-50"
             />
             <input
               id="workspace-accent-color-hex"
@@ -121,7 +121,7 @@ export function WorkspaceGeneral({ workspaceId }: WorkspaceGeneralProps) {
               value={accentColor}
               onChange={(e) => setAccentColor(e.target.value)}
               disabled={!canManageSettings}
-              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white font-mono focus:border-zinc-500 focus:outline-none disabled:opacity-50"
+              className="flex-1 rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground font-mono focus:border-accent focus:outline-none disabled:opacity-50"
             />
           </div>
         </div>
@@ -135,8 +135,8 @@ export function WorkspaceGeneral({ workspaceId }: WorkspaceGeneralProps) {
             className={cn(
               "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
               saved
-                ? "bg-green-600 text-white"
-                : "bg-white text-black hover:bg-zinc-200"
+                ? "bg-green-600 text-foreground"
+                : "bg-card text-foreground hover:bg-surface"
             )}
           >
             {saving ? (

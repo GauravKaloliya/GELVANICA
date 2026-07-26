@@ -27,9 +27,9 @@ export default function EntityGrid({
   if (entities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Layers className="h-10 w-10 text-zinc-600" />
-        <p className="mt-3 text-sm text-zinc-400">{emptyMessage || "No entities yet"}</p>
-        <p className="mt-1 text-xs text-zinc-600">Create your first entity to get started</p>
+        <Layers className="h-10 w-10 text-muted" />
+        <p className="mt-3 text-sm text-muted">{emptyMessage || "No entities yet"}</p>
+        <p className="mt-1 text-xs text-muted">Create your first entity to get started</p>
       </div>
     );
   }

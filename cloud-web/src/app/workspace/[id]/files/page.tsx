@@ -117,10 +117,8 @@ export default function FilesPage() {
         setUploadProgress(((i + 1) / fileArray.length) * 100);
       }
 
-      if (results.length > 0) {
-        fetchFiles();
-        fetchStorageInfo();
-      }
+      fetchFiles();
+      fetchStorageInfo();
       setUploading(false);
     },
     [workspaceId, fetchFiles, fetchStorageInfo]
@@ -139,7 +137,7 @@ export default function FilesPage() {
 
   const handleDelete = useCallback(
     async (fileId: string) => {
-      await fileService.delete(fileId);
+      await fileService.delete(workspaceId, fileId);
       setFiles((prev) => prev.filter((f) => f.id !== fileId));
       setDeleteTarget(null);
       fetchStorageInfo();
@@ -151,7 +149,7 @@ export default function FilesPage() {
     async (fileId: string, entityId: string) => {
       setLinking(true);
       try {
-        await fileService.linkToEntity(fileId, entityId);
+        await fileService.linkToEntity(workspaceId, fileId, entityId);
         setLinkSuccess(fileId);
         setTimeout(() => {
           setLinkSuccess(null);
@@ -171,7 +169,7 @@ export default function FilesPage() {
     setCleaningOrphans(true);
     setOrphanResult(null);
     try {
-      const json = await fileService.cleanupOrphans() as Record<string, unknown>;
+      const json = await fileService.cleanupOrphans(workspaceId) as Record<string, unknown>;
       const removed = (json?.data as Record<string, unknown>)?.removed ?? json?.removed ?? 0;
       setOrphanResult(`Removed ${removed} orphaned file${removed !== 1 ? "s" : ""}`);
       fetchFiles();
@@ -254,8 +252,8 @@ export default function FilesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Files</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <h1 className="text-2xl font-bold text-foreground display-heading">Files</h1>
+          <p className="mt-1 text-step-3 text-muted">
             {files.length} file{files.length !== 1 ? "s" : ""} · {formatFileSize(files.reduce((s, f) => s + (f.file_size ?? 0), 0))}
           </p>
         </div>
@@ -263,7 +261,7 @@ export default function FilesPage() {
           <button
             onClick={handleCleanupOrphans}
             disabled={cleaningOrphans}
-            className="flex items-center gap-2 rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-accent hover:text-foreground disabled:opacity-50"
           >
             {cleaningOrphans ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -320,16 +318,16 @@ export default function FilesPage() {
           onViewModeChange={setViewMode}
         />
         <div className="flex items-center gap-2">
-          <select aria-label="Sort by" value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-2 py-1 text-xs text-zinc-300">
+          <select aria-label="Sort by" value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-lg border border-border bg-surface/50 px-2 py-1 text-xs text-foreground">
             <option value="date">Date</option>
             <option value="name">Name</option>
             <option value="size">Size</option>
             <option value="type">Type</option>
           </select>
-          <button onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")} className="rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800" aria-label={sortDir === "asc" ? "Sort descending" : "Sort ascending"}>
+          <button onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")} className="rounded-lg border border-border px-2 py-1 text-xs text-muted hover:bg-surface" aria-label={sortDir === "asc" ? "Sort descending" : "Sort ascending"}>
             {sortDir === "asc" ? "↑" : "↓"}
           </button>
-          <select aria-label="Filter by type" value={filterType} onChange={(e) => setFilterType(e.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-2 py-1 text-xs text-zinc-300">
+          <select aria-label="Filter by type" value={filterType} onChange={(e) => setFilterType(e.target.value)} className="rounded-lg border border-border bg-surface/50 px-2 py-1 text-xs text-foreground">
             <option value="all">All Files</option>
             <option value="images">Images</option>
             <option value="documents">Documents</option>
@@ -337,13 +335,13 @@ export default function FilesPage() {
             <option value="linked">Linked</option>
             <option value="unlinked">Unlinked</option>
           </select>
-          <select aria-label="Filter by size" value={sizeFilter} onChange={(e) => setSizeFilter(e.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-2 py-1 text-xs text-zinc-300">
+          <select aria-label="Filter by size" value={sizeFilter} onChange={(e) => setSizeFilter(e.target.value)} className="rounded-lg border border-border bg-surface/50 px-2 py-1 text-xs text-foreground">
             <option value="all">All Sizes</option>
             <option value="small">Small (&lt; 1MB)</option>
             <option value="medium">Medium (1-10MB)</option>
             <option value="large">Large (&gt; 10MB)</option>
           </select>
-          <select aria-label="Filter by state" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-2 py-1 text-xs text-zinc-300">
+          <select aria-label="Filter by state" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="rounded-lg border border-border bg-surface/50 px-2 py-1 text-xs text-foreground">
             <option value="all">All States</option>
             <option value="READY">Ready</option>
             <option value="VALIDATING">Validating</option>
@@ -366,7 +364,7 @@ export default function FilesPage() {
               }
             }}
           />
-          <span className="text-xs text-zinc-500">
+          <span className="text-step-1 text-muted">
             Select all ({filteredFiles.length})
           </span>
         </div>
@@ -384,7 +382,7 @@ export default function FilesPage() {
           "rounded-xl border-2 border-dashed p-12 text-center transition-colors",
           dragOver
             ? "border-white bg-white/5"
-            : "border-zinc-800 hover:border-zinc-700"
+            : "border-border hover:border-border"
         )}
       >
         {loading ? (
@@ -395,16 +393,17 @@ export default function FilesPage() {
           </div>
         ) : filteredFiles.length === 0 && !searchQuery ? (
           <>
-            <Upload className="mx-auto h-10 w-10 text-zinc-600" />
-            <p className="mt-3 text-sm text-zinc-400">Drag and drop files here, or click to upload</p>
-            <p className="mt-1 text-xs text-zinc-600">
+            <Upload className="mx-auto h-10 w-10 text-muted" />
+            <p className="mt-3 text-step-3 text-muted">Drag and drop files here, or click to upload</p>
+            <p className="mt-1 text-step-1 text-muted">
               Max {FILE_UPLOAD.MAX_SIZE_MB}MB per file
             </p>
           </>
         ) : filteredFiles.length === 0 ? (
-          <p className="text-sm text-zinc-500">No files match &quot;{searchQuery}&quot;</p>
+          <p className="text-sm text-muted">No files match &quot;{searchQuery}&quot;</p>
         ) : viewMode === "grid" ? (
           <FileGrid
+            workspaceId={workspaceId}
             files={filteredFiles}
             onPreview={setPreviewFile}
             onLink={openLinkModal}
@@ -414,6 +413,7 @@ export default function FilesPage() {
           />
         ) : (
           <FileList
+            workspaceId={workspaceId}
             files={filteredFiles}
             onLink={openLinkModal}
             onDelete={(f) => handleDelete(f.id)}
@@ -424,7 +424,7 @@ export default function FilesPage() {
       </div>
 
       {previewFile && (
-        <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
+        <FilePreviewModal workspaceId={workspaceId} file={previewFile} onClose={() => setPreviewFile(null)} />
       )}
 
       {linkTarget && (

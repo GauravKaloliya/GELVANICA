@@ -23,12 +23,12 @@ export default function PanelTabs({ activePanel, onTogglePanel }: PanelTabsProps
   ];
 
   return (
-    <div className="flex gap-4 border-b border-zinc-800 pb-3 text-sm">
+    <div className="flex gap-4 border-b border-border pb-3 text-sm">
       {tabs.map((tab) => (
         <button
           key={tab.panel}
           onClick={() => onTogglePanel(tab.panel)}
-          className={`flex items-center gap-1.5 ${activePanel === tab.panel ? "text-white" : "text-zinc-400 hover:text-white"}`}
+          className={`flex items-center gap-1.5 ${activePanel === tab.panel ? "text-foreground" : "text-muted hover:text-foreground"}`}
         >
           {tab.icon} {tab.label}
         </button>

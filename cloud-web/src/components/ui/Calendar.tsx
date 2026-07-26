@@ -47,16 +47,16 @@ export function Calendar({ selected, onSelect, className, disabled }: CalendarPr
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={prevMonth}
-          className="rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="rounded-md p-1 text-muted hover:bg-surface hover:text-foreground transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <p className="text-sm font-medium text-white">
+        <p className="text-sm font-medium text-foreground">
           {MONTHS[month]} {year}
         </p>
         <button
           onClick={nextMonth}
-          className="rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="rounded-md p-1 text-muted hover:bg-surface hover:text-foreground transition-colors"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -65,7 +65,7 @@ export function Calendar({ selected, onSelect, className, disabled }: CalendarPr
       {/* Day Names */}
       <div className="grid grid-cols-7 mb-1">
         {DAYS.map((day) => (
-          <div key={day} className="text-center text-[10px] font-medium text-zinc-600 py-1">
+          <div key={day} className="text-center text-[10px] font-medium text-muted py-1">
             {day}
           </div>
         ))}
@@ -88,12 +88,12 @@ export function Calendar({ selected, onSelect, className, disabled }: CalendarPr
               disabled={isDisabled}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors",
-                "hover:bg-zinc-800",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400",
+                "hover:bg-surface",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
                 "disabled:pointer-events-none disabled:opacity-50",
-                isSelected && "bg-white text-black font-medium hover:bg-zinc-200",
-                isTodayDate && !isSelected && "border border-zinc-600",
-                !isSelected && !isTodayDate && "text-zinc-400"
+                isSelected && "accent-bg font-medium hover:bg-surface",
+                isTodayDate && !isSelected && "border border-border",
+                !isSelected && !isTodayDate && "text-muted"
               )}
             >
               {day.getDate()}

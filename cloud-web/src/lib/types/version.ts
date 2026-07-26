@@ -7,6 +7,9 @@ export interface Changeset {
   message: string | null;
   created_by: string | null;
   created_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface Snapshot {
@@ -14,17 +17,29 @@ export interface Snapshot {
   branch_id: string;
   name: string | null;
   description: string | null;
+  metadata: Record<string, unknown>;
   created_by: string | null;
   created_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface EntityVersion {
   id: string;
   entity_id: string;
+  branch_id: string | null;
   changeset_id: string | null;
+  snapshot_id: string | null;
+  version: number;
+  message: string | null;
   snapshot: Record<string, unknown>;
   content_hash: string;
+  created_by: string | null;
   created_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface BlockVersion {
@@ -34,12 +49,26 @@ export interface BlockVersion {
   snapshot: Record<string, unknown>;
   content_hash: string;
   created_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface DiffEntry {
-  left_version_id: string;
-  right_version_id: string;
-  diff: Record<string, { left: unknown; right: unknown }>;
+  from_version: number;
+  to_version: number;
+  summary: {
+    blocks_added: number;
+    blocks_removed: number;
+    blocks_modified: number;
+  };
+  changes: Array<{
+    block_id: string;
+    type: 'added' | 'removed' | 'modified';
+    block_type: string;
+    from: Record<string, unknown> | null;
+    to: Record<string, unknown> | null;
+  }>;
 }
 
 export interface BlockDiffEntry {

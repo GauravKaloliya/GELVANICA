@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Download, FileJson, FileText, Archive, Globe, FileIcon, Loader2, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -8,27 +8,22 @@ import { ScrollArea } from "@/components/ui/ScrollArea";
 import { Separator } from "@/components/ui/Separator";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/apiClient";
+import { configService } from "@/lib/services/configService";
+import type { ExportFormat as ConfigExportFormat } from "@/lib/services/configService";
 import { backupService } from "@/lib/services/backupService";
 import { downloadJson } from "@/lib/utils";
 
 
 type ExportFormat = "json" | "markdown" | "zip" | "html" | "pdf" | "disk";
 
-const FORMAT_OPTIONS: Array<{
-  id: ExportFormat;
-  label: string;
-  description: string;
-  icon: React.ElementType;
-  iconColor: string;
-  scope: "workspace" | "entity";
-}> = [
-  { id: "json", label: "JSON", description: "Full data export with all metadata", icon: FileJson, iconColor: "text-blue-400", scope: "workspace" },
-  { id: "markdown", label: "Markdown", description: "Human-readable .md files with YAML frontmatter", icon: FileText, iconColor: "text-green-400", scope: "workspace" },
-  { id: "zip", label: "ZIP Archive", description: "Markdown + images + manifest.json in a .zip", icon: Archive, iconColor: "text-purple-400", scope: "workspace" },
-  { id: "disk", label: "Server Disk", description: "Export to instance/backups/ on server", icon: FileIcon, iconColor: "text-amber-400", scope: "workspace" },
-  { id: "html", label: "HTML", description: "Single entity as self-contained .html", icon: Globe, iconColor: "text-cyan-400", scope: "entity" },
-  { id: "pdf", label: "PDF", description: "Render a single entity to PDF", icon: FileText, iconColor: "text-red-400", scope: "entity" },
-];
+const EXPORT_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
+  json: { icon: FileJson, color: "text-blue-400" },
+  markdown: { icon: FileText, color: "text-green-400" },
+  zip: { icon: Archive, color: "text-purple-400" },
+  disk: { icon: FileIcon, color: "text-amber-400" },
+  html: { icon: Globe, color: "text-cyan-400" },
+  pdf: { icon: FileText, color: "text-red-400" },
+};
 
 interface ExportModalProps {
   open: boolean;
@@ -50,11 +45,16 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export function ExportModal({ open, onClose, workspaceId, workspaceName, entityId, entityTitle }: ExportModalProps) {
   const [format, setFormat] = useState<ExportFormat>("json");
+  const [formatOptions, setFormatOptions] = useState<ConfigExportFormat[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const selectedFormat = FORMAT_OPTIONS.find((f) => f.id === format);
-  const needsEntity = selectedFormat?.scope === "entity";
+  useEffect(() => {
+    configService.get(workspaceId).then(c => setFormatOptions(c.export_formats ?? [])).catch(() => {});
+  }, [workspaceId]);
+
+  const selectedFormatData = formatOptions.find((f) => f.id === format);
+  const needsEntity = selectedFormatData?.scope === "entity";
   const canExport = !needsEntity || (entityId && entityTitle);
 
   const slug = workspaceName.replace(/\s+/g, "-").toLowerCase();
@@ -69,29 +69,29 @@ export function ExportModal({ open, onClose, workspaceId, workspaceName, entityI
           break;
         }
         case "markdown": {
-          const blob = await apiClient.blob("/backups/export-markdown", { workspace_id: workspaceId });
+          const blob = await apiClient.blob(`/workspaces/${workspaceId}/backups/export-markdown`, { workspace_id: workspaceId });
           downloadBlob(blob, `${slug}-export.tar.gz`);
           break;
         }
         case "zip": {
-          const blob = await apiClient.blob("/backups/export-zip", { workspace_id: workspaceId });
+          const blob = await apiClient.blob(`/workspaces/${workspaceId}/backups/export-zip`, { workspace_id: workspaceId });
           downloadBlob(blob, `${slug}-export.zip`);
           break;
         }
         case "disk": {
-          await apiClient.post("/backups/export-to-disk", { workspace_id: workspaceId });
+          await apiClient.post(`/workspaces/${workspaceId}/backups/export-to-disk`, { workspace_id: workspaceId });
           break;
         }
         case "html": {
           if (!entityId) throw new Error("No entity selected");
-          const blob = await apiClient.blob("/backups/export-html", { workspace_id: workspaceId, entity_id: entityId });
+          const blob = await apiClient.blob(`/workspaces/${workspaceId}/backups/export-html`, { workspace_id: workspaceId, entity_id: entityId });
           const entitySlug = (entityTitle || "entity").replace(/\s+/g, "-").toLowerCase();
           downloadBlob(blob, `${entitySlug}.html`);
           break;
         }
         case "pdf": {
           if (!entityId) throw new Error("No entity selected");
-          const blob = await apiClient.blob("/backups/export-pdf", { workspace_id: workspaceId, entity_id: entityId });
+          const blob = await apiClient.blob(`/workspaces/${workspaceId}/backups/export-pdf`, { workspace_id: workspaceId, entity_id: entityId });
           const entitySlug = (entityTitle || "entity").replace(/\s+/g, "-").toLowerCase();
           downloadBlob(blob, `${entitySlug}.pdf`);
           break;
@@ -122,14 +122,15 @@ export function ExportModal({ open, onClose, workspaceId, workspaceName, entityI
           </div>
         </DialogHeader>
 
-        <p className="text-sm text-zinc-400">
-          Download data from <span className="font-medium text-zinc-300">{workspaceName}</span>
+        <p className="text-step-3 text-muted">
+          Download data from <span className="font-medium text-foreground">{workspaceName}</span>
         </p>
 
         <ScrollArea className="max-h-[50vh]">
           <div className="space-y-1.5">
-            {FORMAT_OPTIONS.map((opt) => {
-              const Icon = opt.icon;
+            {formatOptions.map((opt) => {
+              const iconData = EXPORT_ICONS[opt.id] || EXPORT_ICONS.json;
+              const Icon = iconData.icon;
               const disabled = opt.scope === "entity" && !entityId;
               return (
                 <button
@@ -141,18 +142,18 @@ export function ExportModal({ open, onClose, workspaceId, workspaceName, entityI
                     disabled && "opacity-40 cursor-not-allowed",
                     format === opt.id
                       ? "border-blue-500/50 bg-blue-500/5 text-white"
-                      : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                      : "border-border text-muted card-hover"
                   )}
                 >
-                  <Icon className={cn("h-5 w-5 shrink-0", opt.iconColor)} />
+                  <Icon className={cn("h-5 w-5 shrink-0", iconData.color)} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{opt.label}</p>
                       {opt.scope === "entity" && (
-                        <span className="text-[10px] font-medium uppercase text-zinc-600">Entity only</span>
+                        <span className="text-step-0 font-medium uppercase text-muted">Entity only</span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-500">{opt.description}</p>
+                    <p className="text-step-1 text-muted">{opt.description}</p>
                   </div>
                 </button>
               );
@@ -161,7 +162,7 @@ export function ExportModal({ open, onClose, workspaceId, workspaceName, entityI
         </ScrollArea>
 
         {needsEntity && !entityId && (
-          <p className="text-xs text-amber-400">Select an entity first to use this export format.</p>
+          <p className="text-step-1 text-amber-400">Select an entity first to use this export format.</p>
         )}
 
         <Separator />

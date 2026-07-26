@@ -26,10 +26,10 @@ export function useEntity(options: UseEntityOptions = {}) {
   const fetchEntity = useCallback(
     async (id?: string) => {
       const targetId = id || entityId;
-      if (!targetId || !token) return;
+      if (!targetId || !token || !workspaceId) return;
       setIsLoading(true);
       try {
-        const res = await apiClient.get<{ data: Entity }>(`/entities/${targetId}`, token);
+        const res = await apiClient.get<{ data: Entity }>(`/workspaces/${workspaceId}/entities/${targetId}`, token);
         setEntity(res.data);
       } catch (e) {
         setError((e as Error).message);
@@ -37,43 +37,43 @@ export function useEntity(options: UseEntityOptions = {}) {
         setIsLoading(false);
       }
     },
-    [entityId, token]
+    [entityId, workspaceId, token]
   );
 
   const fetchEntityTypes = useCallback(async () => {
     if (!workspaceId || !token) return;
-    const res = await apiClient.get<{ data: EntityType[] }>(`/entities/types?workspace_id=${workspaceId}`, token);
+    const res = await apiClient.get<{ data: EntityType[] }>(`/workspaces/${workspaceId}/entities/types`, token);
     setEntityTypes(res.data);
   }, [workspaceId, token]);
 
   const fetchRelations = useCallback(
     async (targetEntityId?: string) => {
       const id = targetEntityId || entityId;
-      if (!id || !token) return;
-      const res = await apiClient.get<{ data: Relation[] }>(`/relations/?entity_id=${id}`, token);
+      if (!id || !token || !workspaceId) return;
+      const res = await apiClient.get<{ data: Relation[] }>(`/workspaces/${workspaceId}/relations/?entity_id=${id}`, token);
       setRelations(res.data);
     },
-    [entityId, token]
+    [entityId, workspaceId, token]
   );
 
   const fetchTags = useCallback(
     async (targetEntityId?: string) => {
       const id = targetEntityId || entityId;
-      if (!id || !token) return;
-      const res = await apiClient.get<{ data: Tag[] }>(`/tags/?entity_id=${id}`, token);
+      if (!id || !token || !workspaceId) return;
+      const res = await apiClient.get<{ data: Tag[] }>(`/workspaces/${workspaceId}/tags/?entity_id=${id}`, token);
       setTags(res.data);
     },
-    [entityId, token]
+    [entityId, workspaceId, token]
   );
 
   const fetchComments = useCallback(
     async (targetEntityId?: string) => {
       const id = targetEntityId || entityId;
-      if (!id || !token) return;
-      const res = await apiClient.get<{ data: Comment[] }>(`/comments/?entity_id=${id}`, token);
+      if (!id || !token || !workspaceId) return;
+      const res = await apiClient.get<{ data: Comment[] }>(`/workspaces/${workspaceId}/comments/?entity_id=${id}`, token);
       setComments(res.data);
     },
-    [entityId, token]
+    [entityId, workspaceId, token]
   );
 
   const createEntity = useCallback(
@@ -84,7 +84,8 @@ export function useEntity(options: UseEntityOptions = {}) {
       icon?: string;
       properties?: Record<string, unknown>;
     }) => {
-      const res = await apiClient.post<{ data: Entity }>("/entities/", data, token);
+      const wsId = data.workspace_id;
+      const res = await apiClient.post<{ data: Entity }>(`/workspaces/${wsId}/entities/`, data, token);
       return res.data;
     },
     [token]
@@ -92,42 +93,47 @@ export function useEntity(options: UseEntityOptions = {}) {
 
   const updateEntity = useCallback(
     async (id: string, data: Partial<Entity>) => {
-      const res = await apiClient.patch<{ data: Entity }>(`/entities/${id}`, data, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      const res = await apiClient.patch<{ data: Entity }>(`/workspaces/${workspaceId}/entities/${id}`, data, token);
       setEntity(res.data);
       return res.data;
     },
-    [token]
+    [workspaceId, token]
   );
 
   const deleteEntity = useCallback(
     async (id: string) => {
-      await apiClient.delete(`/entities/${id}`, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      await apiClient.delete(`/workspaces/${workspaceId}/entities/${id}`, token);
       setEntity(null);
     },
-    [token]
+    [workspaceId, token]
   );
 
   const archiveEntity = useCallback(
     async (id: string) => {
-      const res = await apiClient.post<{ data: Entity }>(`/entities/${id}/archive`, undefined, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      const res = await apiClient.post<{ data: Entity }>(`/workspaces/${workspaceId}/entities/${id}/archive`, undefined, token);
       setEntity(res.data);
       return res.data;
     },
-    [token]
+    [workspaceId, token]
   );
 
   const addTag = useCallback(
     async (targetEntityId: string, tagId: string) => {
-      await apiClient.post(`/tags/${tagId}/entities`, { entity_id: targetEntityId }, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      await apiClient.post(`/workspaces/${workspaceId}/tags/${tagId}/entities/${targetEntityId}`, undefined, token);
     },
-    [token]
+    [workspaceId, token]
   );
 
   const removeTag = useCallback(
     async (tagId: string, targetEntityId: string) => {
-      await apiClient.delete(`/tags/${tagId}/entities/${targetEntityId}`, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      await apiClient.delete(`/workspaces/${workspaceId}/tags/${tagId}/entities/${targetEntityId}`, token);
     },
-    [token]
+    [workspaceId, token]
   );
 
   const addRelation = useCallback(
@@ -136,46 +142,50 @@ export function useEntity(options: UseEntityOptions = {}) {
       target_entity_id: string;
       relation_type: string;
     }) => {
-      const res = await apiClient.post<{ data: Relation }>("/relations/", data, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      const res = await apiClient.post<{ data: Relation }>(`/workspaces/${workspaceId}/relations/`, data, token);
       setRelations((prev) => [...prev, res.data]);
       return res.data;
     },
-    [token]
+    [workspaceId, token]
   );
 
   const removeRelation = useCallback(
     async (relationId: string) => {
-      await apiClient.delete(`/relations/${relationId}`, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      await apiClient.delete(`/workspaces/${workspaceId}/relations/${relationId}`, token);
       setRelations((prev) => prev.filter((r) => r.id !== relationId));
     },
-    [token]
+    [workspaceId, token]
   );
 
   const restoreEntity = useCallback(
     async (entityId: string) => {
-      const res = await apiClient.post<{ data: Entity }>(`/entities/${entityId}/restore`, {}, token);
+      if (!workspaceId) throw new Error("workspaceId required");
+      const res = await apiClient.post<{ data: Entity }>(`/workspaces/${workspaceId}/entities/${entityId}/restore`, {}, token);
       setEntity(res.data);
       return res.data;
     },
-    [token]
+    [workspaceId, token]
   );
 
   const duplicateEntity = useCallback(
     async (entityId: string, options?: { title?: string; include_blocks?: boolean }) => {
+      if (!workspaceId) throw new Error("workspaceId required");
       const res = await apiClient.post<{ data: Entity }>(
-        `/entities/${entityId}/duplicate`,
+        `/workspaces/${workspaceId}/entities/${entityId}/duplicate`,
         options || {},
         token
       );
       return res.data;
     },
-    [token]
+    [workspaceId, token]
   );
 
   const listProperties = useCallback(
     async (workspaceId: string, entityTypeId: string) => {
       const res = await apiClient.get<{ data: Array<{ id: string; name: string; property_type: string; config?: Record<string, unknown> }> }>(
-        `/entities/properties?workspace_id=${workspaceId}&entity_type_id=${entityTypeId}`,
+        `/workspaces/${workspaceId}/entities/properties?entity_type_id=${entityTypeId}`,
         token
       );
       return res.data;
@@ -191,8 +201,9 @@ export function useEntity(options: UseEntityOptions = {}) {
       property_type: string;
       config?: Record<string, unknown>;
     }) => {
+      const wsId = data.workspace_id;
       const res = await apiClient.post<{ data: { id: string; name: string; property_type: string } }>(
-        "/entities/properties",
+        `/workspaces/${wsId}/entities/properties`,
         data,
         token
       );

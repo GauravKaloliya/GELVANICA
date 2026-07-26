@@ -46,7 +46,8 @@ def _require_settings_access(workspace_id):
 _VALID_CATEGORIES = frozenset({
     "general", "editor", "appearance", "ai",
     "performance", "backups", "privacy", "sync",
-    "keyboard_shortcuts", "advanced",
+    "keyboard_shortcuts", "advanced", "governance",
+    "notifications",
 })
 
 
@@ -183,6 +184,8 @@ _DEFAULT_SETTINGS = {
     "privacy": {"telemetry": False},
     "sync": {"auto_sync": False, "conflict_strategy": "ask"},
     "keyboard_shortcuts": {},
+    "governance": {"auto_reports": True, "report_interval_days": 7},
+    "notifications": {"email_notifications": True, "push_notifications": True},
     "advanced": {"debug_mode": False, "log_level": "info"},
 }
 

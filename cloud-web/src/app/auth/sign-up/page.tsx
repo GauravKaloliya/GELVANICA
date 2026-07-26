@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { authApi } from "@/lib/services/auth";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { authService } from "@/lib/services/auth";
 import { API_BASE, DESKTOP_AUTH_SCHEME } from "@/lib/config/constants";
-import { apiClient } from "@/lib/apiClient";
+import { apiClient, ApiError } from "@/lib/apiClient";
 import { useSession } from "@/lib/session";
+import { useUIStore } from "@/stores/uiStore";
+import { getAvatarUrl } from "@/lib/utils/avatar";
+import { UniversalNavbar, CloudWebRightSlot, CloudWebMobileAuthSlot } from "@gnovium/shared";
 import type { AuthTokens, User } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -55,7 +58,9 @@ const itemVariants = {
 export default function SignUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login: loginSession } = useSession();
+  const pathname = usePathname();
+  const { login: loginSession, user, logout, isLoading: sessionLoading } = useSession();
+  const { resolvedTheme, toggleTheme } = useUIStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,6 +75,7 @@ export default function SignUpPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadAttempt, setUploadAttempt] = useState(0);
   const [avatarWarning, setAvatarWarning] = useState<string | null>(null);
   const [uploadSucceeded, setUploadSucceeded] = useState(false);
   const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "available" | "unavailable">("idle");
@@ -80,11 +86,22 @@ export default function SignUpPage() {
   const isDesktop = searchParams.get("source") === "desktop";
   const signInHref = isDesktop ? "/auth/sign-in?source=desktop" : "/auth/sign-in";
 
+  const handleEmailBlur = async () => {
+    const emailTrimmed = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailTrimmed || !emailRegex.test(emailTrimmed)) { setEmailStatus("idle"); return; }
+    setEmailStatus("checking");
+    try {
+      const { data: result } = await authService.checkEmail(emailTrimmed);
+      setEmailStatus(result.available ? "available" : "unavailable");
+    } catch { setEmailStatus("idle"); }
+  };
+
   const completeDesktopAuth = useCallback(async (accessToken: string) => {
     if (exchangeStartedRef.current) return;
     exchangeStartedRef.current = true;
     const state = crypto.randomUUID();
-    const { code } = await authApi.exchangeCode(accessToken);
+    const { data: { code } } = await authService.exchangeCode(accessToken);
     window.location.href = `${DESKTOP_AUTH_SCHEME}://callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
   }, []);
 
@@ -110,15 +127,13 @@ export default function SignUpPage() {
   const handleGoogleAuth = useCallback(async (idToken: string) => {
     setLoading(true);
     try {
-      const { user, tokens } = await authApi.googleLogin(idToken);
-      loginSession(user, tokens);
+      const { data } = await authService.googleLogin(idToken);
+      const tokens = { access_token: data.access_token, refresh_token: data.refresh_token, token_type: data.token_type, expires_in: data.expires_in };
+      loginSession(data.user, tokens);
       if (isDesktop) {
         await completeDesktopAuth(tokens.access_token);
-      } else {
-        router.push("/");
       }
-    } catch {
-      setError("Google sign-in failed. Please try again.");
+      window.location.href = "/app";
     } finally {
       setLoading(false);
     }
@@ -140,27 +155,61 @@ export default function SignUpPage() {
     window.google.accounts.id.prompt();
   };
 
-  const handleEmailBlur = async () => {
-    const emailTrimmed = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailTrimmed || !emailRegex.test(emailTrimmed)) { setEmailStatus("idle"); return; }
-    setEmailStatus("checking");
-    try {
-      const { data: result } = await authApi.checkEmail(emailTrimmed);
-      setEmailStatus(result.available ? "available" : "unavailable");
-    } catch { setEmailStatus("idle"); }
-  };
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) { setAvatarFile(file); setAvatarPreview(URL.createObjectURL(file)); setUploadProgress(0); }
+    if (file) { setAvatarFile(file); setAvatarPreview(URL.createObjectURL(file)); setUploadProgress(0); setAvatarWarning(null); }
   };
 
   const handleRemoveAvatar = () => {
     setAvatarFile(null);
     setAvatarPreview(null);
     setUploadProgress(0);
+    setAvatarWarning(null);
   };
+
+  function uploadAvatarXhr(
+    file: File,
+    token: string,
+    onProgress: (pct: number) => void
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append("file", file);
+
+      xhr.open("POST", `${API_BASE}/auth/avatar`);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response.data.avatar_url);
+          } catch {
+            reject(new Error("Invalid server response"));
+          }
+        } else {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            reject(new Error(response.error?.message || `HTTP ${xhr.status}`));
+          } catch {
+            reject(new Error(`HTTP ${xhr.status}`));
+          }
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Network error"));
+      xhr.onabort = () => reject(new Error("Upload cancelled"));
+
+      xhr.send(formData);
+    });
+  }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,6 +217,7 @@ export default function SignUpPage() {
     setStatusText("");
     setAvatarWarning(null);
     setUploadSucceeded(false);
+    setUploadAttempt(0);
 
     const nameTrimmed = name.trim();
     const emailTrimmed = email.trim();
@@ -176,15 +226,6 @@ export default function SignUpPage() {
     if (!nameTrimmed) { setError("Please enter your full name."); return; }
     if (nameTrimmed.length < 2) { setError("Full name must be at least 2 characters long."); return; }
     if (!emailTrimmed || !emailRegex.test(emailTrimmed)) { setError("Please enter a valid email address."); return; }
-    if (emailStatus === "checking") { setError("Please wait while we check email availability."); return; }
-    if (emailStatus === "unavailable") { setError("This email address is already registered."); return; }
-    if (emailStatus === "idle") {
-      try {
-        const { data: result } = await authApi.checkEmail(emailTrimmed);
-        if (!result.available) { setEmailStatus("unavailable"); setError("This email address is already registered."); return; }
-        setEmailStatus("available");
-      } catch { /* proceed */ }
-    }
     if (!password) { setError("Please enter a password."); return; }
     if (password.length < 8) { setError("Password must be at least 8 characters long."); return; }
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
@@ -193,56 +234,103 @@ export default function SignUpPage() {
     }
 
     setLoading(true);
+
+    // Case 3: No avatar — register and redirect
+    if (!avatarFile) {
+      try {
+        setStatusText("Creating account...");
+        const { data: registerData } = await authService.register(emailTrimmed, password, nameTrimmed);
+        const tokens = { access_token: registerData.access_token, refresh_token: registerData.refresh_token, token_type: registerData.token_type, expires_in: registerData.expires_in };
+        tokensRef.current = tokens;
+        setStatusText("Signing in...");
+        loginSession(registerData.user, tokens);
+        if (isDesktop) await completeDesktopAuth(tokens.access_token);
+        window.location.href = "/app";
+      } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 409) {
+          try {
+            setStatusText("Email already registered. Signing in...");
+            const { data: loginData } = await authService.login(emailTrimmed, password);
+            const loginTokens = { access_token: loginData.access_token, refresh_token: loginData.refresh_token, token_type: loginData.token_type, expires_in: loginData.expires_in };
+            loginSession(loginData.user, loginTokens);
+            if (isDesktop) await completeDesktopAuth(loginTokens.access_token);
+            window.location.href = "/app";
+            return;
+          } catch {
+            setError("Email already registered. Please sign in.");
+          }
+        } else if (err instanceof ApiError) {
+          setError(err.message || "Registration failed. Please try again.");
+        } else {
+          setError("An unexpected error occurred. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Cases 1 & 2: Has avatar file — register first, then upload with retry
     try {
       setStatusText("Creating account...");
-      const { user: registeredUser, tokens } = await authApi.register(emailTrimmed, password, nameTrimmed);
-
+      const { data: registerData } = await authService.register(emailTrimmed, password, nameTrimmed);
+      const tokens = { access_token: registerData.access_token, refresh_token: registerData.refresh_token, token_type: registerData.token_type, expires_in: registerData.expires_in };
       tokensRef.current = tokens;
-      registeredUserRef.current = registeredUser;
-      let finalUser = registeredUser;
-      let usedDefaultAvatar = false;
+      let finalUser = registerData.user;
 
-      if (avatarFile) {
-        setIsUploading(true);
-        const ext = avatarFile.name.split(".").pop() || "png";
-        const objectKey = `users/avatars/${registeredUser.id}-${Date.now()}.${ext}`;
+      const maxRetries = 3;
+      let lastError: string | null = null;
 
-        const presignRes = await apiClient.post<{ data: { upload_url: string; object_key: string; id: string } }>("/files/presign", { object_key: objectKey, content_type: avatarFile.type }, tokens.access_token);
-        if (!presignRes) {
-          setAvatarWarning("Profile image upload unavailable — using default avatar. You can change it from profile settings later.");
-          usedDefaultAvatar = true;
-        } else {
-          const presignData = await presignRes;
-          const uploadUrl = presignData.data?.upload_url;
-          const objectKey_ = presignData.data?.object_key || objectKey;
-          const publicUrl = presignData.data?.id
-            ? `${API_BASE}/files/${presignData.data.id}/download`
-            : `${API_BASE}/files/download/${encodeURIComponent(objectKey_)}`;
-
-          if (!uploadUrl) {
-            setAvatarWarning("Profile image upload unavailable — using default avatar. You can change it from profile settings later.");
-            usedDefaultAvatar = true;
-          } else {
-            try {
-              await uploadFileWithProgress(uploadUrl, avatarFile, (pct) => setUploadProgress(pct));
-              const updateRes = await apiClient.patch<{ data: Partial<User> & { avatar_url: string } }>("/auth/me", { avatar_url: publicUrl }, tokens.access_token);
-              finalUser = { ...finalUser, ...updateRes.data } as User;
-              setUploadSucceeded(true);
-            } catch { usedDefaultAvatar = true; }
+      setIsUploading(true);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        setUploadAttempt(attempt);
+        try {
+          setStatusText(attempt === 1 ? "Uploading profile image..." : `Retrying upload (${attempt}/${maxRetries})...`);
+          const avatarUrl = await uploadAvatarXhr(avatarFile, tokens.access_token, setUploadProgress);
+          finalUser = { ...finalUser, avatar_url: avatarUrl } as User;
+          setUploadSucceeded(true);
+          lastError = null;
+          break;
+        } catch (uploadErr) {
+          lastError = uploadErr instanceof Error ? uploadErr.message : "Upload failed";
+          if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, 1000 * attempt));
           }
         }
-        setIsUploading(false);
+      }
+      setIsUploading(false);
+
+      if (lastError) {
+        setAvatarWarning("Upload failed after multiple attempts. Please choose a different image and try again.");
+        setError(null);
+        setLoading(false);
+        return;
       }
 
       setStatusText("Signing in...");
       loginSession(finalUser, tokensRef.current!);
       if (isDesktop) {
         await completeDesktopAuth(tokensRef.current!.access_token);
-      } else {
-        router.push(usedDefaultAvatar ? "/?notice=avatar_default" : "/");
       }
-    } catch {
-      setError("An unexpected error occurred. Please try again.");
+      window.location.href = "/app";
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 409) {
+        try {
+          setStatusText("Email already registered. Signing in...");
+          const { data: loginData } = await authService.login(emailTrimmed, password);
+          const loginTokens = { access_token: loginData.access_token, refresh_token: loginData.refresh_token, token_type: loginData.token_type, expires_in: loginData.expires_in };
+          loginSession(loginData.user, loginTokens);
+          if (isDesktop) await completeDesktopAuth(loginTokens.access_token);
+          window.location.href = "/app";
+          return;
+        } catch {
+          setError("Email already registered. Please sign in.");
+        }
+      } else if (err instanceof ApiError) {
+        setError(err.message || "An unexpected error occurred. Please try again.");
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
       setStatusText("");
@@ -251,7 +339,34 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-[90vh] flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <>
+      <UniversalNavbar
+        variant="cloud-web"
+        theme={resolvedTheme}
+        onToggleTheme={toggleTheme}
+        navItems={[]}
+        pathname={pathname}
+        rightSlot={
+          <CloudWebRightSlot
+            user={user}
+            isLoading={sessionLoading}
+            pathname={pathname}
+            onLogout={logout}
+            getAvatarUrl={getAvatarUrl}
+          />
+        }
+        mobileBottomSlot={(onClose) => (
+          <CloudWebMobileAuthSlot
+            user={user}
+            isLoading={sessionLoading}
+            pathname={pathname}
+            onLogout={logout}
+            onClose={onClose}
+            getAvatarUrl={getAvatarUrl}
+          />
+        )}
+      />
+      <div className="flex min-h-screen flex-col justify-center pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 z-0">
         <ParticleGraph className="opacity-60" />
       </div>
@@ -295,7 +410,7 @@ export default function SignUpPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 16 }}
-            className="text-3xl sm:text-4xl font-black font-mono uppercase tracking-tight text-[var(--foreground)]"
+            className="text-3xl sm:text-4xl font-black font-mono uppercase tracking-tight text-[var(--foreground)] display-heading"
           >
             Create Account
           </motion.h1>
@@ -304,7 +419,7 @@ export default function SignUpPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, type: "spring", stiffness: 100, damping: 16 }}
-            className="text-xs text-[var(--muted)] font-mono font-bold mt-2"
+            className="text-step-1 text-[var(--muted)] font-mono font-bold mt-2"
           >
             Join the knowledge operating system
           </motion.p>
@@ -337,6 +452,7 @@ export default function SignUpPage() {
             avatarPreview={avatarPreview}
             isUploading={isUploading}
             uploadProgress={uploadProgress}
+            uploadAttempt={uploadAttempt}
             avatarWarning={avatarWarning}
             uploadSucceeded={uploadSucceeded}
             onFileSelect={handleFileSelect}
@@ -353,5 +469,6 @@ export default function SignUpPage() {
         </motion.div>
       </motion.div>
     </div>
+    </>
   );
 }

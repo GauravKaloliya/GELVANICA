@@ -349,3 +349,142 @@ def delete_entity_type(workspace_id: str, type_id: str) -> Response:
         db.session.rollback()
         raise
     return item_response(et)
+
+
+@bp.post("/<string:workspace_id>/entities/bulk-delete")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def bulk_delete_entities(workspace_id: str) -> Response:
+    """Soft-delete multiple entities."""
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    entity_ids = data.get("entity_ids", [])
+    if not isinstance(entity_ids, list) or not entity_ids:
+        return error("bad_request", "entity_ids must be a non-empty array", status=400)
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    results = []
+    for eid in entity_ids:
+        try:
+            entity = EntityRepository().get(eid)
+            if entity and str(entity.workspace_id) == workspace_id:
+                results.append(EntityService().soft_delete(eid, current_user_id()))
+        except NotFoundError:
+            pass
+    return item_response({"deleted": len(results)})
+
+
+@bp.post("/<string:workspace_id>/entities/bulk-archive")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def bulk_archive_entities(workspace_id: str) -> Response:
+    """Archive multiple entities."""
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    entity_ids = data.get("entity_ids", [])
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    results = []
+    for eid in entity_ids:
+        try:
+            entity = EntityRepository().get(eid)
+            if entity and str(entity.workspace_id) == workspace_id:
+                results.append(EntityService().archive(eid, archived=True, user_id=current_user_id()))
+        except NotFoundError:
+            pass
+    return item_response({"archived": len(results)})
+
+
+@bp.post("/<string:workspace_id>/entities/bulk-restore")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def bulk_restore_entities(workspace_id: str) -> Response:
+    """Restore multiple soft-deleted entities."""
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    entity_ids = data.get("entity_ids", [])
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    results = []
+    for eid in entity_ids:
+        try:
+            entity = EntityRepository().get(eid, include_deleted=True)
+            if entity and str(entity.workspace_id) == workspace_id:
+                results.append(EntityService().restore(eid, current_user_id()))
+        except NotFoundError:
+            pass
+    return item_response({"restored": len(results)})
+
+
+@bp.post("/<string:workspace_id>/entities/bulk-tag")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def bulk_tag_entities(workspace_id: str) -> Response:
+    """Apply a tag to multiple entities."""
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    entity_ids = data.get("entity_ids", [])
+    tag_id = data.get("tag_id")
+    if not tag_id:
+        return error("bad_request", "tag_id is required", status=400)
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    from app.models import EntityTag
+    tagged = 0
+    for eid in entity_ids:
+        try:
+            entity = EntityRepository().get(eid)
+            if entity and str(entity.workspace_id) == workspace_id:
+                existing = EntityTag.query.filter_by(entity_id=eid, tag_id=tag_id, is_deleted=False).first()
+                if not existing:
+                    et = EntityTag(entity_id=eid, tag_id=tag_id)
+                    db.session.add(et)
+                    tagged += 1
+        except NotFoundError:
+            pass
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    return item_response({"tagged": tagged})
+
+
+@bp.post("/<string:workspace_id>/entities/bulk-move")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def bulk_move_entities(workspace_id: str) -> Response:
+    """Move multiple entities to another workspace."""
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    entity_ids = data.get("entity_ids", [])
+    target_workspace_id = data.get("target_workspace_id")
+    if not target_workspace_id:
+        return error("bad_request", "target_workspace_id is required", status=400)
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    moved = 0
+    for eid in entity_ids:
+        try:
+            entity = EntityRepository().get(eid)
+            if entity and str(entity.workspace_id) == workspace_id:
+                EntityRepository().update(entity, {"workspace_id": target_workspace_id})
+                moved += 1
+        except NotFoundError:
+            pass
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    return item_response({"moved": moved})

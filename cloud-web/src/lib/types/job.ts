@@ -1,23 +1,26 @@
-export type JobPriority = "critical" | "high" | "medium" | "low";
+export type JobPriority = 'critical' | 'high' | 'medium' | 'low';
+export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'dead_letter';
 
 export interface Job {
   id: string;
   workspace_id: string | null;
-  job_type: string;
-  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  type: string;
+  status: JobStatus;
+  progress: number;
+  message: string | null;
   priority: JobPriority;
-  idempotency_key: string | null;
-  timeout_seconds: number | null;
   payload: Record<string, unknown>;
   result: Record<string, unknown> | null;
-  error_message: string | null;
+  error: Record<string, unknown> | null;
+  idempotency_key: string | null;
   retry_count: number;
   max_retries: number;
+  timeout_seconds: number | null;
   created_by: string | null;
   started_at: string | null;
   completed_at: string | null;
+  schedule_at: string | null;
   created_at: string;
-  updated_at: string;
   is_deleted: boolean;
   deleted_at: string | null;
   deleted_by: string | null;

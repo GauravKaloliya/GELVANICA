@@ -39,7 +39,7 @@ def require_admin(f):
 @limiter.limit(RATE_LIMIT_STANDARD)
 @secured
 @require_admin
-@cloud_only
+
 def list_users() -> Response:
     """List all users (paginated)."""
     args = pagination_args()
@@ -59,7 +59,7 @@ def list_users() -> Response:
 @limiter.limit(RATE_LIMIT_STANDARD)
 @secured
 @require_admin
-@cloud_only
+
 def get_user(user_id: str) -> Response:
     """Get a user by ID."""
     user = UserRepository().get(user_id)
@@ -72,7 +72,7 @@ def get_user(user_id: str) -> Response:
 @limiter.limit(RATE_LIMIT_STRICT)
 @secured
 @require_admin
-@cloud_only
+
 def update_user(user_id: str) -> Response:
     """Update any user."""
     body = request_json()
@@ -96,7 +96,7 @@ def update_user(user_id: str) -> Response:
 @limiter.limit(RATE_LIMIT_DESTRUCTIVE)
 @secured
 @require_admin
-@cloud_only
+
 def delete_user(user_id: str) -> Response:
     """Soft-delete a user."""
     repo = UserRepository()
@@ -116,7 +116,7 @@ def delete_user(user_id: str) -> Response:
 @limiter.limit(RATE_LIMIT_STANDARD)
 @secured
 @require_admin
-@cloud_only
+
 def system_status() -> Response:
     """System-wide status."""
     return raw_response({"message": "Not yet implemented"}, 501)
@@ -126,7 +126,7 @@ def system_status() -> Response:
 @limiter.limit(RATE_LIMIT_STANDARD)
 @secured
 @require_admin
-@cloud_only
+
 def system_logs() -> Response:
     """Get application logs."""
     return raw_response({"message": "Not yet implemented"}, 501)
@@ -136,7 +136,7 @@ def system_logs() -> Response:
 @limiter.limit(RATE_LIMIT_DESTRUCTIVE)
 @secured
 @require_admin
-@cloud_only
+
 def system_cleanup() -> Response:
     """Trigger cleanup tasks."""
     return raw_response({"message": "Not yet implemented"}, 501)

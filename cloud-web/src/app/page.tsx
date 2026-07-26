@@ -1,376 +1,154 @@
-"use client"
+"use client";
 
-import { useSession } from "@/lib/session"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Network, History, FilePlus, Search, Sparkles, BookOpen, ExternalLink, Plus, Download } from "lucide-react"
-import { getAvatarUrl } from "@/lib/utils/avatar"
-import { docsUrl } from "@gnovium/shared"
-import { motion } from "framer-motion"
-import ParticleGraph from "./components/ParticleGraph"
-import { useWorkspaceStore } from "@/stores/workspaceStore"
-import { apiClient } from "@/lib/apiClient"
-import { formatRelativeTime } from "@/lib/utils"
-import { toast } from "sonner"
-
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 100, damping: 15 },
-  },
-}
-
-interface ActivityEntry {
-  id: string
-  action: string
-  details: Record<string, unknown>
-  created_at: string
-}
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/authStore";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { useSession } from "@/lib/session";
+import Link from "next/link";
+import { Plus, Loader2, FolderOpen } from "lucide-react";
+import { formatRelativeTime } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function Home() {
-  const { user, tokens, isLoading, isAuthenticated } = useSession()
-  const router = useRouter()
-  const [notice, setNotice] = useState<string | null>(null)
-  const [exporting, setExporting] = useState(false)
-  const { stats, fetchStats, workspaces, fetchWorkspaces } = useWorkspaceStore()
-  const [activity, setActivity] = useState<ActivityEntry[]>([])
-  const [loadingData, setLoadingData] = useState(true)
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const { user, isLoading: sessionLoading } = useSession();
+  const { workspaces, fetchWorkspaces, isLoading } = useWorkspaceStore();
+  const { tokens } = useAuthStore();
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    document.title = 'Knowledge Operating System | Gnovium'
+    document.title = 'Workspaces | Gnovium'
   }, [])
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/auth/sign-in")
+    if (!authLoading && !isAuthenticated) {
+      router.push("/auth/sign-in");
+      return;
     }
-  }, [isLoading, isAuthenticated, router])
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('notice') === 'avatar_default') {
-      setNotice('avatar_default')
-      const url = new URL(window.location.href)
-      url.searchParams.delete('notice')
-      window.history.replaceState({}, '', url.toString())
+    if (tokens?.access_token) {
+      fetchWorkspaces(tokens.access_token);
     }
-  }, [])
+  }, [isAuthenticated, authLoading, tokens, fetchWorkspaces, router]);
 
-  useEffect(() => {
-    if (!tokens?.access_token) return
-
-    const loadData = async () => {
-      setLoadingData(true)
-      try {
-        await fetchWorkspaces(tokens.access_token)
-
-        const firstWorkspace = workspaces[0]
-        if (firstWorkspace) {
-          await Promise.all([
-            fetchStats(tokens.access_token, firstWorkspace.id),
-            apiClient.get<{ data: ActivityEntry[] }>(`/activity/?workspace_id=${firstWorkspace.id}&per_page=5`).then((json) => {
-              setActivity(json.data || []);
-            }),
-          ])
-        }
-      } catch {
-        // non-critical — homepage still renders
-      } finally {
-        setLoadingData(false)
-      }
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tokens?.access_token || !newName.trim()) return;
+    setCreating(true);
+    try {
+      const workspace = await useWorkspaceStore.getState().createWorkspace(tokens.access_token, { name: newName.trim() });
+      router.push(`/workspace/${workspace.id}/dashboard`);
+    } catch {
+      setCreating(false);
     }
+  };
 
-    loadData()
-  }, [tokens?.access_token, fetchWorkspaces, fetchStats, workspaces])
-
-  if (isLoading) {
+  if (authLoading || sessionLoading || isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-        <div className="skeleton-card min-h-[220px] rounded-none border-2 border-dashed flex flex-col justify-between" />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="skeleton-card min-h-[220px] rounded-none p-6 border-2 border-dashed" />
-          <div className="skeleton-card min-h-[220px] rounded-none p-6 border-2 border-dashed" />
-          <div className="skeleton-card min-h-[220px] rounded-none p-6 border-2 border-dashed" />
+      <div className="min-h-screen px-6 py-12 grid-bg">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-8 flex items-center justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton variant="rectangular" className="h-10 w-36 rounded-lg" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} variant="rectangular" className="h-32 rounded-lg" />
+            ))}
+          </div>
         </div>
-
-        <div className="skeleton-card min-h-[140px] rounded-none border-2 border-dashed" />
       </div>
-    )
+    );
   }
 
-  if (!user) return null
-
-  const firstWorkspaceId = workspaces[0]?.id
+  if (!isAuthenticated) return null;
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10"
-    >
-
-      {/* Notice Banner */}
-      {notice === 'avatar_default' && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-3 border-2 border-amber-500 bg-amber-500/10 font-mono text-[10px] font-bold text-amber-500"
-        >
-          Profile image could not be uploaded. A default avatar has been set. You can change it later in your profile settings.
-        </motion.div>
-      )}
-
-      {/* Hero */}
-      <motion.div
-        variants={cardVariants}
-        className="p-6 sm:p-8 rounded-none border-[3px] border-[var(--foreground)] hero-depth flex flex-col md:flex-row items-stretch justify-between gap-8 overflow-hidden relative min-h-[220px]"
-      >
-        <ParticleGraph />
-
-        <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
-
-        <div className="relative z-10 w-full flex items-stretch gap-6">
-          <div className="relative w-[150px] shrink-0 border-2 border-[var(--foreground)] bg-[var(--sunken-bg)] shadow-[4px_4px_0px_0px_var(--shadow-color)] overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={user.avatar_url || getAvatarUrl(user.name || user.email)}
-              alt={user.name || user.email}
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <div className="flex flex-col justify-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-none border-2 border-emerald-500/50 bg-emerald-500/10 text-emerald-400 text-[10px] font-black tracking-widest uppercase font-mono w-fit">
-              <span className="w-2 h-2 bg-emerald-400 animate-pulse" />
-              WORKSPACE ACTIVE · KNOWLEDGE ENGINE
-            </div>
-            <h1 className="display-heading text-[var(--foreground)] uppercase text-3xl sm:text-4xl font-black font-mono tracking-tight leading-none">
-              Welcome back, {user.name}!
-            </h1>
-            <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed font-mono font-bold">
-              Your knowledge operating system is ready.
-            </p>
-          </div>
-        </div>
-
-        <motion.div
-          whileHover={{ scale: 1.05, rotate: -3 }}
-          className="relative z-10 shrink-0 self-center p-4 bg-[var(--card-bg)] border-2 border-[var(--foreground)] shadow-[4px_4px_0px_0px_var(--shadow-color)] flex flex-col items-center justify-center w-36 h-36 font-mono cursor-pointer"
-        >
-          <span className="text-[9px] font-black uppercase text-[var(--muted)] tracking-wider">MEMBER SINCE</span>
-          <span className="text-xl font-black mt-2 text-[var(--foreground)]">
-            {new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
-          </span>
-        </motion.div>
-      </motion.div>
-
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-        {/* Knowledge Graph Card */}
-        <motion.div
-          variants={cardVariants}
-          className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth flex flex-col justify-between min-h-[240px]"
-        >
+    <div className="min-h-screen px-6 py-12 grid-bg">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-4 border-b-2 border-[var(--border)] pb-3">
-              <Network size={18} strokeWidth={2.5} />
-              <h3 className="text-sm font-black font-mono uppercase tracking-wider text-[var(--foreground)]">Knowledge Graph</h3>
-            </div>
-            <div className="flex items-center justify-center py-6 text-[var(--muted)]">
-              <div className="flex flex-col items-center gap-3">
-                <Network size={40} strokeWidth={1.5} className="text-[var(--border)]" />
-                <p className="text-[10px] font-mono font-bold text-center text-[var(--muted)]">
-                  Visualize connections between your pages, entities, and ideas.
-                </p>
-              </div>
-            </div>
+            <h1 className="text-2xl font-bold text-foreground display-heading">Workspaces</h1>
+            <p className="mt-1 text-step-3 text-muted">Select a workspace or create a new one</p>
           </div>
           <button
-            onClick={() => firstWorkspaceId
-              ? router.push(`/workspace/${firstWorkspaceId}/graph`)
-              : router.push("/workspaces")}
-            className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] neo-depth-btn cursor-pointer"
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface"
           >
-            Explore Graph
+            <Plus className="h-4 w-4" />
+            New Workspace
           </button>
-        </motion.div>
+        </div>
 
-        {/* Recent Activity Card */}
-        <motion.div
-          variants={cardVariants}
-          className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth flex flex-col justify-between min-h-[240px]"
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-4 border-b-2 border-[var(--border)] pb-3">
-              <History size={18} strokeWidth={2.5} />
-              <h3 className="text-sm font-black font-mono uppercase tracking-wider text-[var(--foreground)]">Recent Activity</h3>
+        {showCreate && (
+          <form onSubmit={handleCreate} className="mb-8 rounded-lg border border-border bg-card p-4">
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Workspace name"
+                autoFocus
+                className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={creating || !newName.trim()}
+                className="rounded-lg bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface disabled:opacity-50"
+              >
+                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowCreate(false); setNewName(""); }}
+                className="rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-surface"
+              >
+                Cancel
+              </button>
             </div>
-            {loadingData ? (
-              <div className="space-y-2 py-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-6 bg-[var(--sunken-bg)] animate-pulse rounded" />
-                ))}
-              </div>
-            ) : activity.length > 0 ? (
-              <div className="space-y-1 py-2">
-                {activity.slice(0, 4).map((entry) => (
-                  <div key={entry.id} className="flex items-center gap-2 text-[10px] font-mono text-[var(--muted)]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--border)] shrink-0" />
-                    <span className="truncate">{String(entry.details?.title || entry.action)}</span>
-                    <span className="shrink-0 opacity-60">{formatRelativeTime(entry.created_at)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-4 border-2 border-dashed border-[var(--border)] bg-[var(--sunken-bg)] text-center font-mono text-[10px] text-[var(--muted)] font-black uppercase tracking-wider">
-                No activity yet.
-              </div>
-            )}
-          </div>
-          <div className="pt-4">
+          </form>
+        )}
+
+        {workspaces.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card py-16 text-center grid-bg">
+            <FolderOpen className="mx-auto h-12 w-12 text-muted" />
+            <h3 className="mt-4 text-lg font-medium text-foreground display-heading">No workspaces yet</h3>
+            <p className="mt-1 text-step-3 text-muted">Create your first workspace to get started</p>
             <button
-              onClick={() => firstWorkspaceId
-                ? router.push(`/workspace/${firstWorkspaceId}/activity`)
-                : router.push("/workspaces")}
-              className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--card-bg)] text-[var(--foreground)] neo-depth-btn hover:bg-[var(--code-bg)] cursor-pointer"
+              onClick={() => setShowCreate(true)}
+              className="mt-4 rounded-lg bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface"
             >
-              View All
+              Create Workspace
             </button>
           </div>
-        </motion.div>
-
-        {/* Quick Actions Card */}
-        <motion.div
-          variants={cardVariants}
-          className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth flex flex-col justify-between min-h-[240px]"
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-4 border-b-2 border-[var(--border)] pb-3">
-              <Sparkles size={18} strokeWidth={2.5} />
-              <h3 className="text-sm font-black font-mono uppercase tracking-wider text-[var(--foreground)]">Quick Actions</h3>
-            </div>
-            <ul className="space-y-3 font-mono text-[11px] font-bold text-[var(--foreground)]">
-              <li>
-                <button
-                  className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left"
-                  onClick={() => firstWorkspaceId
-                    ? router.push(`/workspace/${firstWorkspaceId}/dashboard`)
-                    : router.push("/workspaces")}
-                >
-                  <FilePlus size={12} strokeWidth={2.5} />
-                  <span>Create New Page</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left"
-                  onClick={() => firstWorkspaceId
-                    ? router.push(`/workspace/${firstWorkspaceId}/search`)
-                    : router.push("/workspaces")}
-                >
-                  <Search size={12} strokeWidth={2.5} />
-                  <span>AI Semantic Search</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={async () => {
-                    if (!firstWorkspaceId) {
-                      router.push("/workspaces")
-                      return
-                    }
-                    setExporting(true)
-                    try {
-                      const json = await apiClient.post<{ data: unknown }>('/backups/export', { workspace_id: firstWorkspaceId })
-                      const data = json.data || json
-                      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = `gnovium-cloud-export-${new Date().toISOString().slice(0, 10)}.json`
-                      a.click()
-                      URL.revokeObjectURL(url)
-                    } catch {
-                      toast.error("Export failed. Please try again later.")
-                    } finally {
-                      setExporting(false)
-                    }
-                  }}
-                  className="hover:opacity-80 flex items-center gap-1.5 cursor-pointer w-full text-left"
-                >
-                  <Download size={12} strokeWidth={2.5} />
-                  <span>{exporting ? 'Exporting...' : 'Export Data'}</span>
-                </button>
-              </li>
-              <li>
-                <a href={docsUrl()} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 flex items-center gap-1.5">
-                  <BookOpen size={12} strokeWidth={2.5} />
-                  <span>View Documentation</span>
-                  <ExternalLink size={10} className="opacity-60" />
-                </a>
-              </li>
-            </ul>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[...workspaces].sort((a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime()).map((workspace) => (
+              <Link
+                key={workspace.id}
+                href={`/workspace/${workspace.id}/dashboard`}
+                className="group rounded-lg border border-border bg-card p-5 transition-colors card-hover"
+              >
+                <h3 className="font-semibold text-foreground group-hover:text-foreground display-heading">
+                  {workspace.name}
+                </h3>
+                {workspace.description && (
+                  <p className="mt-1 text-step-3 text-muted line-clamp-2">{workspace.description}</p>
+                )}
+                <p className="mt-3 text-step-1 text-muted">
+                  Updated {formatRelativeTime(workspace.updated_at)}
+                </p>
+              </Link>
+            ))}
           </div>
-          <div className="pt-4">
-            <button
-              onClick={() => firstWorkspaceId
-                ? router.push(`/workspace/${firstWorkspaceId}/entity/new`)
-                : router.push("/workspaces")}
-              className="w-full text-center font-mono text-[10px] font-black uppercase tracking-wider py-2 border-2 border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] neo-depth-btn cursor-pointer"
-            >
-              <Plus size={12} className="inline mr-1" />
-              New Page
-            </button>
-          </div>
-        </motion.div>
-
+        )}
       </div>
-
-      {/* Workspace Overview */}
-      <motion.div
-        variants={cardVariants}
-        className="bg-[var(--card-bg)] border-[3px] border-[var(--foreground)] rounded-none p-6 neo-depth"
-      >
-        <div className="flex items-center gap-2 mb-6 border-b-2 border-[var(--border)] pb-3">
-          <Network size={18} strokeWidth={2.5} />
-          <h3 className="text-sm font-black font-mono uppercase tracking-wider text-[var(--foreground)]">Workspace Overview</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="p-4 border-2 border-[var(--border)] bg-[var(--sunken-bg)] text-center">
-            <div className="text-2xl font-black font-mono text-[var(--foreground)]">
-              {loadingData ? '—' : (stats?.entity_count ?? 0)}
-            </div>
-            <div className="text-[9px] font-black font-mono uppercase tracking-wider text-[var(--muted)] mt-1">Entities</div>
-          </div>
-          <div className="p-4 border-2 border-[var(--border)] bg-[var(--sunken-bg)] text-center">
-            <div className="text-2xl font-black font-mono text-[var(--foreground)]">
-              {loadingData ? '—' : (stats?.relation_count ?? 0)}
-            </div>
-            <div className="text-[9px] font-black font-mono uppercase tracking-wider text-[var(--muted)] mt-1">Connections</div>
-          </div>
-          <div className="p-4 border-2 border-[var(--border)] bg-[var(--sunken-bg)] text-center">
-            <div className="text-2xl font-black font-mono text-[var(--foreground)]">
-              {loadingData ? '—' : (stats?.member_count ?? 0)}
-            </div>
-            <div className="text-[9px] font-black font-mono uppercase tracking-wider text-[var(--muted)] mt-1">Members</div>
-          </div>
-        </div>
-      </motion.div>
-
-    </motion.div>
-  )
+    </div>
+  );
 }

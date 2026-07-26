@@ -20,7 +20,7 @@ export default function AIQuickActions({ workspaceId, entityId }: AIQuickActions
     setAiSummaryLoading(true);
     setAiSummary(null);
     try {
-      const json = await apiClient.post<{ data?: { summary?: string } | string }>("/ai/summarize", {
+      const json = await apiClient.post<{ data?: { summary?: string } | string }>(`/workspaces/${workspaceId}/ai/summarize`, {
         workspace_id: workspaceId, entity_id: entityId,
       });
       const data = json.data;
@@ -38,7 +38,7 @@ export default function AIQuickActions({ workspaceId, entityId }: AIQuickActions
     setAiRelationsLoading(true);
     setAiSuggestedRelations(null);
     try {
-      const json = await apiClient.post<{ data?: { suggestions?: unknown[] } | unknown[] }>("/ai/suggest-relations", {
+      const json = await apiClient.post<{ data?: { suggestions?: unknown[] } | unknown[] }>(`/workspaces/${workspaceId}/ai/suggest-relations`, {
         workspace_id: workspaceId, entity_id: entityId,
       });
       const data = json.data;
@@ -79,11 +79,11 @@ export default function AIQuickActions({ workspaceId, entityId }: AIQuickActions
         <div className="rounded-md border border-purple-800 bg-purple-950/30 p-3 text-sm text-purple-200">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-semibold text-purple-400">AI Summary</span>
-            <button onClick={() => setAiSummary(null)} className="text-zinc-500 hover:text-white">
+            <button onClick={() => setAiSummary(null)} className="text-muted hover:text-foreground">
               <X className="h-3 w-3" />
             </button>
           </div>
-          <p className="text-xs text-zinc-300 whitespace-pre-wrap">{aiSummary}</p>
+          <p className="text-xs text-foreground whitespace-pre-wrap">{aiSummary}</p>
         </div>
       )}
 
@@ -91,14 +91,14 @@ export default function AIQuickActions({ workspaceId, entityId }: AIQuickActions
         <div className="rounded-md border border-purple-800 bg-purple-950/30 p-3 text-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-semibold text-purple-400">Suggested Relations</span>
-            <button onClick={() => setAiSuggestedRelations(null)} className="text-zinc-500 hover:text-white">
+            <button onClick={() => setAiSuggestedRelations(null)} className="text-muted hover:text-foreground">
               <X className="h-3 w-3" />
             </button>
           </div>
           {Array.isArray(aiSuggestedRelations) && aiSuggestedRelations.length > 0 ? (
             <div className="space-y-1.5">
               {aiSuggestedRelations.map((suggestion, idx) => (
-                <div key={idx} className="rounded-md bg-zinc-800/50 px-2 py-1.5 text-xs text-zinc-300">
+                <div key={idx} className="rounded-md bg-surface px-2 py-1.5 text-xs text-foreground">
                   {typeof suggestion === "object" && suggestion !== null ? (
                     <span>{JSON.stringify(suggestion)}</span>
                   ) : (
@@ -108,7 +108,7 @@ export default function AIQuickActions({ workspaceId, entityId }: AIQuickActions
               ))}
             </div>
           ) : (
-            <p className="text-xs text-zinc-500">No suggestions found.</p>
+            <p className="text-xs text-muted">No suggestions found.</p>
           )}
         </div>
       )}

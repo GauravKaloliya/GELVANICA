@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { API_BASE } from "@/lib/config/constants";
 import type { Changeset, Snapshot, EntityVersion, DiffEntry, BlockDiffEntry, RestoreResult } from "@/lib/types/version";
 
-export function useVersion(entityId: string) {
+export function useVersion(workspaceId: string, entityId: string) {
   const { tokens } = useAuthStore();
   const token = tokens?.access_token;
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ export function useVersion(entityId: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/versions/changesets?entity_id=${entityId}`);
+      const res = await request(`/workspaces/${workspaceId}/versions/changesets?entity_id=${entityId}`);
       return res.data;
     } catch {
       setError("Failed to load changesets");
@@ -42,14 +42,14 @@ export function useVersion(entityId: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [entityId, request]);
+  }, [workspaceId, entityId, request]);
 
   const createChangeset = useCallback(
     async (data: { entity_id: string; description: string; parent_changeset_id?: string }): Promise<Changeset> => {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request("/versions/changesets", {
+        const res = await request(`/workspaces/${workspaceId}/versions/changesets`, {
           method: "POST",
           body: JSON.stringify(data),
         });
@@ -61,14 +61,14 @@ export function useVersion(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   const listSnapshots = useCallback(async (): Promise<Snapshot[]> => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/versions/snapshots?entity_id=${entityId}`);
+      const res = await request(`/workspaces/${workspaceId}/versions/snapshots?entity_id=${entityId}`);
       return res.data;
     } catch {
       setError("Failed to load snapshots");
@@ -76,14 +76,14 @@ export function useVersion(entityId: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [entityId, request]);
+  }, [workspaceId, entityId, request]);
 
   const createSnapshot = useCallback(
     async (data: { entity_id: string; label?: string }): Promise<Snapshot> => {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request("/versions/snapshots", {
+        const res = await request(`/workspaces/${workspaceId}/versions/snapshots`, {
           method: "POST",
           body: JSON.stringify(data),
         });
@@ -95,14 +95,14 @@ export function useVersion(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   const listEntityVersions = useCallback(async (): Promise<EntityVersion[]> => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/versions/entities/${entityId}`);
+      const res = await request(`/workspaces/${workspaceId}/versions/entities/${entityId}`);
       return res.data;
     } catch {
       setError("Failed to load entity versions");
@@ -110,14 +110,14 @@ export function useVersion(entityId: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [entityId, request]);
+  }, [workspaceId, entityId, request]);
 
   const restoreVersion = useCallback(
     async (versionId: string): Promise<RestoreResult> => {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request(`/versions/restore/${versionId}`, { method: "POST" });
+        const res = await request(`/workspaces/${workspaceId}/versions/${versionId}/restore`, { method: "POST" });
         return res.data;
       } catch (e) {
         setError("Failed to restore version");
@@ -126,7 +126,7 @@ export function useVersion(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   const compareVersions = useCallback(
@@ -134,7 +134,7 @@ export function useVersion(entityId: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request(`/versions/compare?left_version_id=${leftVersionId}&right_version_id=${rightVersionId}`);
+        const res = await request(`/workspaces/${workspaceId}/versions/compare?left_version_id=${leftVersionId}&right_version_id=${rightVersionId}`);
         return res.data;
       } catch {
         setError("Failed to compare versions");
@@ -143,7 +143,7 @@ export function useVersion(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   const compareDiff = useCallback(
@@ -151,10 +151,8 @@ export function useVersion(entityId: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request("/diffs/compare", {
-          method: "POST",
-          body: JSON.stringify(data),
-        });
+        const query = `entity_id=${data.entity_id}&left_version_id=${data.left_version_id}&right_version_id=${data.right_version_id}`;
+        const res = await request(`/workspaces/${workspaceId}/diffs/compare?${query}`);
         return res.data;
       } catch {
         setError("Failed to compare diffs");
@@ -163,7 +161,7 @@ export function useVersion(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   const blockDiff = useCallback(
@@ -171,7 +169,7 @@ export function useVersion(entityId: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request("/diffs/blocks", {
+        const res = await request(`/workspaces/${workspaceId}/diffs/blocks`, {
           method: "POST",
           body: JSON.stringify(data),
         });
@@ -183,7 +181,7 @@ export function useVersion(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   return {

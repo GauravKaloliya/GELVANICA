@@ -2,6 +2,12 @@ import os
 import signal
 import sys
 
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(__file__), ".env.cloud")
+if os.path.isfile(env_path):
+    load_dotenv(env_path)
+
 from app import create_app
 from app.core.logging import logger
 

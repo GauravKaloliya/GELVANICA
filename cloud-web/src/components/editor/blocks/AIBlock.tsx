@@ -26,11 +26,11 @@ export default function AIBlock({ content }: AIBlockProps) {
           {content.model && <span className="ml-1 text-purple-500/60">· {content.model}</span>}
         </span>
       </div>
-      <p className="text-sm text-zinc-300 whitespace-pre-wrap">{content.text}</p>
+      <p className="text-sm text-foreground whitespace-pre-wrap">{content.text}</p>
       <div className="mt-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-white"
+          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-surface hover:text-foreground"
         >
           {copied ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5" />}
           {copied ? "Copied" : "Copy"}

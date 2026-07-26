@@ -15,12 +15,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  default: "bg-white text-black hover:bg-zinc-200 active:bg-zinc-300 shadow-sm",
-  destructive: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm",
-  outline: "border border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
-  secondary: "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white active:bg-zinc-600",
-  ghost: "text-zinc-400 hover:bg-zinc-800 hover:text-white active:bg-zinc-700",
-  link: "text-zinc-300 underline-offset-4 hover:underline hover:text-white",
+  default: "accent-bg hover:bg-accent/90 active:bg-accent/80 neo-depth-btn",
+  destructive: "bg-red-600 text-foreground hover:bg-red-700 active:bg-red-800 neo-depth-btn",
+  outline: "border border-border bg-transparent text-muted hover:bg-surface hover:text-foreground active:bg-surface-2 neo-depth-btn",
+  secondary: "bg-surface text-muted hover:bg-surface-2 hover:text-foreground active:bg-surface neo-depth-btn",
+  ghost: "text-muted hover:bg-surface hover:text-foreground active:bg-surface-2 neo-depth-btn",
+  link: "text-muted underline-offset-4 hover:underline hover:text-foreground",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -50,7 +50,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(
           "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "disabled:pointer-events-none disabled:opacity-50",
           "select-none",
           variantStyles[variant],
@@ -61,7 +61,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {loading && (
+        {loading ? (
           <svg
             className="h-4 w-4 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
@@ -75,8 +75,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
+        ) : (
+          children
         )}
-        {children}
       </Comp>
     );
   }

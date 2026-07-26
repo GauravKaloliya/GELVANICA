@@ -54,9 +54,9 @@ interface SyncState {
     operation_type: string;
     payload: Record<string, unknown>;
   }) => Promise<void>;
-  acknowledge: (token: string, opId: string) => Promise<void>;
+  acknowledge: (token: string, workspaceId: string, opId: string) => Promise<void>;
   syncFromExport: (token: string, workspaceId: string, exportData: Record<string, unknown>) => Promise<void>;
-  resolveConflict: (token: string, conflictId: string, resolution: "local_wins" | "remote_wins" | "manual", mergedData?: Record<string, unknown>) => Promise<void>;
+  resolveConflict: (token: string, workspaceId: string, conflictId: string, resolution: "local_wins" | "remote_wins" | "manual", mergedData?: Record<string, unknown>) => Promise<void>;
   addToOfflineQueue: (operation: string, payload: unknown, workspaceId: string) => void;
   processOfflineQueue: (token: string, workspaceId: string) => Promise<void>;
 }
@@ -81,7 +81,7 @@ export const useSyncStore = create<SyncState>()(
 
   fetchOperations: async (token, workspaceId) => {
     try {
-      const res = await apiClient.get<{ data: SyncOperation[] }>(`/sync/?workspace_id=${workspaceId}`, token);
+      const res = await apiClient.get<{ data: SyncOperation[] }>(`/workspaces/${workspaceId}/sync`, token);
       set({ operations: res.data });
     } catch (e) {
       set({ error: (e as Error).message });
@@ -90,7 +90,7 @@ export const useSyncStore = create<SyncState>()(
 
   fetchDevices: async (token, workspaceId) => {
     try {
-      const res = await apiClient.get<{ data: SyncDevice[] }>(`/sync/devices?workspace_id=${workspaceId}`, token);
+      const res = await apiClient.get<{ data: SyncDevice[] }>(`/workspaces/${workspaceId}/sync/devices`, token);
       set({ devices: res.data });
     } catch (e) {
       set({ error: (e as Error).message });
@@ -99,7 +99,7 @@ export const useSyncStore = create<SyncState>()(
 
   fetchConflicts: async (token, workspaceId) => {
     try {
-      const res = await apiClient.get<{ data: SyncConflict[] }>(`/sync/conflicts?workspace_id=${workspaceId}`, token);
+      const res = await apiClient.get<{ data: SyncConflict[] }>(`/workspaces/${workspaceId}/sync/conflicts`, token);
       set({ conflicts: res.data, conflictCount: res.data.length });
     } catch (e) {
       set({ error: (e as Error).message });
@@ -109,7 +109,8 @@ export const useSyncStore = create<SyncState>()(
   ingestOperation: async (token, operation) => {
     set({ isSyncing: true, status: "syncing" });
     try {
-      const res = await apiClient.post<{ data: SyncOperation }>("/sync/", operation, token);
+      const wsId = operation.workspace_id;
+      const res = await apiClient.post<{ data: SyncOperation }>(`/workspaces/${wsId}/sync`, operation, token);
       set({
         operations: [...get().operations, res.data],
         pendingChanges: get().pendingChanges + 1,
@@ -120,9 +121,9 @@ export const useSyncStore = create<SyncState>()(
     }
   },
 
-  acknowledge: async (token, opId) => {
+  acknowledge: async (token, workspaceId, opId) => {
     try {
-      await apiClient.post(`/sync/${opId}/ack`, undefined, token);
+      await apiClient.post(`/workspaces/${workspaceId}/sync/${opId}/ack`, undefined, token);
       set({ pendingChanges: Math.max(0, get().pendingChanges - 1) });
     } catch (e) {
       set({ error: (e as Error).message });
@@ -132,7 +133,7 @@ export const useSyncStore = create<SyncState>()(
   syncFromExport: async (token, workspaceId, exportData) => {
     set({ isSyncing: true, status: "syncing" });
     try {
-      await apiClient.post("/sync/sync-from-export", { workspace_id: workspaceId, export_data: exportData }, token);
+      await apiClient.post(`/workspaces/${workspaceId}/sync/sync-from-export`, { export_data: exportData }, token);
       set({
         lastSyncAt: new Date().toISOString(),
         status: "idle",
@@ -144,10 +145,9 @@ export const useSyncStore = create<SyncState>()(
     }
   },
 
-  resolveConflict: async (token, conflictId, resolution, mergedData) => {
+  resolveConflict: async (token, workspaceId, conflictId, resolution, mergedData) => {
     try {
-      await apiClient.post(`/sync/resolve-conflict`, {
-        conflict_id: conflictId,
+      await apiClient.post(`/workspaces/${workspaceId}/sync/conflicts/${conflictId}/resolve`, {
         resolution,
         merged_data: mergedData,
       }, token);
@@ -175,7 +175,7 @@ export const useSyncStore = create<SyncState>()(
     if (queue.length === 0) return;
     for (const item of queue) {
       try {
-        await apiClient.post("/sync/", { operation_type: item.operation, payload: item.payload, workspace_id: workspaceId }, token);
+        await apiClient.post(`/workspaces/${workspaceId}/sync`, { operation_type: item.operation, payload: item.payload }, token);
       } catch {
         break;
       }

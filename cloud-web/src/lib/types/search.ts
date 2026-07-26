@@ -1,12 +1,13 @@
-export interface SearchResult {
-  id: string;
-  entity_id: string;
-  block_id: string | null;
-  title: string;
-  content: string;
-  match_type: "block" | "page";
-  score: number;
-}
+export type SearchResultEntity = {
+  type: 'entity'; id: string; name: string; summary: string; score: number;
+};
+
+export type SearchResultBlock = {
+  type: 'block'; id: string; entity_id: string; entity_name: string;
+  content_preview: string; score: number;
+};
+
+export type SearchResult = SearchResultEntity | SearchResultBlock;
 
 export type SearchMode = "keyword" | "full_text" | "hybrid" | "semantic";
 

@@ -142,32 +142,53 @@ def get_file(workspace_id: str, file_id: str) -> Response:
 @limiter.limit(RATE_LIMIT_FILE_DOWNLOAD)
 @secured
 def download_file(workspace_id: str, file_id: str) -> Response:
-    """Download file content (local disk or presigned redirect)."""
+    """Download file — returns JSON with presigned_url in both cloud and local modes."""
     file_record = FileRepository().get(file_id)
     if not file_record:
         return error("not_found", "File not found", status=404)
     access_err = check_workspace_access(str(file_record.workspace_id))
     if access_err:
         return access_err
-    fs = FileService()
-    if not _is_cloud():
-        if file_record.state != "READY":
-            return error("bad_request", f"File is in '{file_record.state}' state, not available for download", status=400)
-        provider = create_storage_provider(current_app.config)
-        full_path = provider.get_path(file_record.object_key)
-        if os.path.isfile(full_path):
-            directory = os.path.dirname(full_path)
-            filename = os.path.basename(full_path)
-            return _safe_send(directory, filename, download_name=file_record.file_name, mimetype=file_record.mime_type)
-        return error("not_found", "File not found on disk", status=404)
-
-    if file_record.state != "READY":
+    if file_record.state not in ("READY", "UPLOADED", "VALIDATING"):
         return error("bad_request", f"File is in '{file_record.state}' state, not available for download", status=400)
 
+    if _is_cloud():
+        try:
+            presigned_url = FileService().download_file(file_record)
+            return raw_response({"presigned_url": presigned_url})
+        except ValueError as e:
+            return error("bad_request", str(e), status=400)
+
+    provider = create_storage_provider(current_app.config)
+    full_path = provider.get_path(file_record.object_key)
+    if not os.path.isfile(full_path):
+        return error("not_found", "File not found on disk", status=404)
+
+    if request.args.get("direct"):
+        directory = os.path.dirname(full_path)
+        filename = os.path.basename(full_path)
+        return _safe_send(directory, filename, download_name=file_record.file_name, mimetype=file_record.mime_type)
+
+    return raw_response({"presigned_url": f"{request.url}?direct=1"})
+
+
+@bp.get("/<string:workspace_id>/files/<string:file_id>/content")
+@limiter.limit(RATE_LIMIT_STANDARD)
+@secured
+def get_file_content(workspace_id: str, file_id: str) -> Response:
+    """Return the raw text content of a file."""
+    file_record = FileRepository().get(file_id)
+    if not file_record:
+        return error("not_found", "File not found", status=404)
+    access_err = check_workspace_access(str(file_record.workspace_id))
+    if access_err:
+        return access_err
+    if file_record.state not in ("READY", "UPLOADED", "VALIDATING"):
+        return error("bad_request", f"File is in '{file_record.state}' state", status=400)
     try:
-        presigned_url = fs.download_file(file_record)
-        return redirect(presigned_url)
-    except ValueError as e:
+        content = FileService().get_file_content(file_record)
+        return raw_response(content)
+    except (ValueError, OSError, UnicodeDecodeError) as e:
         return error("bad_request", str(e), status=400)
 
 
@@ -196,7 +217,7 @@ def serve_optimized(workspace_id: str, file_id: str) -> Response:
 
 
 def _serve_variant(file_id: str, variant_type: str):
-    """Serve a file variant (local) or redirect to presigned URL (cloud)."""
+    """Serve a file variant — returns JSON with presigned_url in both cloud and local modes."""
     file_record = FileRepository().get(file_id)
     if not file_record:
         return error("not_found", "File not found", status=404)
@@ -207,12 +228,14 @@ def _serve_variant(file_id: str, variant_type: str):
         result = FileService().get_variant(file_id, variant_type)
         if not result or not result.get("download_url"):
             return error("not_found", f"{variant_type} not found", status=404)
-        return redirect(result["download_url"])
+        return raw_response({"presigned_url": result["download_url"]})
 
     response = FileService().serve_local_variant(file_id, variant_type)
     if not response:
         return error("not_found", f"{variant_type} not found", status=404)
-    return response
+    if request.args.get("direct"):
+        return response
+    return raw_response({"presigned_url": f"{request.url}?direct=1"})
 
 
 @bp.delete("/<string:workspace_id>/files/<string:file_id>")

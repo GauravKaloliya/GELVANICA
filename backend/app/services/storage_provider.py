@@ -306,7 +306,11 @@ class S3Provider(StorageProvider):
         """Return a cached boto3 S3 client, creating it lazily on first call."""
         if self._client is None:
             import boto3
-            kwargs: dict[str, str] = {"region_name": self.region}
+            from botocore.config import Config
+            kwargs: dict[str, Any] = {
+                "region_name": self.region,
+                "config": Config(signature_version="s3v4"),
+            }
             if self.access_key_id:
                 kwargs["aws_access_key_id"] = self.access_key_id
             if self.secret_access_key:
@@ -437,6 +441,55 @@ class S3Provider(StorageProvider):
     def get_provider_name(self) -> str:
         """Return ``'aws_s3'``."""
         return "aws_s3"
+
+    def generate_object_key(self, workspace_id: str, filename: str, content_hash: str) -> str:
+        """Generate a deterministic S3 object key.
+
+        Delegates to the module-level key generator which uses the
+        ``v1/objects/original/{prefix1}/{prefix2}/{hash}`` layout.
+        """
+        return generate_object_key(content_hash, "original")
+
+    def generate_variant_key(self, tier: str, content_hash: str, ext: str = ".webp") -> str:
+        """Generate a variant object key for S3.
+
+        Args:
+            tier: One of 'thumbnail', 'preview', 'optimized'
+            content_hash: SHA-256 of the original file
+            ext: File extension (e.g. '.webp')
+        """
+        return generate_derived_key(content_hash, tier, ext)
+
+    def has_variant(self, tier: str, content_hash: str, ext: str = ".webp") -> bool:
+        """Check whether a variant exists for the given tier and content hash."""
+        key = self.generate_variant_key(tier, content_hash, ext)
+        return self.exists(key)
+
+    def store_variant(self, tier: str, content_hash: str, data: bytes,
+                      ext: str = ".webp", content_type: str = "image/webp") -> str:
+        """Store a processed variant. Returns the object_key."""
+        key = self.generate_variant_key(tier, content_hash, ext)
+        self.store(key, data, content_type)
+        return key
+
+    def retrieve_variant(self, tier: str, content_hash: str, ext: str = ".webp") -> bytes:
+        """Retrieve a variant by tier and content hash."""
+        key = self.generate_variant_key(tier, content_hash, ext)
+        return self.retrieve(key)
+
+    def delete_variant(self, tier: str, content_hash: str, ext: str = ".webp") -> bool:
+        """Delete a single variant. Returns True if removed."""
+        key = self.generate_variant_key(tier, content_hash, ext)
+        return self.delete(key)
+
+    def delete_all_variants(self, content_hash: str) -> int:
+        """Remove all variants (thumbnail, preview, optimized) for a content hash. Returns count deleted."""
+        count = 0
+        for tier in ("thumbnail", "preview", "optimized"):
+            for ext in (".webp", ""):
+                if ext and self.delete_variant(tier, content_hash, ext):
+                    count += 1
+        return count
 
     def enable_versioning(self) -> None:
         client = self._get_client()

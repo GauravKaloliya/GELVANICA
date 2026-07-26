@@ -43,12 +43,12 @@ export default function CompareTab({
     <div className="space-y-6">
       <div className="flex items-end gap-4">
         <div className="flex-1 space-y-1.5">
-          <label htmlFor="compare-left-version" className="text-xs font-medium text-zinc-400">Left version (before)</label>
+          <label htmlFor="compare-left-version" className="text-xs font-medium text-muted">Left version (before)</label>
           <select
             id="compare-left-version"
             value={leftVersionId}
             onChange={(e) => onLeftChange(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white focus:border-zinc-500 focus:outline-none"
+            className="w-full rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
           >
             <option value="">Select a version</option>
             {versions.map((v) => (
@@ -60,12 +60,12 @@ export default function CompareTab({
         </div>
 
         <div className="flex-1 space-y-1.5">
-          <label htmlFor="compare-right-version" className="text-xs font-medium text-zinc-400">Right version (after)</label>
+          <label htmlFor="compare-right-version" className="text-xs font-medium text-muted">Right version (after)</label>
           <select
             id="compare-right-version"
             value={rightVersionId}
             onChange={(e) => onRightChange(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white focus:border-zinc-500 focus:outline-none"
+            className="w-full rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
           >
             <option value="">Select a version</option>
             {versions.map((v) => (
@@ -79,7 +79,7 @@ export default function CompareTab({
         <button
           onClick={onCompare}
           disabled={!leftVersionId || !rightVersionId || comparing || leftVersionId === rightVersionId}
-          className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-50"
+          className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface disabled:opacity-50"
         >
           {comparing ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -95,7 +95,7 @@ export default function CompareTab({
       )}
 
       {hasCompared && (
-        <Suspense fallback={<div className="flex items-center justify-center h-[400px]"><Loader2 className="h-6 w-6 animate-spin text-zinc-500" /></div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-[400px]"><Loader2 className="h-6 w-6 animate-spin text-muted" /></div>}>
           <DiffViewer
             leftLabel={
               versions.find((v) => v.id === leftVersionId)

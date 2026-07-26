@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
     ],
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/app",
+        basePath: false,
+        permanent: true,
+      },
+    ];
+  },
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,

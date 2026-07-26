@@ -47,15 +47,15 @@ export function RemoveMemberModal({
               <DialogTitle>Remove Member</DialogTitle>
               <DialogDescription>
                 Are you sure you want to remove{" "}
-                <span className="font-medium text-zinc-300">{memberName}</span> from this workspace?
+                <span className="font-medium text-foreground">{memberName}</span> from this workspace?
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="rounded-lg border border-zinc-800 bg-zinc-800/50 p-3">
-          <p className="text-xs text-zinc-400">
-            <span className="font-medium text-zinc-300">{memberName}</span>
+        <div className="rounded-lg border-border bg-surface p-3">
+          <p className="text-xs text-muted">
+            <span className="font-medium text-foreground">{memberName}</span>
             <br />
             {memberEmail}
             <br />

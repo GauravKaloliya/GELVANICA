@@ -38,7 +38,7 @@ export default function CalloutBlock({ content, onChange, readOnly }: CalloutBlo
             <Icon className="h-5 w-5" />
           </button>
           {selecting && (
-            <div className="absolute left-0 top-6 z-10 w-32 rounded-lg border border-zinc-700 bg-zinc-900 p-1 shadow-xl">
+            <div className="absolute left-0 top-6 z-10 w-32 rounded-lg border border-border bg-card p-1 neo-depth-zinc">
               {(Object.keys(CALLOUT_VARIANTS) as CalloutVariant[]).map((v) => {
                 const VIcon = CALLOUT_VARIANTS[v].icon;
                 return (
@@ -48,7 +48,7 @@ export default function CalloutBlock({ content, onChange, readOnly }: CalloutBlo
                       onChange({ text: content.text, icon: v });
                       setSelecting(false);
                     }}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-surface"
                   >
                     <VIcon className={cn("h-3.5 w-3.5", CALLOUT_VARIANTS[v].text)} />
                     <span className="capitalize">{v}</span>
@@ -63,7 +63,7 @@ export default function CalloutBlock({ content, onChange, readOnly }: CalloutBlo
           onChange={(e) => onChange({ text: e.target.value, icon: content.icon || "info" })}
           readOnly={readOnly}
           placeholder="Callout text..."
-          className="flex-1 resize-none bg-transparent text-sm text-zinc-300 outline-none placeholder:text-zinc-600"
+          className="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
           rows={Math.max(1, Math.ceil((content.text || "").length / 60))}
         />
       </div>

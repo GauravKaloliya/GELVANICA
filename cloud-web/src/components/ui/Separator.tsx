@@ -20,13 +20,13 @@ const Separator = React.forwardRef<
           decorative={decorative}
           orientation={orientation}
           className={cn(
-            "shrink-0 bg-zinc-800",
+            "shrink-0 bg-border",
             orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
             className
           )}
           {...props}
         />
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-zinc-950 px-3 text-[11px] text-zinc-600">
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-[11px] text-muted">
           {label}
         </span>
       </div>
@@ -39,7 +39,7 @@ const Separator = React.forwardRef<
       decorative={decorative}
       orientation={orientation}
       className={cn(
-        "shrink-0 bg-zinc-800",
+            "shrink-0 bg-border",
         orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
         className
       )}

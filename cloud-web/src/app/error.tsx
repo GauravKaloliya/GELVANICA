@@ -8,9 +8,9 @@ export default function RootError({ error, reset }: { error: Error & { digest?: 
   }, [error]);
   return (
     <div className="flex flex-col items-center justify-center gap-4 p-12 text-center">
-      <h2 className="text-xl font-bold text-white">Something went wrong</h2>
-      <p className="text-sm text-zinc-500">An unexpected error occurred. Please try again later.</p>
-      <button onClick={reset} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200">
+      <h2 className="text-xl font-bold text-foreground">Something went wrong</h2>
+      <p className="text-sm text-muted">An unexpected error occurred. Please try again later.</p>
+      <button onClick={reset} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent/90">
         Try again
       </button>
     </div>

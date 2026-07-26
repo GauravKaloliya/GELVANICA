@@ -962,7 +962,7 @@ class ActivityLog(UUIDPrimaryKeyMixin, CreatedOnlyMixin, SoftDeleteMixin, db.Mod
 class GovernanceReport(UUIDPrimaryKeyMixin, CreatedOnlyMixin, SoftDeleteMixin, db.Model):
     __tablename__ = "governance_reports"
     __table_args__ = (
-        CheckConstraint("type IN ('access_audit','change_log','storage_summary','activity_summary','compliance')", name="ck_governance_report_type"),
+        CheckConstraint("type IN ('access_audit','change_log','storage_summary','activity_summary','compliance','health_check')", name="ck_governance_report_type"),
         CheckConstraint("status IN ('pending','running','completed','failed')", name="ck_governance_report_status"),
         Index("idx_governance_reports_workspace_id", "workspace_id"),
         Index("idx_governance_reports_created_by", "created_by"),

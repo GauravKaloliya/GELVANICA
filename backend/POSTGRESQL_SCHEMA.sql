@@ -825,7 +825,7 @@ CREATE TABLE IF NOT EXISTS governance_reports (
     deleted_at TIMESTAMP WITH TIME ZONE,
     deleted_by UUID,
     PRIMARY KEY (id),
-    CONSTRAINT ck_governance_report_type CHECK (type IN ('access_audit','change_log','storage_summary','activity_summary','compliance')),
+    CONSTRAINT ck_governance_report_type CHECK (type IN ('access_audit','change_log','storage_summary','activity_summary','compliance','health_check')),
     CONSTRAINT ck_governance_report_status CHECK (status IN ('pending','running','completed','failed')),
     FOREIGN KEY(workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE,
     FOREIGN KEY(created_by) REFERENCES users (id) ON DELETE SET NULL,

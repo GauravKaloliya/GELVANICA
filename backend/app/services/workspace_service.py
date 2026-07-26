@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.errors import ApiError, ConflictError, NotFoundError
 from app.extensions import db
-from app.models import Block, Entity, Relation, WorkspaceMember
+from app.models import Block, Entity, Relation, User, WorkspaceMember
 from app.repositories import WorkspaceMemberRepository, WorkspaceRepository
 
 
@@ -80,7 +80,15 @@ class WorkspaceService:
             except Exception:
                 db.session.rollback()
                 raise
-            WorkspaceMemberRepository().create({"workspace_id": workspace.id, "user_id": user_id, "role": "owner"})
+            user = User.query.get(user_id)
+            WorkspaceMemberRepository().create({
+                "workspace_id": workspace.id,
+                "user_id": user_id,
+                "role": "owner",
+                "display_name": user.name if user else "",
+                "email": user.email if user else "",
+                "avatar_url": user.avatar_url if user else None,
+            })
         try:
             db.session.commit()
         except IntegrityError:

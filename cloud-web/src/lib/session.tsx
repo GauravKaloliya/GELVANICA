@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import type { User, AuthTokens } from '@/lib/types'
 
@@ -30,23 +30,32 @@ interface SessionProviderProps {
 }
 
 export function SessionProvider({ children }: SessionProviderProps) {
-  const store = useAuthStore()
+  const initialize = useAuthStore(s => s.initialize)
+  const user = useAuthStore(s => s.user)
+  const tokens = useAuthStore(s => s.tokens)
+  const storeIsLoading = useAuthStore(s => s.isLoading)
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const login = useAuthStore(s => s.login)
+  const logout = useAuthStore(s => s.logout)
+  const refreshAccessToken = useAuthStore(s => s.refreshAccessToken)
+  const setUser = useAuthStore(s => s.setUser)
+
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    store.initialize().finally(() => setReady(true))
-  }, [store])
+    initialize().finally(() => setReady(true))
+  }, [initialize])
 
-  const value: SessionContextType = {
-    user: store.user,
-    tokens: store.tokens,
-    isLoading: !ready || store.isLoading,
-    isAuthenticated: store.isAuthenticated,
-    login: store.login,
-    logout: store.logout,
-    refreshToken: store.refreshAccessToken,
-    updateUser: store.setUser,
-  }
+  const value = useMemo<SessionContextType>(() => ({
+    user,
+    tokens,
+    isLoading: !ready || storeIsLoading,
+    isAuthenticated,
+    login,
+    logout,
+    refreshToken: refreshAccessToken,
+    updateUser: setUser,
+  }), [user, tokens, ready, storeIsLoading, isAuthenticated, login, logout, refreshAccessToken, setUser])
 
   return (
     <SessionContext.Provider value={value}>

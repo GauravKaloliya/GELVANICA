@@ -1,50 +1,46 @@
 export type BlockType =
   | "text"
-  | "heading_1"
-  | "heading_2"
-  | "heading_3"
+  | "heading"
+  | "heading1"
+  | "heading2"
+  | "heading3"
   | "bulleted_list"
   | "numbered_list"
-  | "to_do"
+  | "to-do"
+  | "toggle"
   | "code"
   | "quote"
   | "callout"
-  | "image"
   | "divider"
-  | "table"
-  | "toggle"
-  | "embed"
+  | "image"
+  | "video"
+  | "file"
+  | "bookmark"
   | "equation"
-  | "mention"
-  | "ai";
+  | "table_of_contents"
+  | "column_list"
+  | "column"
+  | "breadcrumb";
 
-export type BlockContent =
-  | { text: string }
-  | { text: string; checked: boolean }
-  | { text: string; language: string }
-  | { text: string; icon: string }
-  | { text: string; open: boolean }
-  | { url: string; alt: string }
-  | { url: string; title?: string }
-  | { text: string; display?: boolean }
-  | { text: string; entity_id?: string; entity_title?: string; mention_type?: string }
-  | { text: string; prompt?: string; model?: string }
-  | Record<string, never>
-  | { rows: unknown[]; columns: unknown[] };
+export type BlockContent = Record<string, unknown>;
 
 export interface Block {
   id: string;
   entity_id: string;
   parent_block_id: string | null;
-  block_type: BlockType;
+  type: string;
   position: number;
+  content: Record<string, unknown>;
+  properties: Record<string, unknown>;
+  branch_id: string;
+  content_hash: string;
   indent: number;
-  content: BlockContent;
+  version: number;
+  created_at: string;
+  updated_at: string;
   is_deleted: boolean;
   deleted_at: string | null;
   deleted_by: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface EmbedBlock {
@@ -68,4 +64,34 @@ export interface AIBlock {
   text: string;
   prompt?: string;
   model?: string;
+}
+
+export interface VideoBlock {
+  url: string;
+  caption?: string;
+}
+
+export interface FileBlock {
+  url: string;
+  name?: string;
+}
+
+export interface BookmarkBlock {
+  url: string;
+  title?: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface TableOfContentsBlock {
+}
+
+export interface ColumnListBlock {
+  columns: number;
+}
+
+export interface ColumnBlock {
+}
+
+export interface BreadcrumbBlock {
 }

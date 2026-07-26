@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User, AuthTokens } from "@/lib/types";
-import { authApi } from "@/lib/services/auth";
+import { authService } from "@/lib/services/auth";
 
 interface AuthState {
   user: User | null;
@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         const { tokens } = get();
         if (tokens?.refresh_token) {
-          authApi.logout(tokens.refresh_token).catch(() => {});
+          authService.logout(tokens.refresh_token).catch(() => {});
         }
         clearCookie("access_token");
         set({ user: null, tokens: null, isAuthenticated: false, isLoading: false });
@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
         setCookie("access_token", tokens.access_token, 60 * 30);
 
         try {
-          const res = await authApi.getMe(tokens.access_token);
+          const res = await authService.getMe();
           const user = res.data;
           set({ user, isAuthenticated: true, isLoading: false });
         } catch {
@@ -82,8 +82,8 @@ export const useAuthStore = create<AuthState>()(
         if (!tokens?.refresh_token) return false;
 
         try {
-          const res = await authApi.refresh(tokens.refresh_token);
-          const newTokens = { access_token: res.data.access_token, refresh_token: tokens.refresh_token };
+          const res = await authService.refresh(tokens.refresh_token);
+          const newTokens: AuthTokens = { access_token: res.data.access_token, refresh_token: res.data.refresh_token, token_type: res.data.token_type, expires_in: res.data.expires_in };
           get().setTokens(newTokens);
           return true;
         } catch {
@@ -96,7 +96,7 @@ export const useAuthStore = create<AuthState>()(
         const { tokens, user } = get();
         if (!tokens?.access_token || !user) return;
 
-        const res = await authApi.updateMe(tokens.access_token, data);
+        const res = await authService.updateMe(data);
         set({ user: res.data });
       },
     }),

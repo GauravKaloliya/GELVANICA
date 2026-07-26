@@ -35,7 +35,7 @@ export default function TextBlock({ content, onChange, placeholder = "Type somet
       onKeyDown={handleKeyDown}
       placeholder={placeholder}
       rows={1}
-      className="w-full resize-none bg-transparent text-sm text-zinc-300 outline-none placeholder:text-zinc-600 overflow-hidden"
+      className="w-full resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted overflow-hidden"
       style={{ height: "auto" }}
       onInput={(e) => {
         const target = e.currentTarget;

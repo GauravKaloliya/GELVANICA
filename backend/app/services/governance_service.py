@@ -21,6 +21,25 @@ def _governance_report_model():
 
 
 class GovernanceService:
+    def health_score_history(self, workspace_id: str, limit: int = 30) -> list:
+        GovernanceReport = _governance_report_model()
+        if GovernanceReport is None:
+            return []
+        records = (
+            GovernanceReport.query
+            .filter_by(workspace_id=workspace_id, type="health_check", is_deleted=False)
+            .order_by(GovernanceReport.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return [
+            {
+                "score": r.data.get("health_score", 0) if r.data else 0,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in reversed(records)
+        ]
+
     def list_runs(self, workspace_id: str, page: int = 1, per_page: int = 10) -> Dict[str, Any]:
         GovernanceReport = _governance_report_model()
         if GovernanceReport is None:
@@ -193,3 +212,53 @@ class GovernanceService:
             Entity.updated_at < cutoff,
         ).count()
         return {"stale_entities": stale_entities, "stale_threshold_days": 90}
+
+    def broken_links(self, workspace_id: str) -> Dict[str, Any]:
+        """Find relations that point to deleted or missing entities."""
+        result = []
+        relations = Relation.query.filter_by(workspace_id=workspace_id, is_deleted=False).all()
+        for rel in relations:
+            for ref_id in [rel.source_entity_id, rel.target_entity_id]:
+                target = Entity.query.get(ref_id)
+                if not target or target.is_deleted:
+                    entity = Entity.query.get(rel.source_entity_id)
+                    result.append({
+                        "entity_id": str(entity.id) if entity else str(rel.source_entity_id),
+                        "entity_title": entity.name if entity else "Deleted entity",
+                        "broken_ref": str(ref_id),
+                    })
+        return {"items": result, "total": len(result)}
+
+    def naming_issues(self, workspace_id: str) -> Dict[str, Any]:
+        """Find entities with naming inconsistencies."""
+        result = []
+        entities = Entity.query.filter_by(workspace_id=workspace_id, is_deleted=False).all()
+        for entity in entities:
+            issues = []
+            if entity.name and len(entity.name) > 200:
+                issues.append("Name exceeds 200 characters")
+            if entity.name and entity.name != entity.name.strip():
+                issues.append("Name has leading/trailing whitespace")
+            if entity.name and entity.name[0].islower():
+                issues.append("Name should start with uppercase")
+            if issues:
+                result.append({
+                    "entity_id": str(entity.id),
+                    "entity_title": entity.name or "Untitled",
+                    "issue": "; ".join(issues),
+                })
+        return {"items": result, "total": len(result)}
+
+    def size_warnings(self, workspace_id: str) -> Dict[str, Any]:
+        """Find entities with excessive block counts."""
+        result = []
+        entities = Entity.query.filter_by(workspace_id=workspace_id, is_deleted=False).all()
+        for entity in entities:
+            block_count = Block.query.filter_by(entity_id=entity.id, is_deleted=False).count()
+            if block_count > 100:
+                result.append({
+                    "entity_id": str(entity.id),
+                    "entity_title": entity.name or "Untitled",
+                    "block_count": block_count,
+                })
+        return {"items": result, "total": len(result)}

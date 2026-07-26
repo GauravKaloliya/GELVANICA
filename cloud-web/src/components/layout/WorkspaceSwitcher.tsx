@@ -24,15 +24,15 @@ export function WorkspaceSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="gap-2 px-3 text-zinc-300 hover:text-white"
+          className="gap-2 px-3 text-foreground hover:text-foreground"
         >
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-zinc-700 text-[10px] font-bold text-white">
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-surface-2 text-[10px] font-bold text-foreground">
             {currentWorkspace.name?.[0]?.toUpperCase() || "W"}
           </div>
           <span className="max-w-[140px] truncate text-sm font-medium">
             {currentWorkspace.name}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 text-zinc-500" />
+          <ChevronDown className="h-3.5 w-3.5 text-muted" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
@@ -45,7 +45,7 @@ export function WorkspaceSwitcher() {
                 href={`/workspace/${workspace.id}/dashboard`}
                 className="gap-3"
               >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-zinc-700 text-[10px] font-bold text-white">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-surface-2 text-[10px] font-bold text-foreground">
                   {workspace.name?.[0]?.toUpperCase() || "W"}
                 </div>
                 <span className="min-w-0 flex-1 truncate">{workspace.name}</span>
@@ -59,8 +59,8 @@ export function WorkspaceSwitcher() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/workspaces" className="gap-3">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-dashed border-zinc-600">
-              <Plus className="h-3 w-3 text-zinc-500" />
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-dashed border-border">
+              <Plus className="h-3 w-3 text-muted" />
             </div>
             <span>Create workspace</span>
           </Link>

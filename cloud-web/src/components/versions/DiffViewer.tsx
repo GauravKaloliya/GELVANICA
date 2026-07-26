@@ -59,25 +59,25 @@ function DiffFieldRow({ field }: { field: DiffField }) {
         className="flex w-full items-center gap-2 px-3 py-2 text-left"
       >
         <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
-        <span className="flex-1 text-sm font-medium text-zinc-300">{field.field}</span>
-        <span className="text-[10px] text-zinc-500 uppercase">{field.type}</span>
+        <span className="flex-1 text-sm font-medium text-foreground">{field.field}</span>
+        <span className="text-[10px] text-muted uppercase">{field.type}</span>
         {longContent && (
           expanded ?
-            <ChevronDown className="h-3 w-3 text-zinc-500" /> :
-            <ChevronRight className="h-3 w-3 text-zinc-500" />
+            <ChevronDown className="h-3 w-3 text-muted" /> :
+            <ChevronRight className="h-3 w-3 text-muted" />
         )}
       </button>
       {expanded && (
-        <div className="grid grid-cols-2 gap-px border-t border-zinc-800">
-          <div className="bg-zinc-900/50 p-3">
-            <p className="mb-1 text-[10px] font-medium text-zinc-500 uppercase">Before</p>
-            <pre className="whitespace-pre-wrap break-words text-xs text-zinc-400">
+        <div className="grid grid-cols-2 gap-px border-t border-border">
+          <div className="bg-card p-3">
+            <p className="mb-1 text-[10px] font-medium text-muted uppercase">Before</p>
+            <pre className="whitespace-pre-wrap break-words text-xs text-muted">
               {field.type === "added" ? "—" : formatValue(before)}
             </pre>
           </div>
-          <div className="bg-zinc-900/50 p-3">
-            <p className="mb-1 text-[10px] font-medium text-zinc-500 uppercase">After</p>
-            <pre className="whitespace-pre-wrap break-words text-xs text-zinc-300">
+          <div className="bg-card p-3">
+            <p className="mb-1 text-[10px] font-medium text-muted uppercase">After</p>
+            <pre className="whitespace-pre-wrap break-words text-xs text-foreground">
               {field.type === "removed" ? "—" : formatValue(after)}
             </pre>
           </div>
@@ -100,9 +100,9 @@ export default function DiffViewer({
 
   if (fields.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-zinc-800 py-12 text-center">
-        <ArrowLeftRight className="mx-auto h-8 w-8 text-zinc-600" />
-        <p className="mt-2 text-sm text-zinc-500">{emptyMessage}</p>
+      <div className="rounded-lg border border-dashed border-border py-12 text-center">
+        <ArrowLeftRight className="mx-auto h-8 w-8 text-muted" />
+        <p className="mt-2 text-sm text-muted">{emptyMessage}</p>
       </div>
     );
   }
@@ -110,7 +110,7 @@ export default function DiffViewer({
   if (viewMode === "side-by-side") {
     return (
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-zinc-500">
+        <div className="flex items-center justify-between text-xs text-muted">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-green-400" />
@@ -128,22 +128,22 @@ export default function DiffViewer({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <p className="text-xs font-medium text-zinc-400 uppercase">{leftLabel}</p>
+            <p className="text-xs font-medium text-muted uppercase">{leftLabel}</p>
             {fields.map((field, i) => (
-              <div key={`left-${field.field}-${i}`} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-                <p className="mb-1 text-[10px] font-medium text-zinc-500 uppercase">{field.field}</p>
-                <pre className="whitespace-pre-wrap break-words text-xs text-zinc-400">
+              <div key={`left-${field.field}-${i}`} className="rounded-lg border border-border bg-card p-3">
+                <p className="mb-1 text-[10px] font-medium text-muted uppercase">{field.field}</p>
+                <pre className="whitespace-pre-wrap break-words text-xs text-muted">
                   {field.type === "added" ? "—" : formatValue(field.before)}
                 </pre>
               </div>
             ))}
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-medium text-zinc-400 uppercase">{rightLabel}</p>
+            <p className="text-xs font-medium text-muted uppercase">{rightLabel}</p>
             {fields.map((field, i) => (
-              <div key={`right-${field.field}-${i}`} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-                <p className="mb-1 text-[10px] font-medium text-zinc-500 uppercase">{field.field}</p>
-                <pre className="whitespace-pre-wrap break-words text-xs text-zinc-300">
+              <div key={`right-${field.field}-${i}`} className="rounded-lg border border-border bg-card p-3">
+                <p className="mb-1 text-[10px] font-medium text-muted uppercase">{field.field}</p>
+                <pre className="whitespace-pre-wrap break-words text-xs text-foreground">
                   {field.type === "removed" ? "—" : formatValue(field.after)}
                 </pre>
               </div>
@@ -157,7 +157,7 @@ export default function DiffViewer({
   return (
     <div className="space-y-3">
       {/* Legend */}
-      <div className="flex items-center justify-between text-xs text-zinc-500">
+      <div className="flex items-center justify-between text-xs text-muted">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-green-400" />
@@ -173,8 +173,8 @@ export default function DiffViewer({
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-zinc-600">{leftLabel}</span>
-          <span className="text-zinc-600">{rightLabel}</span>
+          <span className="text-muted">{leftLabel}</span>
+          <span className="text-muted">{rightLabel}</span>
         </div>
       </div>
 

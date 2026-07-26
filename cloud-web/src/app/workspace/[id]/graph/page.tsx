@@ -169,40 +169,40 @@ function GraphView() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <div>
-          <h1 className="text-xl font-bold text-white">Knowledge Graph</h1>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <h1 className="text-xl font-bold text-foreground display-heading">Knowledge Graph</h1>
+          <p className="mt-0.5 text-step-1 text-muted">
             {graphNodes.length} nodes · {graphEdges.length} edges
-            {versionHash && <span className="ml-2 text-zinc-600">v{versionHash.slice(0, 8)}</span>}
+            {versionHash && <span className="ml-2 text-muted">v{versionHash.slice(0, 8)}</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter nodes..."
-              className="w-48 rounded-lg border border-zinc-800 bg-zinc-900/50 py-1.5 pl-8 pr-3 text-xs text-white placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none" />
+              className="w-48 rounded-lg border border-border bg-card py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-none" />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="h-3 w-3 text-zinc-500 hover:text-white" />
+                <X className="h-3 w-3 text-muted hover:text-foreground" />
               </button>
             )}
           </div>
           <div className="relative">
             <button onClick={() => setLayoutOpen(!layoutOpen)}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white">
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted hover:bg-surface hover:text-foreground">
               <LayoutGrid className="h-3.5 w-3.5" />
               {layoutOpts.find((o) => o.value === layout)?.label}
               <ChevronDown className="h-3 w-3" />
             </button>
             {layoutOpen && (
-              <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border border-zinc-800 bg-zinc-900 p-1 shadow-xl">
+              <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border border-border bg-card p-1 shadow-xl">
                 {layoutOpts.map((opt) => (
                   <button key={opt.value}
                     onClick={() => { setLayout(opt.value); setLayoutOpen(false); }}
                     className={cn("flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors",
-                      layout === opt.value ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
+                      layout === opt.value ? "bg-surface text-foreground" : "text-muted hover:bg-surface/50 hover:text-foreground"
                     )}>
                     <opt.icon className="h-3.5 w-3.5" />{opt.label}
                   </button>
@@ -210,20 +210,20 @@ function GraphView() {
               </div>
             )}
           </div>
-          <button onClick={handleExport} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white" title="Export graph">
+          <button onClick={handleExport} className="rounded-lg p-2 text-muted hover:bg-surface hover:text-foreground" title="Export graph">
             <Download className="h-4 w-4" />
           </button>
-          <button onClick={toggleFullscreen} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white" title="Fullscreen">
+          <button onClick={toggleFullscreen} className="rounded-lg p-2 text-muted hover:bg-surface hover:text-foreground" title="Fullscreen">
             {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
           </button>
           <button onClick={() => setFilterOpen(!filterOpen)}
             className={cn("rounded-lg p-2 transition-colors",
-              filterOpen ? "bg-zinc-800 text-white" : "text-zinc-500 hover:bg-zinc-800 hover:text-white"
+              filterOpen ? "bg-surface text-foreground" : "text-muted hover:bg-surface hover:text-foreground"
             )}>
             <Settings2 className="h-4 w-4" />
           </button>
           <button onClick={() => refreshGraph()} disabled={isLoading}
-            className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-700 disabled:opacity-50">
+            className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2 disabled:opacity-50">
             <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />Refresh
           </button>
         </div>
@@ -231,11 +231,11 @@ function GraphView() {
 
       {filterOpen && (
         <GraphFilters depth={depthFilter} onDepthChange={setDepthFilter} relationTypes={relationFilter}
-          onRelationTypesChange={setRelationFilter} nodeTypeFilter={[]} onNodeTypeFilterChange={() => {}} />
+          onRelationTypesChange={setRelationFilter} workspaceId={workspaceId} />
       )}
 
       <div className="relative flex-1">
-        <Suspense fallback={<div className="flex items-center justify-center h-[400px]"><Loader2 className="h-6 w-6 animate-spin text-zinc-500" /></div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-[400px]"><Loader2 className="h-6 w-6 animate-spin text-muted" /></div>}>
         {isLoading && graphNodes.length === 0 ? (
           <div className="flex h-full flex-col p-6 gap-4">
             <div className="flex items-center gap-3"><Skeleton className="h-6 w-48" /><Skeleton className="h-4 w-32" /></div>
@@ -244,14 +244,14 @@ function GraphView() {
         ) : error ? (
           <div className="flex h-full flex-col items-center justify-center gap-3">
             <AlertCircle className="h-8 w-8 text-red-400" />
-            <p className="text-sm text-zinc-400">{error}</p>
-            <button onClick={() => loadGraph()} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700">Retry</button>
+            <p className="text-step-3 text-muted">{error}</p>
+            <button onClick={() => loadGraph()} className="rounded-lg bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-2">Retry</button>
           </div>
         ) : graphNodes.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3">
-            <Zap className="h-10 w-10 text-zinc-600" />
-            <p className="text-sm text-zinc-500">No graph data available</p>
-            <p className="text-xs text-zinc-600">Create entities and relations to populate the graph</p>
+            <Zap className="h-10 w-10 text-muted" />
+            <p className="text-step-3 text-muted">No graph data available</p>
+            <p className="text-step-1 text-muted">Create entities and relations to populate the graph</p>
           </div>
         ) : (
           <ReactFlow nodes={filteredNodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
@@ -259,11 +259,11 @@ function GraphView() {
             fitView fitViewOptions={{ padding: 0.2 }} minZoom={0.1} maxZoom={2}
             defaultEdgeOptions={{ type: "smoothstep" }}>
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#27272a" />
-            <Controls className="!rounded-lg !border !border-zinc-800 !bg-zinc-900" />
-            <MiniMap nodeColor="#27272a" maskColor="rgba(0,0,0,0.7)" className="!rounded-lg !border !border-zinc-800 !bg-zinc-950" />
+            <Controls className="!rounded-lg !border !border-border !bg-card" />
+            <MiniMap nodeColor="#27272a" maskColor="rgba(0,0,0,0.7)" className="!rounded-lg !border !border-border !bg-background" />
             {generatedAt && (
               <Panel position="bottom-left">
-                <p className="text-[10px] text-zinc-600">Generated {new Date(generatedAt).toLocaleString()}</p>
+                <p className="text-[10px] text-muted">Generated {new Date(generatedAt).toLocaleString()}</p>
               </Panel>
             )}
           </ReactFlow>
@@ -279,18 +279,18 @@ function GraphView() {
         )}
 
         {contextMenu && (
-          <div className="fixed z-50 w-48 rounded-lg border border-zinc-800 bg-zinc-900 p-1 shadow-xl"
+          <div className="fixed z-50 w-48 rounded-lg border border-border bg-card p-1 shadow-xl"
             style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(e) => e.stopPropagation()}>
             <button onClick={() => { router.push(`/workspace/${workspaceId}/entity/${contextMenu.nodeId}`); closeCtx(); }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-foreground hover:bg-surface hover:text-foreground">
               <ExternalLink className="h-3.5 w-3.5" />Open Entity
             </button>
             <button onClick={() => { handleTraverse(contextMenu.nodeId); closeCtx(); }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-foreground hover:bg-surface hover:text-foreground">
               <Circle className="h-3.5 w-3.5" />Show in Graph
             </button>
             <button onClick={() => { navigator.clipboard.writeText(contextMenu.nodeId); closeCtx(); }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-foreground hover:bg-surface hover:text-foreground">
               <Copy className="h-3.5 w-3.5" />Copy ID
             </button>
           </div>

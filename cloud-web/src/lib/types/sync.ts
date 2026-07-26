@@ -8,9 +8,11 @@ export interface SyncOperation {
   device_id: string | null;
   client_clock: number | null;
   synced: boolean;
+  retry_count: number;
+  error_message: string | null;
   synced_at: string | null;
-  status: "pending" | "applied" | "acked";
   created_at: string;
+  updated_at: string;
   is_deleted: boolean;
   deleted_at: string | null;
   deleted_by: string | null;

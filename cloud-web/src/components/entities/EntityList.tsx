@@ -29,8 +29,8 @@ export default function EntityList({
   if (entities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <FileText className="h-10 w-10 text-zinc-600" />
-        <p className="mt-3 text-sm text-zinc-400">{emptyMessage || "No entities yet"}</p>
+        <FileText className="h-10 w-10 text-muted" />
+        <p className="mt-3 text-sm text-muted">{emptyMessage || "No entities yet"}</p>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export default function EntityList({
           <div
             key={entity.id}
             className={cn(
-              "group flex items-center justify-between rounded-md px-3 py-2.5 hover:bg-zinc-800/50",
+              "group flex items-center justify-between rounded-md px-3 py-2.5 hover:bg-surface",
               isSelected && "bg-white/5"
             )}
             onClick={(e) => {
@@ -80,25 +80,18 @@ export default function EntityList({
             >
               <span className="text-sm">{entity.icon || "📄"}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-white group-hover:text-blue-400">
-                  {entity.title || "Untitled"}
+                <p className="truncate text-sm text-foreground group-hover:text-blue-400">
+                  {entity.name || "Untitled"}
                 </p>
-                {entity.properties && Object.keys(entity.properties).length > 0 && (
-                  <p className="mt-0.5 truncate text-[11px] text-zinc-500">
-                    {Object.entries(entity.properties)
-                      .slice(0, 3)
-                      .map(([k, v]) => `${k}: ${String(v)}`)
-                      .join(" · ")}
-                  </p>
-                )}
+
               </div>
             </Link>
 
             <div className="flex shrink-0 items-center gap-3">
-              <span className="text-[10px] text-zinc-600">
+              <span className="text-[10px] text-muted">
                 {formatRelativeTime(entity.updated_at)}
               </span>
-              <ExternalLink className="h-3.5 w-3.5 text-zinc-600 group-hover:text-zinc-400" />
+              <ExternalLink className="h-3.5 w-3.5 text-muted group-hover:text-foreground" />
             </div>
           </div>
         );

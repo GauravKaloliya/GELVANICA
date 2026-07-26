@@ -1,59 +1,32 @@
-import { API_BASE } from "@/lib/config/constants";
+import { apiClient } from "../apiClient";
 import type { Job } from "@/lib/types";
 
-interface JobResponse {
-  data: Job;
-}
-
-interface JobListResponse {
-  data: Job[];
-  meta?: { total: number };
-}
-
-async function jobApi<T>(endpoint: string, token: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: { message: "Job request failed" } }));
-    throw new Error(error.error?.message || `HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
 export const jobService = {
-  list: async (token: string, params?: {
-    workspace_id?: string;
-    status?: string;
-    job_type?: string;
-    limit?: number;
-  }): Promise<Job[]> => {
-    const searchParams = new URLSearchParams();
-    if (params?.workspace_id) searchParams.set("workspace_id", params.workspace_id);
-    if (params?.status) searchParams.set("status", params.status);
-    if (params?.job_type) searchParams.set("job_type", params.job_type);
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    const res = await jobApi<JobListResponse>(`/jobs/?${searchParams}`, token);
-    return res.data || [];
+  list: (workspaceId: string, params?: { status?: string; type?: string; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set("status", params.status);
+    if (params?.type) sp.set("type", params.type);
+    if (params?.limit) sp.set("limit", String(params.limit));
+    const qs = sp.toString();
+    return apiClient.get<{data: Job[]}>(`/workspaces/${workspaceId}/jobs${qs ? `?${qs}` : ""}`);
   },
 
-  get: async (token: string, jobId: string): Promise<Job> => {
-    const res = await jobApi<JobResponse>(`/jobs/${jobId}`, token);
-    return res.data;
-  },
+  get: (workspaceId: string, jobId: string) =>
+    apiClient.get<{data: Job}>(`/workspaces/${workspaceId}/jobs/${jobId}`),
 
-  cancel: async (token: string, jobId: string): Promise<Job> => {
-    const res = await jobApi<JobResponse>(`/jobs/${jobId}/cancel`, token, { method: "POST" });
-    return res.data;
-  },
+  create: (workspaceId: string, data: { type: string; priority?: string; payload?: Record<string, unknown>; idempotency_key?: string; timeout_seconds?: number; schedule_at?: string; max_retries?: number }) =>
+    apiClient.post<{data: Job}>(`/workspaces/${workspaceId}/jobs`, data),
 
-  retry: async (token: string, jobId: string): Promise<Job> => {
-    const res = await jobApi<JobResponse>(`/jobs/${jobId}/retry`, token, { method: "POST" });
-    return res.data;
-  },
+  markRunning: (workspaceId: string, jobId: string) =>
+    apiClient.post<{data: Job}>(`/workspaces/${workspaceId}/jobs/${jobId}/running`),
+
+  markCompleted: (workspaceId: string, jobId: string, result?: Record<string, unknown>) =>
+    apiClient.post<{data: Job}>(`/workspaces/${workspaceId}/jobs/${jobId}/completed`, { result }),
+
+  markFailed: (workspaceId: string, jobId: string, error?: Record<string, unknown>) =>
+    apiClient.post<{data: Job}>(`/workspaces/${workspaceId}/jobs/${jobId}/fail`, { error }),
+
+  cancel: (workspaceId: string, jobId: string) =>
+    apiClient.post<{data: Job}>(`/workspaces/${workspaceId}/jobs/${jobId}/cancel`),
+
 };

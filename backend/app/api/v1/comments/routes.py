@@ -27,7 +27,7 @@ bp = Blueprint("comments", __name__)
 @bp.get("/<string:workspace_id>/comments/")
 @limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-@cloud_only
+
 def list_comments(workspace_id: str) -> ResponseValue:
     """List comments, optionally filtered by entity or parent."""
     args = pagination_args()
@@ -72,7 +72,7 @@ def list_comments(workspace_id: str) -> ResponseValue:
 @bp.post("/<string:workspace_id>/comments/")
 @limiter.limit(RATE_LIMIT_STRICT)
 @secured
-@cloud_only
+
 def create_comment(workspace_id: str) -> ResponseValue:
     """Create a new comment."""
     data = request_json()
@@ -102,7 +102,7 @@ def create_comment(workspace_id: str) -> ResponseValue:
 @bp.get("/<string:workspace_id>/comments/<string:comment_id>")
 @limiter.limit(RATE_LIMIT_STANDARD)
 @secured
-@cloud_only
+
 def get_comment(workspace_id: str, comment_id: str) -> ResponseValue:
     """Get a single comment by ID."""
     try:
@@ -125,7 +125,7 @@ def get_comment(workspace_id: str, comment_id: str) -> ResponseValue:
 @bp.patch("/<string:workspace_id>/comments/<string:comment_id>")
 @limiter.limit(RATE_LIMIT_STRICT)
 @secured
-@cloud_only
+
 def update_comment(workspace_id: str, comment_id: str) -> ResponseValue:
     """Update an existing comment."""
     try:
@@ -157,7 +157,7 @@ def update_comment(workspace_id: str, comment_id: str) -> ResponseValue:
 @bp.delete("/<string:workspace_id>/comments/<string:comment_id>")
 @limiter.limit(RATE_LIMIT_STRICT)
 @secured
-@cloud_only
+
 def delete_comment(workspace_id: str, comment_id: str) -> ResponseValue:
     """Delete a comment."""
     try:
@@ -180,7 +180,7 @@ def delete_comment(workspace_id: str, comment_id: str) -> ResponseValue:
 @bp.post("/<string:workspace_id>/comments/<string:comment_id>/restore")
 @limiter.limit(RATE_LIMIT_STRICT)
 @secured
-@cloud_only
+
 def restore_comment(workspace_id: str, comment_id: str) -> ResponseValue:
     """Restore a soft-deleted comment."""
     try:

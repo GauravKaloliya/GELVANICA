@@ -43,11 +43,11 @@ export default function GraphControls({
         className
       )}
     >
-      <div className="flex flex-col items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/90 p-1 shadow-2xl backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card p-1 neo-depth-zinc backdrop-blur-sm">
         <TooltipWrapper content="Zoom in" side="left">
           <button
             onClick={onZoomIn}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground"
           >
             <ZoomIn size={14} strokeWidth={2.5} />
           </button>
@@ -56,7 +56,7 @@ export default function GraphControls({
         <TooltipWrapper content="Zoom out" side="left">
           <button
             onClick={onZoomOut}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground"
           >
             <ZoomOut size={14} strokeWidth={2.5} />
           </button>
@@ -65,7 +65,7 @@ export default function GraphControls({
         <TooltipWrapper content="Fit view" side="left">
           <button
             onClick={onFitView}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground"
           >
             <Maximize size={14} strokeWidth={2.5} />
           </button>
@@ -73,12 +73,12 @@ export default function GraphControls({
 
         {onToggleLayout && (
           <>
-            <div className="my-0.5 h-px w-5 bg-zinc-800" />
+            <div className="my-0.5 h-px w-5 bg-border" />
             <div className="relative">
               <TooltipWrapper content="Layout" side="left">
                 <button
                   onClick={() => setLayoutOpen(!layoutOpen)}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground"
                 >
                   <Layout size={14} strokeWidth={2.5} />
                   <ChevronDown
@@ -92,7 +92,7 @@ export default function GraphControls({
               </TooltipWrapper>
 
               {layoutOpen && (
-                <div className="absolute bottom-full left-full mb-0 ml-1 w-36 rounded-lg border border-zinc-800 bg-zinc-900 p-1 shadow-2xl">
+                <div className="absolute bottom-full left-full mb-0 ml-1 w-36 rounded-lg border border-border bg-card p-1 neo-depth-zinc">
                   {LAYOUTS.map((l) => (
                     <button
                       key={l.value}
@@ -103,8 +103,8 @@ export default function GraphControls({
                       className={cn(
                         "flex w-full items-center rounded-md px-2.5 py-1.5 text-xs transition-colors",
                         currentLayout === l.value
-                          ? "bg-white font-medium text-black"
-                          : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                          ? "bg-card font-medium text-foreground"
+                          : "text-muted hover:bg-surface hover:text-foreground"
                       )}
                     >
                       {l.label}

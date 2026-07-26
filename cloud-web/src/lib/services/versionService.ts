@@ -1,9 +1,5 @@
-import { API_BASE } from "@/lib/config/constants";
-import type { EntityVersion, Changeset, Snapshot, DiffEntry, BlockDiffEntry, RestoreResult } from "@/lib/types";
-
-interface VersionResponse {
-  data: EntityVersion;
-}
+import { apiClient } from "../apiClient";
+import type { EntityVersion, Changeset, Snapshot, DiffEntry } from "../types";
 
 interface VersionListResponse {
   data: EntityVersion[];
@@ -32,108 +28,51 @@ interface DiffResponse {
   data: DiffEntry;
 }
 
-interface BlockDiffResponse {
-  data: BlockDiffEntry[];
-}
-
-async function versionApi<T>(endpoint: string, token: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: { message: "Version request failed" } }));
-    throw new Error(error.error?.message || `HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
 export const versionService = {
-  listEntityVersions: async (token: string, entityId: string): Promise<EntityVersion[]> => {
-    const res = await versionApi<VersionListResponse>(`/versions/entities/${entityId}`, token);
-    return res.data || [];
-  },
+  listChangesets: (workspaceId: string, entityId: string) =>
+    apiClient.get<ChangesetListResponse>(`/workspaces/${workspaceId}/versions/changesets?entity_id=${entityId}`),
 
-  getVersion: async (token: string, versionId: string): Promise<EntityVersion> => {
-    const res = await versionApi<VersionResponse>(`/versions/${versionId}`, token);
-    return res.data;
-  },
-
-  restoreVersion: async (token: string, versionId: string): Promise<RestoreResult> => {
-    const res = await versionApi<{ data: RestoreResult }>(`/versions/restore/${versionId}`, token, {
-      method: "POST",
-    });
-    return res.data;
-  },
-
-  listChangesets: async (token: string, entityId: string): Promise<Changeset[]> => {
-    const res = await versionApi<ChangesetListResponse>(`/versions/changesets?entity_id=${entityId}`, token);
-    return res.data || [];
-  },
-
-  createChangeset: async (token: string, data: {
+  createChangeset: (workspaceId: string, data: {
     entity_id: string;
     description: string;
     parent_changeset_id?: string;
-  }): Promise<Changeset> => {
-    const res = await versionApi<ChangesetResponse>("/versions/changesets", token, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  },
+  }) => apiClient.post<ChangesetResponse>(`/workspaces/${workspaceId}/versions/changesets`, data),
 
-  listSnapshots: async (token: string, entityId: string): Promise<Snapshot[]> => {
-    const res = await versionApi<SnapshotListResponse>(`/versions/snapshots?entity_id=${entityId}`, token);
-    return res.data || [];
-  },
+  getChangeset: (workspaceId: string, changesetId: string) =>
+    apiClient.get<ChangesetResponse>(`/workspaces/${workspaceId}/versions/changesets/${changesetId}`),
 
-  createSnapshot: async (token: string, data: {
+  deleteChangeset: (workspaceId: string, changesetId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/versions/changesets/${changesetId}`),
+
+  listSnapshots: (workspaceId: string, entityId: string) =>
+    apiClient.get<SnapshotListResponse>(`/workspaces/${workspaceId}/versions/snapshots?entity_id=${entityId}`),
+
+  createSnapshot: (workspaceId: string, data: {
     entity_id: string;
     label?: string;
     description?: string;
-  }): Promise<Snapshot> => {
-    const res = await versionApi<SnapshotResponse>("/versions/snapshots", token, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  },
+  }) => apiClient.post<SnapshotResponse>(`/workspaces/${workspaceId}/versions/snapshots`, data),
 
-  compare: async (token: string, leftVersionId: string, rightVersionId: string): Promise<DiffEntry> => {
-    const res = await versionApi<DiffResponse>(
-      `/versions/compare?left_version_id=${leftVersionId}&right_version_id=${rightVersionId}`,
-      token
-    );
-    return res.data;
-  },
+  getSnapshot: (workspaceId: string, snapshotId: string) =>
+    apiClient.get<SnapshotResponse>(`/workspaces/${workspaceId}/versions/snapshots/${snapshotId}`),
 
-  compareDiff: async (token: string, data: {
-    entity_id: string;
-    left_version_id: string;
-    right_version_id: string;
-  }): Promise<DiffEntry> => {
-    const res = await versionApi<DiffResponse>("/diffs/compare", token, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  },
+  deleteSnapshot: (workspaceId: string, snapshotId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/versions/snapshots/${snapshotId}`),
 
-  blockDiff: async (token: string, data: {
-    entity_id: string;
-    block_id: string;
-    left_version_id: string;
-    right_version_id: string;
-  }): Promise<BlockDiffEntry[]> => {
-    const res = await versionApi<BlockDiffResponse>("/diffs/blocks", token, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  },
+  createEntitySnapshot: (workspaceId: string, entityId: string) =>
+    apiClient.post<SnapshotResponse>(`/workspaces/${workspaceId}/versions/entities/${entityId}/snapshot`),
+
+  listEntityVersions: (workspaceId: string, entityId: string) =>
+    apiClient.get<VersionListResponse>(`/workspaces/${workspaceId}/versions/entities/${entityId}`),
+
+  restoreVersion: (workspaceId: string, versionId: string) =>
+    apiClient.post<{ data: unknown }>(`/workspaces/${workspaceId}/versions/${versionId}/restore`),
+
+  getBlockVersions: (workspaceId: string, blockId: string) =>
+    apiClient.get<VersionListResponse>(`/workspaces/${workspaceId}/versions/blocks/${blockId}`),
+
+  compare: (workspaceId: string, leftVersionId: string, rightVersionId: string) =>
+    apiClient.get<DiffResponse>(
+      `/workspaces/${workspaceId}/versions/compare?left_version_id=${leftVersionId}&right_version_id=${rightVersionId}`
+    ),
 };

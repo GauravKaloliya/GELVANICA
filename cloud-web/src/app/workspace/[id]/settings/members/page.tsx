@@ -8,7 +8,7 @@ export default function MembersPage() {
   const workspaceId = params.id as string;
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="mx-auto max-w-4xl p-6">
       <MembersTable workspaceId={workspaceId} />
     </div>
   );

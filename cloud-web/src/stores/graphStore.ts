@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { apiClient } from "@/lib/apiClient";
+import { apiClient, ApiError } from "@/lib/apiClient";
 import type { GraphNode, GraphEdge, GraphSnapshot, GraphPath } from "@/lib/types";
 
 interface GraphState {
@@ -51,7 +51,7 @@ export const useGraphStore = create<GraphState>()(
   fetchGraph: async (token, workspaceId) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await apiClient.get<{ data: GraphSnapshot }>(`/graph/?workspace_id=${workspaceId}`, token);
+      const res = await apiClient.get<{ data: GraphSnapshot }>(`/workspaces/${workspaceId}/graph/`, token);
       const snapshot = res.data;
       set({
         nodes: snapshot.graph_snapshot.nodes,
@@ -61,14 +61,19 @@ export const useGraphStore = create<GraphState>()(
         isLoading: false,
       });
     } catch (e) {
-      set({ error: (e as Error).message, isLoading: false });
+      const err = e as ApiError;
+      if (err.status === 404) {
+        await get().materialize(token, workspaceId);
+      } else {
+        set({ error: err.message, isLoading: false });
+      }
     }
   },
 
   materialize: async (token, workspaceId) => {
     set({ isLoading: true, error: null });
     try {
-      await apiClient.post("/graph/materialize", { workspace_id: workspaceId }, token);
+      await apiClient.post(`/workspaces/${workspaceId}/graph/materialize`, undefined, token);
       await get().fetchGraph(token, workspaceId);
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
@@ -78,7 +83,7 @@ export const useGraphStore = create<GraphState>()(
   queryGraph: async (token, workspaceId, filters) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await apiClient.post<{ data: { nodes: GraphNode[]; edges: GraphEdge[] } }>("/graph/query", { workspace_id: workspaceId, ...filters }, token);
+      const res = await apiClient.post<{ data: { nodes: GraphNode[]; edges: GraphEdge[] } }>(`/workspaces/${workspaceId}/graph/query`, filters, token);
       set({ nodes: res.data.nodes, edges: res.data.edges, isLoading: false });
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
@@ -89,13 +94,12 @@ export const useGraphStore = create<GraphState>()(
     set({ isLoading: true, error: null });
     try {
       const body: Record<string, unknown> = {
-        workspace_id: workspaceId,
         center_node: centerNode,
         depth,
       };
       if (relationTypes) body.relation_types = relationTypes;
 
-      const res = await apiClient.post<{ data: { nodes: GraphNode[]; edges: GraphEdge[] } }>("/graph/traverse", body, token);
+      const res = await apiClient.post<{ data: { nodes: GraphNode[]; edges: GraphEdge[] } }>(`/workspaces/${workspaceId}/graph/traverse`, body, token);
       set({ nodes: res.data.nodes, edges: res.data.edges, isLoading: false });
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
@@ -104,8 +108,7 @@ export const useGraphStore = create<GraphState>()(
 
   findPath: async (token, workspaceId, sourceId, targetId) => {
     try {
-      const res = await apiClient.post<{ data: GraphPath }>("/graph/paths", {
-        workspace_id: workspaceId,
+      const res = await apiClient.post<{ data: GraphPath }>(`/workspaces/${workspaceId}/graph/paths`, {
         source_entity_id: sourceId,
         target_entity_id: targetId,
       }, token);

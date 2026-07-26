@@ -37,7 +37,7 @@ const ACTION_CONFIG: Record<string, { icon: React.ElementType; color: string; la
 
 function getActionConfig(action: string) {
   const key = Object.keys(ACTION_CONFIG).find((k) => action.toLowerCase().includes(k));
-  return key ? ACTION_CONFIG[key] : { icon: Activity, color: "text-zinc-400", label: action };
+  return key ? ACTION_CONFIG[key] : { icon: Activity, color: "text-muted", label: action };
 }
 
 export default function ActivityPage() {
@@ -84,7 +84,7 @@ export default function ActivityPage() {
   const filteredActivities = activities.filter((a) => {
     if (filter && a.action !== filter) return false;
     if (userFilter && a.user_id !== userFilter) return false;
-    if (entityFilter && !a.entity_id.toLowerCase().includes(entityFilter.toLowerCase())) return false;
+    if (entityFilter && (!a.entity_id || !a.entity_id.toLowerCase().includes(entityFilter.toLowerCase()))) return false;
     if (dateFrom && a.created_at < dateFrom) return false;
     if (dateTo && a.created_at > dateTo) return false;
     return true;
@@ -95,8 +95,8 @@ export default function ActivityPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Activity Log</h1>
-          <p className="mt-1 text-sm text-zinc-500">Track all changes in your workspace</p>
+          <h1 className="text-2xl font-bold text-foreground display-heading">Activity Log</h1>
+          <p className="mt-1 text-step-3 text-muted">Track all changes in your workspace</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -105,7 +105,7 @@ export default function ActivityPage() {
               "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
               autoRefresh
                 ? "bg-green-500/10 text-green-400"
-                : "bg-zinc-800 text-zinc-400 hover:text-zinc-300"
+                : "bg-surface text-muted hover:text-foreground"
             )}
           >
             <RefreshCw className={cn("h-3.5 w-3.5", autoRefresh && "animate-spin")} />
@@ -118,12 +118,12 @@ export default function ActivityPage() {
       <div className="space-y-3">
         {uniqueActions.length > 0 && (
           <div className="flex items-center gap-2">
-            <Filter className="h-3.5 w-3.5 text-zinc-600" />
+            <Filter className="h-3.5 w-3.5 text-muted" />
             <button
               onClick={() => { setFilter(null); setPage(1); }}
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                !filter ? "bg-white text-black" : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                !filter ? "bg-card text-foreground" : "bg-surface text-muted hover:text-foreground"
               )}
             >
               All
@@ -136,7 +136,7 @@ export default function ActivityPage() {
                   onClick={() => { setFilter(action); setPage(1); }}
                   className={cn(
                     "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                    filter === action ? "bg-white text-black" : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                    filter === action ? "bg-card text-foreground" : "bg-surface text-muted hover:text-foreground"
                   )}
                 >
                   {config.label}
@@ -150,7 +150,7 @@ export default function ActivityPage() {
             <select
               value={userFilter}
               onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}
-              className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 focus:border-zinc-600 focus:outline-none"
+              className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground focus:border-accent focus:outline-none"
             >
               <option value="">All users</option>
               {uniqueUsers.map((uid) => (
@@ -163,21 +163,21 @@ export default function ActivityPage() {
             value={entityFilter}
             onChange={(e) => { setEntityFilter(e.target.value); setPage(1); }}
             placeholder="Filter by entity..."
-            className="w-40 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
+            className="w-40 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
           />
           <div className="flex items-center gap-1.5">
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-              className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 focus:border-zinc-600 focus:outline-none"
+              className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground focus:border-accent focus:outline-none"
             />
-            <span className="text-xs text-zinc-600">to</span>
+            <span className="text-step-1 text-muted">to</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-              className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 focus:border-zinc-600 focus:outline-none"
+              className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground focus:border-accent focus:outline-none"
             />
           </div>
         </div>
@@ -204,14 +204,14 @@ export default function ActivityPage() {
         </div>
       ) : filteredActivities.length === 0 ? (
         <div className="py-16 text-center">
-          <Activity className="mx-auto h-10 w-10 text-zinc-700" />
-          <p className="mt-3 text-sm text-zinc-500">No activity yet</p>
-          <p className="mt-1 text-xs text-zinc-600">Changes will appear here as they happen</p>
+          <Activity className="mx-auto h-10 w-10 text-muted" />
+          <p className="mt-3 text-step-3 text-muted">No activity yet</p>
+          <p className="mt-1 text-step-1 text-muted">Changes will appear here as they happen</p>
         </div>
       ) : (
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-5 top-0 bottom-0 w-px bg-zinc-800" />
+          <div className="absolute left-5 top-0 bottom-0 w-px bg-surface" />
 
           <div className="space-y-1">
             {filteredActivities.map((entry) => {
@@ -220,31 +220,31 @@ export default function ActivityPage() {
               return (
                 <div
                   key={entry.id}
-                  className="relative flex items-start gap-4 rounded-lg px-3 py-3 hover:bg-zinc-900/50"
+                  className="relative flex items-start gap-4 rounded-lg px-3 py-3 hover:bg-card"
                 >
                   <div
                     className={cn(
-                      "relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950"
+                      "relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background"
                     )}
                   >
                     <Icon className={cn("h-4 w-4", config.color)} />
                   </div>
                   <div className="min-w-0 flex-1 pt-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-zinc-300">{config.label}</span>
+                      <span className="text-step-3 text-foreground">{config.label}</span>
                       {"title" in (entry.details || {}) && (
                         <Link
                           href={`/workspace/${workspaceId}/entity/${entry.entity_id}`}
-                          className="text-sm font-medium text-white hover:underline truncate"
+                          className="text-sm font-medium text-foreground hover:underline truncate"
                         >
                           {String((entry.details as Record<string, unknown>).title)}
                         </Link>
                       )}
                     </div>
-                    <div className="mt-1 flex items-center gap-3 text-[11px] text-zinc-600">
+                    <div className="mt-1 flex items-center gap-3 text-[11px] text-muted">
                       <span>{formatRelativeTime(entry.created_at)}</span>
                       {entry.user_id && <span>User {entry.user_id.slice(0, 8)}</span>}
-                      {entry.block_id && <span>Block {entry.block_id.slice(0, 8)}</span>}
+                      {entry.resource_id && <span>{entry.resource_type ? entry.resource_type.charAt(0).toUpperCase() + entry.resource_type.slice(1) : "Resource"} {entry.resource_id.slice(0, 8)}</span>}
                     </div>
                   </div>
                 </div>
@@ -260,17 +260,17 @@ export default function ActivityPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="rounded-lg border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 disabled:opacity-50"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:bg-surface disabled:opacity-50"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-xs text-zinc-500">
+          <span className="text-step-1 text-muted">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="rounded-lg border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 disabled:opacity-50"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:bg-surface disabled:opacity-50"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

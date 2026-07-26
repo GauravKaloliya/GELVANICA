@@ -19,7 +19,7 @@ export default function ToDoBlock({ content, onChange, readOnly }: ToDoBlockProp
           "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
           content.checked
             ? "border-blue-500 bg-blue-500 text-white"
-            : "border-zinc-600 bg-transparent hover:border-zinc-400"
+            : "border-border bg-transparent hover:border-border/80"
         )}
       >
         {content.checked && <Check className="h-3 w-3" />}
@@ -31,8 +31,8 @@ export default function ToDoBlock({ content, onChange, readOnly }: ToDoBlockProp
         readOnly={readOnly}
         placeholder="To-do"
         className={cn(
-          "flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-600",
-          content.checked ? "text-zinc-500 line-through" : "text-zinc-300"
+          "flex-1 bg-transparent text-sm outline-none placeholder:text-muted",
+          content.checked ? "text-muted line-through" : "text-foreground"
         )}
       />
     </div>

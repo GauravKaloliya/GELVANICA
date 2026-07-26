@@ -190,6 +190,13 @@ class AuthService:
             except IntegrityError:
                 db.session.rollback()
                 raise ConflictError("Email is already registered")
+        else:
+            # Always sync latest Google profile picture and name for existing users
+            if avatar_url:
+                user.avatar_url = avatar_url
+            if name:
+                user.name = name
+            db.session.flush()
 
         return self._create_session(user)
 

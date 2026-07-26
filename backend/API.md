@@ -4,7 +4,7 @@
 > **Base URL:** `/api/v1`  
 > **Deployment Modes:** `local` (SQLite) | `cloud` (PostgreSQL)  
 > **Auth:** JWT Bearer tokens (access + refresh)  
-> **Total Endpoints:** 221
+> **Total Endpoints:** 223
 
 ---
 
@@ -142,7 +142,7 @@
 - **Auth:** Full auth stack (Google OAuth, password, JWT)
 - **File Storage:** AWS S3 via `S3Provider`
 - **Port:** `5000` (via `wsgi.py`)
-- **Features:** Workspace members, comments, jobs, governance, admin
+- **Features:** Workspace members, jobs (cloud-only); comments, governance, admin (hybrid)
 
 ### Mode Selection
 ```python
@@ -247,32 +247,35 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 > **Pagination:** `?page=1&per_page=30` (max `per_page`: 100)  
 > **Response meta:** `{"page": int, "per_page": int, "total": int, "pages": int}`  
 > **Table shorthand:** All table sections use shorthand rate limits: `STANDARD` = `RATE_LIMIT_STANDARD` (120/min), `STRICT` = `RATE_LIMIT_STRICT` (30/min), `DESTRUCTIVE` = `RATE_LIMIT_DESTRUCTIVE` (10/min), `LENIENT` = `RATE_LIMIT_LENIENT` (300/min), `AUTH_WRITE` = `RATE_LIMIT_AUTH_WRITE` (5/min), `FILE_UPLOAD` = `RATE_LIMIT_FILE_UPLOAD` (10/min), `FILE_DOWNLOAD` = `RATE_LIMIT_FILE_DOWNLOAD` (60/min), `PASSWORD_RESET` = `RATE_LIMIT_PASSWORD_RESET` (3/min)  
-> **`secured`:** The `secured` decorator (from `app/services/security.py`) wraps `@jwt_required()` with error handling, used on all authenticated endpoints unless noted otherwise
+> **`secured`:** The `secured` decorator (from `app/services/security.py`) wraps `@jwt_required()` with error handling, used on all authenticated endpoints unless noted otherwise  
+> **Mode column in section headers:** `@cloud_only` = endpoint returns 400 in local mode; `hybrid` = works in both modes  
+> **Deployment Mode column:** `cloud_only` = endpoint returns 400 in local mode; `hybrid` = works in both local and cloud modes
 
 ---
 
 ### 4.1 Auth
 
-**Blueprint:** `auth` | **Prefix:** `/auth` | **Permission:** Varies per endpoint
+**Blueprint:** `auth` | **Prefix:** `/auth` | **Mode:** `@cloud_only` | **Permission:** Varies per endpoint
 
-| Method | Path | Decorators | Body/Params | Permission | Notes |
-|--------|------|------------|-------------|------------|-------|
-| POST | `/auth/register` | `AUTH_WRITE`, `require_local_auth` | `RegisterSchema` | Public (local auth gate) | Creates user + JWT |
-| POST | `/auth/login` | `AUTH_WRITE`, `require_local_auth` | `LoginSchema` | Public (local auth gate) | Brute-force protected |
-| GET | `/auth/check-email` | `STRICT`, `secured` | Query: `email` | `@secured` | Returns `{available: bool}` |
-| POST | `/auth/google` | `AUTH_WRITE`, `cloud_only` | `GoogleLoginSchema` | `@cloud_only` | Google OAuth |
-| POST | `/auth/refresh` | `STANDARD` | Cookie: refresh token | Public (cookie) | Proxies to cloud in local mode |
-| POST | `/auth/logout` | `STANDARD` | — | Public (cookie) | Proxies to cloud in local mode |
-| GET | `/auth/me` | `STANDARD` | — | Manual `_verify_jwt()` | User profile |
-| PATCH | `/auth/me` | `STRICT` | `UserUpdateSchema` | Manual `_verify_jwt()` | Update name/avatar |
-| POST | `/auth/change-password` | `STRICT`, `secured`, `cloud_only` | `ChangePasswordSchema` | `@secured` + `@cloud_only` | — |
-| POST | `/auth/forgot-password` | `PASSWORD_RESET`, `require_local_auth` | `ForgotPasswordSchema` | Public | Proxied to cloud |
-| POST | `/auth/reset-password` | `PASSWORD_RESET`, `require_local_auth` | `ResetPasswordSchema` | Public | Proxied to cloud |
-| POST | `/auth/exchange-code` | `DESTRUCTIVE`, `cloud_only`, `secured` | — | `@secured` + `@cloud_only` | Generates one-time code |
-| POST | `/auth/authorize` | `AUTH_WRITE`, `secured`, `require_local_auth` | `AuthorizeSchema` | `@secured` + local auth gate | OAuth code flow |
-| GET | `/auth/authorize` | `STANDARD` | Query: `redirect_uri`, `state?`, `workspace_id?` | Public | 302 redirect to web app |
-| POST | `/auth/profile-changed` | `STANDARD`, `secured`, `require_local_auth` | `ProfileChangedSchema` | `@secured` + local auth gate | Desktop polling |
-| POST | `/auth/exchange` | `DESTRUCTIVE`, `require_local_auth` | `ExchangeCodeSchema` | Public (local auth gate) | Code-for-tokens |
+| Method | Path | Decorators | Body/Params | Permission | Mode |
+|--------|------|------------|-------------|------------|------|
+| POST | `/auth/register` | `AUTH_WRITE`, `cloud_only`, `require_local_auth` | `RegisterSchema` | Public (local auth gate) | cloud_only |
+| POST | `/auth/login` | `AUTH_WRITE`, `cloud_only`, `require_local_auth` | `LoginSchema` | Public (local auth gate) | cloud_only |
+| GET | `/auth/check-email` | `STRICT`, `cloud_only` | Query: `email` | Public | cloud_only |
+| POST | `/auth/google` | `AUTH_WRITE`, `cloud_only` | `GoogleLoginSchema` | Public | cloud_only |
+| POST | `/auth/refresh` | `STANDARD`, `cloud_only` | Cookie: refresh token | Public (cookie) | cloud_only |
+| POST | `/auth/logout` | `STANDARD`, `cloud_only` | — | Public (cookie) | cloud_only |
+| GET | `/auth/me` | `STANDARD`, `cloud_only` | — | Manual `_verify_jwt()` | cloud_only |
+| PATCH | `/auth/me` | `STRICT`, `cloud_only` | `UserUpdateSchema` | Manual `_verify_jwt()` | cloud_only |
+| POST | `/auth/avatar` | `STRICT`, `cloud_only`, `secured` | Multipart: `file` | `@secured` | cloud_only |
+| POST | `/auth/change-password` | `STRICT`, `secured`, `cloud_only` | `ChangePasswordSchema` | `@secured` | cloud_only |
+| POST | `/auth/forgot-password` | `PASSWORD_RESET`, `cloud_only`, `require_local_auth` | `ForgotPasswordSchema` | Public | cloud_only |
+| POST | `/auth/reset-password` | `PASSWORD_RESET`, `cloud_only`, `require_local_auth` | `ResetPasswordSchema` | Public | cloud_only |
+| POST | `/auth/exchange-code` | `DESTRUCTIVE`, `cloud_only`, `secured` | — | `@secured` | cloud_only |
+| POST | `/auth/authorize` | `AUTH_WRITE`, `cloud_only`, `secured`, `require_local_auth` | `AuthorizeSchema` | `@secured` + local auth gate | cloud_only |
+| GET | `/auth/authorize` | `STANDARD`, `cloud_only` | Query: `redirect_uri`, `state?`, `workspace_id?` | Public | cloud_only |
+| POST | `/auth/profile-changed` | `STANDARD`, `cloud_only`, `secured`, `require_local_auth` | `ProfileChangedSchema` | `@secured` + local auth gate | cloud_only |
+| POST | `/auth/exchange` | `DESTRUCTIVE`, `cloud_only`, `require_local_auth` | `ExchangeCodeSchema` | Public (local auth gate) | cloud_only |
 
 **Proxy Helper:** `proxy_to_cloud(method, path, json_data=None)` — validates against `ALLOWED_CLOUD_HOSTS`, forwards request. Used by: `refresh`, `logout`, `forgot_password`, `reset_password`, `exchange_code`.
 
@@ -296,7 +299,7 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 
 ### 4.3 Workspace Members
 
-**Blueprint:** `workspace_members` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `_require_member` (varies by role)
+**Blueprint:** `workspace_members` | **Prefix:** `/workspaces` | **Mode:** `@cloud_only` | **Permission:** `_require_member` (varies by role)
 
 | Method | Path | Decorators | Body/Params | Permission | Notes |
 |--------|------|------------|-------------|------------|-------|
@@ -328,6 +331,11 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 | GET | `/workspaces/<ws>/entities/<entity_id>/versions` | `STANDARD`, `secured` | `page?`, `per_page?` | `check_workspace_access` | List entity versions |
 | GET | `/workspaces/<ws>/entities/properties` | `STANDARD`, `secured` | `page?`, `per_page?` | `check_workspace_access` | Alias for `/properties/` list (no admin gate) |
 | POST | `/workspaces/<ws>/entities/properties` | `STRICT`, `secured` | `PropertyCreateSchema` | `check_workspace_access` | Alias for `/properties/` create (no `_require_admin`) |
+| POST | `/workspaces/<ws>/entities/bulk-delete` | `STRICT`, `secured` | `{entity_ids: [...]}` | `check_workspace_access` | Soft-delete multiple |
+| POST | `/workspaces/<ws>/entities/bulk-archive` | `STRICT`, `secured` | `{entity_ids: [...]}` | `check_workspace_access` | Archive multiple |
+| POST | `/workspaces/<ws>/entities/bulk-restore` | `STRICT`, `secured` | `{entity_ids: [...]}` | `check_workspace_access` | Restore multiple soft-deleted |
+| POST | `/workspaces/<ws>/entities/bulk-tag` | `STRICT`, `secured` | `{entity_ids: [...], tag_id}` | `check_workspace_access` | Apply tag to multiple |
+| POST | `/workspaces/<ws>/entities/bulk-move` | `STRICT`, `secured` | `{entity_ids: [...], target_workspace_id}` | `check_workspace_access` | Move to another workspace |
 
 ---
 
@@ -499,10 +507,11 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 | POST | `/workspaces/<ws>/files/upload` | `FILE_UPLOAD`, `secured` | Multipart `file` | Local upload with validation |
 | POST | `/workspaces/<ws>/files` | `STRICT`, `secured` | `FileCreateSchema` | Create metadata only |
 | GET | `/workspaces/<ws>/files/<file_id>` | `STANDARD`, `secured` | — | Get file metadata |
-| GET | `/workspaces/<ws>/files/<file_id>/download` | `FILE_DOWNLOAD`, `secured` | — | Presigned URL or local path |
-| GET | `/workspaces/<ws>/files/<file_id>/thumbnail` | `STANDARD`, `secured` | — | Variant serving |
-| GET | `/workspaces/<ws>/files/<file_id>/preview` | `STANDARD`, `secured` | — | Variant serving |
-| GET | `/workspaces/<ws>/files/<file_id>/optimized` | `STANDARD`, `secured` | — | Variant serving |
+| GET | `/workspaces/<ws>/files/<file_id>/download` | `FILE_DOWNLOAD`, `secured` | — | Returns `{"presigned_url": "..."}` — S3 URL in cloud, `?direct=1` local URL in local mode |
+| GET | `/workspaces/<ws>/files/<file_id>/thumbnail` | `STANDARD`, `secured` | — | Returns `{"presigned_url": "..."}` — same cloud/local pattern |
+| GET | `/workspaces/<ws>/files/<file_id>/preview` | `STANDARD`, `secured` | — | Returns `{"presigned_url": "..."}` — same cloud/local pattern |
+| GET | `/workspaces/<ws>/files/<file_id>/optimized` | `STANDARD`, `secured` | — | Returns `{"presigned_url": "..."}` — same cloud/local pattern |
+| GET | `/workspaces/<ws>/files/<file_id>/content` | `STANDARD`, `secured` | — | Returns raw file text content (UTF-8) as JSON string |
 | DELETE | `/workspaces/<ws>/files/<file_id>` | `STRICT`, `secured` | — | Soft-delete |
 | GET | `/workspaces/<ws>/files/<file_id>/variants/<variant_type>` | `STANDARD`, `secured` | — | Get variant |
 | GET | `/workspaces/<ws>/files/<file_id>/variants` | `STANDARD`, `secured` | — | List variants |
@@ -527,6 +536,12 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 - Storage quota check
 
 **Variant Types:** `thumbnail` (≤256px), `preview` (≤1024px), `optimized`
+
+**Download/Variant URL Pattern:**
+- **Cloud mode:** Returns `{"presigned_url": "https://s3-bucket.s3.amazonaws.com/..."}` — the frontend uses `window.open(res.data.presigned_url)` to navigate to the S3 URL directly
+- **Local mode:** Returns `{"presigned_url": ".../download?direct=1"}` — when the browser navigates there with `?direct=1`, the backend serves the local file via `send_from_directory`
+- This applies to `/download`, `/thumbnail`, `/preview`, and `/optimized` endpoints
+- The frontend `getDownloadUrl()` / `getThumbnailUrl()` / `getPreviewUrl()` / `getOptimizedUrl()` methods call `apiClient.get()` → expects `{ data: { presigned_url: string } }`
 
 ---
 
@@ -605,6 +620,7 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 |--------|------|------------|------|-------------|
 | GET | `/workspaces/<ws>/sync` | `STANDARD`, `secured` | `pending?`, `page?`, `per_page?` | List sync operations |
 | POST | `/workspaces/<ws>/sync` | `STRICT`, `secured` | `SyncOperationCreateSchema` | Create sync operation |
+| GET | `/workspaces/<ws>/sync/devices` | `STANDARD`, `secured` | — | List device IDs that have pushed operations |
 | GET | `/workspaces/<ws>/sync/<op_id>` | `STANDARD`, `secured` | — | Get sync operation |
 | POST | `/workspaces/<ws>/sync/<op_id>/ack` | `STRICT`, `secured` | — | Acknowledge (mark synced) |
 | POST | `/workspaces/<ws>/sync/diff` | `STRICT`, `secured` | `{export_data}` | Diff local vs remote |
@@ -644,16 +660,16 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 
 ### 4.19 Comments
 
-**Blueprint:** `comments` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `check_workspace_access`
+**Blueprint:** `comments` | **Prefix:** `/workspaces` | **Mode:** `hybrid` | **Permission:** `check_workspace_access`
 
 | Method | Path | Decorators | Body/Params |
 |--------|------|------------|-------------|
-| GET | `/workspaces/<ws>/comments/` | `STANDARD`, `secured`, `cloud_only` | `entity_id?`, `parent_id?`, `page?`, `per_page?` |
-| POST | `/workspaces/<ws>/comments/` | `STRICT`, `secured`, `cloud_only` | `CommentCreateSchema` |
-| GET | `/workspaces/<ws>/comments/<comment_id>` | `STANDARD`, `secured`, `cloud_only` | — |
-| PATCH | `/workspaces/<ws>/comments/<comment_id>` | `STRICT`, `secured`, `cloud_only` | `CommentUpdateSchema` |
-| DELETE | `/workspaces/<ws>/comments/<comment_id>` | `STRICT`, `secured`, `cloud_only` | — |
-| POST | `/workspaces/<ws>/comments/<comment_id>/restore` | `STRICT`, `secured`, `cloud_only` | — |
+| GET | `/workspaces/<ws>/comments/` | `STANDARD`, `secured` | `entity_id?`, `parent_id?`, `page?`, `per_page?` |
+| POST | `/workspaces/<ws>/comments/` | `STRICT`, `secured` | `CommentCreateSchema` |
+| GET | `/workspaces/<ws>/comments/<comment_id>` | `STANDARD`, `secured` | — |
+| PATCH | `/workspaces/<ws>/comments/<comment_id>` | `STRICT`, `secured` | `CommentUpdateSchema` |
+| DELETE | `/workspaces/<ws>/comments/<comment_id>` | `STRICT`, `secured` | — |
+| POST | `/workspaces/<ws>/comments/<comment_id>/restore` | `STRICT`, `secured` | — |
 
 ---
 
@@ -688,13 +704,39 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 | GET | `/workspaces/<ws>/settings` | `STANDARD`, `secured` | `flat?`, `page?`, `per_page?` |
 | POST | `/workspaces/<ws>/settings/reset` | `STRICT`, `secured` | `{category}` or `"all"` |
 
-**Valid Categories (10):** `general`, `editor`, `appearance`, `ai`, `performance`, `backups`, `privacy`, `sync`, `keyboard_shortcuts`, `advanced`
+**Valid Categories (11):** `general`, `editor`, `appearance`, `ai`, `governance`, `performance`, `backups`, `privacy`, `sync`, `keyboard_shortcuts`, `advanced`
 
 **Settings Security:** Uses marshmallow schema with `unknown = RAISE` to reject unknown fields. Admin role required in cloud mode.
 
 ---
 
-### 4.22 Dashboard
+### 4.22 Config Reference
+
+**Blueprint:** `config` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
+
+Returns reference enum lists used across the frontend (property types, member roles, etc.). These are static server-side constants, not workspace-specific.
+
+| Method | Path | Decorators | Response |
+|--------|------|------------|----------|
+| GET | `/workspaces/<ws>/config` | `STANDARD`, `secured` | Full config object |
+
+**Response fields:**
+- `property_types` (12): `text`, `number`, `date`, `select`, `multi_select`, `checkbox`, `url`, `email`, `phone`, `rich_text`, `boolean`, `entity_ref`
+- `member_roles` (4): `owner`, `admin`, `editor`, `viewer`
+- `relation_types` (8): `refers_to`, `depends_on`, `part_of`, `related_to`, `implements`, `extends`, `blocks`, `follows`
+- `block_types` (22): all valid `BlockType` union values
+- `sync_intervals` (5): `[{value, label}]` for sync interval options
+- `conflict_strategies` (4): `[{value, label, description}]` for merge conflict resolution
+- `export_formats` (6): `[{id, label, description, scope}]` where scope is `workspace` or `entity`
+- `search_modes` (4): `[{id, label, description}]` for search mode options
+- `notification_prefs` (7): `[{key, label, description}]` for notification preference items
+- `governance_categories` (3): `[{id, label}]` for governance report categories
+- `governance_thresholds`: `{excellent: 90, needs_attention: 70}`
+- `sync_frequencies` (4): `[{value, label}]` for sync frequency options
+
+---
+
+### 4.23 Dashboard
 
 **Blueprint:** `dashboard` | **Prefix:** `/workspaces` | **Permission:** `check_workspace_access`
 
@@ -709,7 +751,7 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 
 ### 4.23 AI
 
-**Blueprint:** `ai` | **Prefix:** `/workspaces` | **All 501 Not Implemented** — all endpoints return 501 regardless of mode
+**Blueprint:** `ai` | **Prefix:** `/workspaces` | **All 501 Not Implemented** — most endpoints return 501 regardless of mode (bulk route returns 200)
 
 | Method | Path | Decorators |
 |--------|------|------------|
@@ -720,28 +762,29 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 | POST | `/workspaces/<ws>/ai/complete` | `STRICT`, `secured` |
 | POST | `/workspaces/<ws>/ai/embed` | `STRICT`, `secured` |
 | POST | `/workspaces/<ws>/ai/semantic-search` | `STRICT`, `secured` |
+| POST | `/workspaces/<ws>/ai/bulk` | `STRICT`, `secured` |
 
 ---
 
 ### 4.24 Admin
 
-**Blueprint:** `admin` | **Prefix:** `/admin` | **Cloud only** | **Permission:** `@require_admin` + `@cloud_only`
+**Blueprint:** `admin` | **Prefix:** `/admin` | **Mode:** `hybrid` | **Permission:** `@require_admin`
 
 | Method | Path | Decorators | Body |
 |--------|------|------------|------|
-| GET | `/admin/users` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | `search?`, `page?`, `per_page?` |
-| GET | `/admin/users/<user_id>` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | — |
-| PATCH | `/admin/users/<user_id>` | `STRICT`, `secured`, `require_admin`, `cloud_only` | `UserUpdateSchema` |
-| DELETE | `/admin/users/<user_id>` | `DESTRUCTIVE`, `secured`, `require_admin`, `cloud_only` | — |
-| GET | `/admin/system/status` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | 501 |
-| GET | `/admin/system/logs` | `STANDARD`, `secured`, `require_admin`, `cloud_only` | 501 |
-| POST | `/admin/system/cleanup` | `DESTRUCTIVE`, `secured`, `require_admin`, `cloud_only` | 501 |
+| GET | `/admin/users` | `STANDARD`, `secured`, `require_admin` | `search?`, `page?`, `per_page?` |
+| GET | `/admin/users/<user_id>` | `STANDARD`, `secured`, `require_admin` | — |
+| PATCH | `/admin/users/<user_id>` | `STRICT`, `secured`, `require_admin` | `UserUpdateSchema` |
+| DELETE | `/admin/users/<user_id>` | `DESTRUCTIVE`, `secured`, `require_admin` | — |
+| GET | `/admin/system/status` | `STANDARD`, `secured`, `require_admin` | 501 |
+| GET | `/admin/system/logs` | `STANDARD`, `secured`, `require_admin` | 501 |
+| POST | `/admin/system/cleanup` | `DESTRUCTIVE`, `secured`, `require_admin` | 501 |
 
 ---
 
 ### 4.25 Jobs
 
-**Blueprint:** `jobs` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `check_workspace_access`
+**Blueprint:** `jobs` | **Prefix:** `/workspaces` | **Mode:** `@cloud_only` | **Permission:** `check_workspace_access`
 
 | Method | Path | Decorators | Body/Params |
 |--------|------|------------|-------------|
@@ -760,20 +803,39 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 
 ### 4.26 Governance
 
-**Blueprint:** `governance` | **Prefix:** `/workspaces` | **Cloud only** | **Permission:** `check_workspace_access`
+**Blueprint:** `governance` | **Prefix:** `/workspaces` | **Mode:** `hybrid` | **Permission:** `check_workspace_access`
 
 | Method | Path | Decorators | Body/Params |
 |--------|------|------------|-------------|
-| GET | `/workspaces/<ws>/governance/reports` | `STANDARD`, `secured`, `cloud_only` | `page?`, `per_page?` |
-| GET | `/workspaces/<ws>/governance/health` | `STANDARD`, `secured`, `cloud_only` | — |
-| GET | `/workspaces/<ws>/governance/duplicates` | `STANDARD`, `secured`, `cloud_only` | — |
-| GET | `/workspaces/<ws>/governance/orphans` | `STANDARD`, `secured`, `cloud_only` | — |
-| GET | `/workspaces/<ws>/governance/stale` | `STANDARD`, `secured`, `cloud_only` | — |
-| POST | `/workspaces/<ws>/governance/health-score` | `STRICT`, `secured`, `cloud_only` | — |
-| POST | `/workspaces/<ws>/governance/reports` | `STRICT`, `secured`, `cloud_only` | `GovernanceReportCreateSchema` |
-| GET | `/workspaces/<ws>/governance/reports/<report_id>` | `STANDARD`, `secured`, `cloud_only` | — |
+| GET | `/workspaces/<ws>/governance/reports` | `STANDARD`, `secured` | `page?`, `per_page?` |
+| GET | `/workspaces/<ws>/governance/health` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/governance/duplicates` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/governance/orphans` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/governance/stale` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/governance/health-score` | `STANDARD`, `secured` | — | Return historical health-score records for trend display |
+| POST | `/workspaces/<ws>/governance/health-score` | `STRICT`, `secured` | — | Recalculate and persist health score |
+| POST | `/workspaces/<ws>/governance/reports` | `STRICT`, `secured` | `GovernanceReportCreateSchema` |
+| GET | `/workspaces/<ws>/governance/reports/<report_id>` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/governance/broken-links` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/governance/naming-issues` | `STANDARD`, `secured` | — |
+| GET | `/workspaces/<ws>/governance/size-warnings` | `STANDARD`, `secured` | — |
 
-**Health Score:** Calculates duplicates, orphans, stale entities (90 days). Score = 100 − penalties. Persists to `governance_reports`.
+**Health Score:** Calculates duplicates, orphans, stale entities (90 days). Score = 100 − penalties. Persists to `governance_reports` with type `health_check`.
+
+**`GET /workspaces/<ws>/governance/health` response:**
+```json
+{
+  "data": {
+    "entity_count": 0,
+    "block_count": 0,
+    "relation_count": 0,
+    "duplicate_count": 0,
+    "orphan_count": 0,
+    "stale_count": 0,
+    "health_score": 100
+  }
+}
+```
 
 ---
 
@@ -783,7 +845,7 @@ Used by the desktop Electron app (`gnovium://`, `gnovium-dev://`, `gnovium-auth:
 
 | Method | Path | Decorators | Description |
 |--------|------|------------|-------------|
-| GET | `/docs/` | `STANDARD` (public) | Returns full API documentation JSON with 208+ endpoints |
+| GET | `/docs/` | `STANDARD` (public) | Returns full API documentation JSON with 222 endpoints |
 
 ---
 
@@ -965,7 +1027,7 @@ All 36 domain models with their PostgreSQL table names:
 | 32 | `SyncOperation` | `sync_operations` | operation_type, payload JSON, client_clock |
 | 33 | `Job` | `jobs` | status/priority CHECK, idempotency_key |
 | 34 | `ActivityLog` | `activity_entries` | action, details JSON, BRIN index on created_at |
-| 35 | `GovernanceReport` | `governance_reports` | type/status CHECK, data JSON |
+| 35 | `GovernanceReport` | `governance_reports` | type CHECK (`access_audit`,`change_log`,`storage_summary`,`activity_summary`,`compliance`,`health_check`), status CHECK (`pending`,`running`,`completed`,`failed`), data JSON |
 | 36 | `GraphMaterialization` | `graph_materializations` | graph_snapshot JSON, version_hash |
 
 ### Common Mixins
@@ -1173,7 +1235,7 @@ All schemas use `marshmallow` with `unknown = EXCLUDE` to reject extra fields.
 
 | Schema | Fields |
 |--------|--------|
-| `UserSchema` | id, email, name, avatar_url, profile_image_url, timestamps, soft-delete fields |
+| `UserSchema` | id, email, name, avatar_url (transformed: `v1/` keys → `/auth/avatar/{id}`), profile_image_url, timestamps, soft-delete fields |
 | `SessionSchema` | id, user_id, jti, refresh_jti, user_agent, ip_address, revoked_at, expires_at |
 | `AuthCodeSchema` | id, code, user_id, redirect_uri, expires_at, consumed_at |
 | `WorkspaceSchema` | id, name, description, settings, owner_id, deployment_mode, sync_enabled, cloud_workspace_id |
@@ -1307,7 +1369,8 @@ All schemas use `marshmallow` with `unknown = EXCLUDE` to reject extra fields.
 |--------|-------------|
 | `upload(file_obj, workspace_id, user_id)` | Local upload: validate, scan, dedup, store, generate variants, extract metadata |
 | `create_metadata(data, user_id)` | Create file record without storage |
-| `download_file(file_record, expires_in)` | Presigned download URL or local path |
+| `download_file(file_record, expires_in)` | Presigned download URL (S3 in cloud, local path in local) |
+| `get_file_content(file_record)` | Read and return raw text content (UTF-8) from storage |
 | `delete_file(file_record, deleted_by?)` | Soft-delete |
 | `link_entity(entity_id, file_id, block_id?)` | Create EntityFile link |
 | `unlink_entity(entity_id, file_id)` | Soft-delete EntityFile link |
@@ -1407,12 +1470,12 @@ All schemas use `marshmallow` with `unknown = EXCLUDE` to reject extra fields.
 
 ### StorageProvider (`app/services/storage_provider.py` — 530 lines)
 
-**Abstract Base:** `StorageProvider` with abstract methods: `store`, `retrieve`, `delete`, `exists`, `size`, `presign_upload`, `presign_download`, `get_provider_name`
+**Abstract Base:** `StorageProvider` with abstract methods: `store`, `retrieve`, `delete`, `exists`, `size`, `presign_upload`, `presign_download`, `get_provider_name`; concrete mixin methods: `generate_object_key`, `generate_variant_key`, `has_variant`, `store_variant`, `retrieve_variant`, `delete_variant`, `delete_all_variants`
 
 **LocalProvider:**
 - Storage root: configurable directory
 - Path traversal protection via `_validate_path()`
-- Variant management: `store_variant`, `retrieve_variant`, `delete_all_variants`
+- Variant management: `store_variant`, `retrieve_variant`, `has_variant`, `delete_variant`, `delete_all_variants`
 - Orphan cleanup: `cleanup_orphans()` — removes disk files without DB records
 - Stats: `get_storage_stats()` — per-tier count/bytes
 
@@ -1421,6 +1484,7 @@ All schemas use `marshmallow` with `unknown = EXCLUDE` to reject extra fields.
 - Server-side encryption (AES256)
 - Presigned URLs for upload/download
 - Multipart upload support
+- Variant management: `has_variant`, `store_variant`, `retrieve_variant`, `delete_variant`, `delete_all_variants` (uses `generate_derived_key` for S3 key layout)
 - Object Lock (GOVERNANCE mode)
 - Lifecycle rules: temp cleanup, quarantine, deleted objects, glacier transition
 - Circuit breaker protection on `store()`
@@ -1734,7 +1798,7 @@ Config (base)
 | Provider | Mode | Storage Backend | Key Features |
 |----------|------|----------------|--------------|
 | `LocalProvider` | Local | Filesystem | Path traversal protection, variant generation, orphan cleanup |
-| `S3Provider` | Cloud | AWS S3 | Presigned URLs, multipart upload, object lock, lifecycle rules, versioning |
+| `S3Provider` | Cloud | AWS S3 | Presigned URLs, multipart upload, variant management, object lock, lifecycle rules, versioning |
 
 ### Object Key Structure
 

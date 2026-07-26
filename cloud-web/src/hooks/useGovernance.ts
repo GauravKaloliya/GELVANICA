@@ -3,17 +3,17 @@
 import { useState, useCallback } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { API_BASE } from "@/lib/config/constants";
-import type { GovernanceHealth, GovernanceOverview, GovernanceReport, OrphansResponse, StaleResponse } from "@/lib/types/governance";
+import type { GovernanceHealthScore, GovernanceReport } from "@/lib/types/governance";
 
 export function useGovernance(workspaceId: string) {
   const { tokens } = useAuthStore();
   const token = tokens?.access_token;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [health, setHealth] = useState<GovernanceHealth | null>(null);
-  const [duplicates, setDuplicates] = useState<GovernanceOverview | null>(null);
-  const [orphans, setOrphans] = useState<OrphansResponse | null>(null);
-  const [stale, setStale] = useState<StaleResponse | null>(null);
+  const [health, setHealth] = useState<GovernanceHealthScore | null>(null);
+  const [duplicates, setDuplicates] = useState<{ duplicate_entities: Array<{ name: string; count: number; entity_ids?: string[] }> } | null>(null);
+  const [orphans, setOrphans] = useState<{ orphans: Array<{ id: string; name: string | null; updated_at: string }> } | null>(null);
+  const [stale, setStale] = useState<{ stale: Array<{ id: string; name: string | null; updated_at: string }> } | null>(null);
 
   const request = useCallback(
     async (path: string, options: RequestInit = {}) => {
@@ -34,11 +34,11 @@ export function useGovernance(workspaceId: string) {
     [token]
   );
 
-  const getHealth = useCallback(async (): Promise<GovernanceHealth | null> => {
+  const getHealth = useCallback(async (): Promise<GovernanceHealthScore | null> => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/governance/health?workspace_id=${workspaceId}`);
+      const res = await request(`/workspaces/${workspaceId}/governance/health`);
       setHealth(res.data);
       return res.data;
     } catch {
@@ -49,11 +49,11 @@ export function useGovernance(workspaceId: string) {
     }
   }, [workspaceId, request]);
 
-  const getDuplicates = useCallback(async (): Promise<GovernanceOverview | null> => {
+  const getDuplicates = useCallback(async (): Promise<{ duplicate_entities: Array<{ name: string; count: number; entity_ids?: string[] }> } | null> => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/governance/duplicates?workspace_id=${workspaceId}`);
+      const res = await request(`/workspaces/${workspaceId}/governance/duplicates`);
       setDuplicates(res.data);
       return res.data;
     } catch {
@@ -64,11 +64,11 @@ export function useGovernance(workspaceId: string) {
     }
   }, [workspaceId, request]);
 
-  const getOrphans = useCallback(async (): Promise<OrphansResponse | null> => {
+  const getOrphans = useCallback(async (): Promise<{ orphans: Array<{ id: string; name: string | null; updated_at: string }> } | null> => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/governance/orphans?workspace_id=${workspaceId}`);
+      const res = await request(`/workspaces/${workspaceId}/governance/orphans`);
       setOrphans(res.data);
       return res.data;
     } catch {
@@ -79,11 +79,11 @@ export function useGovernance(workspaceId: string) {
     }
   }, [workspaceId, request]);
 
-  const getStale = useCallback(async (): Promise<StaleResponse | null> => {
+  const getStale = useCallback(async (): Promise<{ stale: Array<{ id: string; name: string | null; updated_at: string }> } | null> => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/governance/stale?workspace_id=${workspaceId}`);
+      const res = await request(`/workspaces/${workspaceId}/governance/stale`);
       setStale(res.data);
       return res.data;
     } catch {
@@ -98,7 +98,7 @@ export function useGovernance(workspaceId: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request("/governance/report", {
+      const res = await request(`/workspaces/${workspaceId}/governance/report`, {
         method: "POST",
         body: JSON.stringify({ workspace_id: workspaceId }),
       });
@@ -116,7 +116,7 @@ export function useGovernance(workspaceId: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request("/governance/resolve", {
+        const res = await request(`/workspaces/${workspaceId}/governance/resolve`, {
           method: "POST",
           body: JSON.stringify(data),
         });

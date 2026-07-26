@@ -14,7 +14,7 @@ interface ProgressProps extends React.ComponentPropsWithoutRef<typeof ProgressPr
 }
 
 const variantStyles: Record<ProgressVariant, string> = {
-  default: "bg-white",
+  default: "bg-accent",
   success: "bg-green-500",
   warning: "bg-amber-500",
   error: "bg-red-500",
@@ -51,12 +51,12 @@ function Progress({
     <div className="w-full">
       {showValue && (
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs text-zinc-500">Progress</span>
-          <span className="text-xs font-mono text-zinc-400">{displayValue}</span>
+          <span className="text-xs text-muted">Progress</span>
+          <span className="text-xs font-mono text-muted">{displayValue}</span>
         </div>
       )}
       <ProgressPrimitive.Root
-        className={cn("relative w-full overflow-hidden rounded-full bg-zinc-800", sizeStyles[size], className)}
+        className={cn("relative w-full overflow-hidden rounded-full bg-surface", sizeStyles[size], className)}
         {...props}
       >
         <ProgressPrimitive.Indicator
@@ -107,7 +107,7 @@ function CircularProgress({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-zinc-800"
+          className="text-border"
         />
         <circle
           cx={size / 2}
@@ -121,7 +121,7 @@ function CircularProgress({
           className={cn("transition-all duration-500 ease-out", colorMap[computedVariant])}
         />
       </svg>
-      <span className="absolute text-xs font-bold text-white">{Math.round(value)}</span>
+      <span className="absolute text-xs font-bold text-foreground">{Math.round(value)}</span>
     </div>
   );
 }

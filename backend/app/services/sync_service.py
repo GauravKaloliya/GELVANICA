@@ -96,6 +96,31 @@ class SyncService:
             raise
         return op
 
+    def list_devices(self, workspace_id: str) -> list[dict[str, Any]]:
+        rows = (
+            db.session.query(SyncOperation.device_id, SyncOperation.updated_at)
+            .filter(
+                SyncOperation.workspace_id == workspace_id,
+                SyncOperation.is_deleted.is_(False),
+            )
+            .distinct(SyncOperation.device_id)
+            .order_by(SyncOperation.device_id, SyncOperation.updated_at.desc())
+            .all()
+        )
+        seen: set[str] = set()
+        result: list[dict[str, Any]] = []
+        for row in rows:
+            if row.device_id not in seen:
+                seen.add(row.device_id)
+                result.append({
+                    "id": row.device_id,
+                    "name": row.device_id,
+                    "type": "desktop",
+                    "lastSyncAt": row.updated_at.isoformat() if row.updated_at else None,
+                    "status": "synced",
+                })
+        return result
+
     def _get_client_clock(self, op) -> int:
         return op.client_clock if op.client_clock is not None else 0
 

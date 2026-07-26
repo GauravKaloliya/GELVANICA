@@ -9,6 +9,7 @@ import { Download, Trash2, Link } from "lucide-react";
 import { Checkbox } from "@/components/ui/Checkbox";
 
 interface FileListProps {
+  workspaceId: string;
   files: FileRecord[];
   onLink: (file: FileRecord) => void;
   onDelete: (file: FileRecord) => void;
@@ -16,7 +17,7 @@ interface FileListProps {
   onToggleSelect?: (fileId: string, shiftKey: boolean, metaKey: boolean) => void;
 }
 
-export function FileList({ files, onLink, onDelete, selectedFiles, onToggleSelect }: FileListProps) {
+export function FileList({ workspaceId, files, onLink, onDelete, selectedFiles, onToggleSelect }: FileListProps) {
   return (
     <div className="space-y-1 text-left">
       {files.map((file) => {
@@ -27,7 +28,7 @@ export function FileList({ files, onLink, onDelete, selectedFiles, onToggleSelec
           <div
             key={file.id}
             className={cn(
-              "group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-800/50",
+              "group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-surface",
               isSelected && "bg-white/5"
             )}
           >
@@ -46,31 +47,34 @@ export function FileList({ files, onLink, onDelete, selectedFiles, onToggleSelec
             )}
             <Icon className={cn("h-5 w-5 shrink-0", iconColor)} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-white">{file.file_name}</p>
+              <p className="truncate text-sm text-foreground">{file.file_name}</p>
             </div>
-            <span className="text-xs text-zinc-600">{formatFileSize(file.file_size ?? 0)}</span>
-            <span className="text-xs text-zinc-600">{formatRelativeTime(file.uploaded_at)}</span>
+            <span className="text-xs text-muted">{formatFileSize(file.file_size ?? 0)}</span>
+            <span className="text-xs text-muted">{formatRelativeTime(file.uploaded_at)}</span>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => onLink(file)}
-                className="rounded p-1 text-zinc-500 hover:text-white"
+                className="rounded p-1 text-muted hover:text-foreground"
                 title="Link to Entity"
                 aria-label={`Link ${file.file_name} to entity`}
               >
                 <Link className="h-3.5 w-3.5" />
               </button>
-              <a
-                href={fileService.getDownloadUrl(file.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded p-1 text-zinc-500 hover:text-white"
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fileService.getDownloadUrl(workspaceId, file.id);
+                    window.open(res.data.presigned_url, '_blank');
+                  } catch {}
+                }}
+                className="rounded p-1 text-muted hover:text-foreground"
                 aria-label={`Download ${file.file_name}`}
               >
                 <Download className="h-3.5 w-3.5" />
-              </a>
+              </button>
               <button
                 onClick={() => onDelete(file)}
-                className="rounded p-1 text-zinc-500 hover:text-red-400"
+                className="rounded p-1 text-muted hover:text-red-400"
                 aria-label={`Delete ${file.file_name}`}
               >
                 <Trash2 className="h-3.5 w-3.5" />

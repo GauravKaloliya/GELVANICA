@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useConfig } from "@/hooks/useConfig";
 import { InviteMemberModal, RemoveMemberModal } from "@/components/modals";
 import { PermissionGate } from "@/components/shared/PermissionGate";
 import { DataTable } from "@/components/ui/DataTable";
 import { UserAvatar } from "@/components/ui/Avatar";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { getRoleBadgeColor, getRoleName } from "@/lib/services/permissions";
-import { MEMBER_ROLES } from "@/lib/config/constants";
 import type { WorkspaceMember } from "@/lib/types";
 import { UserPlus, Shield, Trash2 } from "lucide-react";
 
@@ -22,6 +22,8 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
   const { tokens, user } = useAuthStore();
   const { members, fetchMembers, inviteMember, removeMember, updateMemberRole } = useWorkspaceStore();
   const { canManageMembers, role: myRole } = usePermissions();
+  const { config } = useConfig(workspaceId);
+  const memberRoles = config?.member_roles ?? [];
 
   const [showInvite, setShowInvite] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<WorkspaceMember | null>(null);
@@ -59,18 +61,18 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
-            <Shield className="h-5 w-5 text-zinc-400" />
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Shield className="h-5 w-5 text-muted" />
             Members
           </h3>
-          <p className="mt-0.5 text-sm text-zinc-500">
+          <p className="mt-0.5 text-sm text-muted">
             {members.length} member{members.length !== 1 ? "s" : ""}
           </p>
         </div>
         <PermissionGate role={myRole} permission="MANAGE_MEMBERS">
           <button
             onClick={() => setShowInvite(true)}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-black hover:bg-zinc-200"
+            className="flex items-center gap-2 rounded-lg bg-card px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-surface"
           >
             <UserPlus className="h-4 w-4" />
             Invite
@@ -78,8 +80,8 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
         </PermissionGate>
       </div>
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <div className="grid grid-cols-2 gap-3 text-xs text-zinc-500 sm:grid-cols-4">
+      <div className="rounded-lg border-border bg-card p-4">
+        <div className="grid grid-cols-2 gap-3 text-xs text-muted sm:grid-cols-4">
           <div>
             <span className="font-medium text-amber-400">Owner</span>
             <p>Full control</p>
@@ -93,7 +95,7 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
             <p>Edit content</p>
           </div>
           <div>
-            <span className="font-medium text-zinc-400">Viewer</span>
+            <span className="font-medium text-muted">Viewer</span>
             <p>Read only</p>
           </div>
         </div>
@@ -106,15 +108,15 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
             header: "Member",
             render: (member: WorkspaceMember) => (
               <div className="flex items-center gap-3">
-                <UserAvatar name={member.user?.name} avatarUrl={member.user?.avatar_url} size="sm" />
+                <UserAvatar name={member.display_name} avatarUrl={member.avatar_url} size="sm" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-white">{member.user?.name || "Unknown"}</p>
+                    <p className="text-sm font-medium text-foreground">{member.display_name || "Unknown"}</p>
                     {member.user_id === user?.id && (
-                      <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">You</span>
+                      <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] text-muted">You</span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-500">{member.user?.email}</p>
+                  <p className="text-xs text-muted">{member.email}</p>
                 </div>
               </div>
             ),
@@ -137,8 +139,8 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
                       changingRole === member.user_id && "opacity-50"
                     )}
                   >
-                    {MEMBER_ROLES.filter((r) => r !== "owner").map((r) => (
-                      <option key={r} value={r} className="bg-zinc-800 text-white">
+                    {memberRoles.filter((r) => r !== "owner").map((r) => (
+                      <option key={r} value={r} className="bg-surface text-foreground">
                         {getRoleName(r)}
                       </option>
                     ))}
@@ -155,7 +157,7 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
             key: "joined",
             header: "Joined",
             render: (member: WorkspaceMember) => (
-              <span className="text-[11px] text-zinc-600">{formatRelativeTime(member.joined_at)}</span>
+              <span className="text-[11px] text-muted">{formatRelativeTime(member.joined_at)}</span>
             ),
           },
           {
@@ -165,7 +167,7 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
               const canRemoveMember = canManageMembers && member.role !== "owner" && member.user_id !== user?.id;
               return canRemoveMember ? (
                 <PermissionGate role={myRole} permission="MANAGE_MEMBERS">
-                  <button onClick={() => setRemoveTarget(member)} className="rounded p-1 text-zinc-600 hover:text-red-400">
+                  <button onClick={() => setRemoveTarget(member)} className="rounded p-1 text-muted hover:text-red-400">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </PermissionGate>
@@ -178,13 +180,13 @@ export function MembersTable({ workspaceId }: MembersTableProps) {
         emptyMessage="No members yet"
       />
 
-      <InviteMemberModal open={showInvite} onClose={() => setShowInvite(false)} onInvite={handleInvite} />
+      <InviteMemberModal open={showInvite} onClose={() => setShowInvite(false)} onInvite={handleInvite} workspaceId={workspaceId} />
       <RemoveMemberModal
         open={!!removeTarget}
         onClose={() => setRemoveTarget(null)}
         onConfirm={handleRemove}
-        memberName={removeTarget?.user?.name || "Unknown"}
-        memberEmail={removeTarget?.user?.email || ""}
+        memberName={removeTarget?.display_name || "Unknown"}
+        memberEmail={removeTarget?.email || ""}
         role={removeTarget?.role || ""}
       />
     </div>

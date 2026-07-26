@@ -26,6 +26,7 @@ interface SignUpFormProps {
   avatarPreview: string | null;
   isUploading: boolean;
   uploadProgress: number;
+  uploadAttempt: number;
   avatarWarning: string | null;
   uploadSucceeded: boolean;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -54,6 +55,7 @@ export default function SignUpForm({
   avatarPreview,
   isUploading,
   uploadProgress,
+  uploadAttempt,
   avatarWarning,
   uploadSucceeded,
   onFileSelect,
@@ -76,6 +78,7 @@ export default function SignUpForm({
         name={name}
         isUploading={isUploading}
         uploadProgress={uploadProgress}
+        uploadAttempt={uploadAttempt}
         avatarWarning={avatarWarning}
         uploadSucceeded={uploadSucceeded}
         onFileSelect={onFileSelect}
@@ -111,10 +114,7 @@ export default function SignUpForm({
           autoComplete="email"
           required
           value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (emailStatus !== "idle") onEmailBlur();
-          }}
+          onChange={(e) => setEmail(e.target.value)}
           onBlur={onEmailBlur}
           className="block w-full rounded-none border-2 border-[var(--foreground)] bg-[var(--card-bg)] px-3 py-3 text-xs font-mono text-[var(--foreground)] outline-none transition-all focus:bg-[var(--code-bg)] focus:shadow-[3px_3px_0px_0px_var(--shadow-color)] hover:border-[var(--foreground)]"
           placeholder="name@example.com"

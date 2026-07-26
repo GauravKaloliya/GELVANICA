@@ -1,4 +1,4 @@
-from marshmallow import EXCLUDE, Schema, fields, validate, validates_schema, ValidationError
+from marshmallow import EXCLUDE, Schema, fields, pre_load, validate, validates_schema, ValidationError
 
 
 def UUIDStr(**kwargs):
@@ -65,7 +65,13 @@ class EntityCreateSchema(Schema):
         unknown = EXCLUDE
 
     workspace_id = UUIDStr(required=True)
-    entity_type_id = UUIDStr(required=True)
+    entity_type_id = UUIDStr(load_default=None, allow_none=True)
+
+    @pre_load
+    def coerce_empty_entity_type(self, data, **kwargs):
+        if data and "entity_type_id" in data and not data["entity_type_id"]:
+            data["entity_type_id"] = None
+        return data
     parent_id = UUIDStr(load_default=None, allow_none=True)
     name = fields.Str(load_default=None)
     icon = fields.Str(load_default=None)
@@ -509,13 +515,22 @@ class UserSchema(Schema):
     id = fields.Str()
     email = fields.Email()
     name = fields.Str()
-    avatar_url = fields.Str(allow_none=True)
+    avatar_url = fields.Method("resolve_avatar_url")
     profile_image_url = fields.Str(allow_none=True)
     updated_at = fields.DateTime()
     created_at = fields.DateTime()
     is_deleted = fields.Bool()
     deleted_at = fields.DateTime(allow_none=True)
     deleted_by = fields.Str(allow_none=True)
+
+    def resolve_avatar_url(self, obj) -> str | None:
+        url = obj.avatar_url
+        if url and url.startswith("v1/"):
+            from flask import current_app
+            from app.services.storage_provider import create_storage_provider
+            provider = create_storage_provider(current_app.config)
+            return provider.presign_download(url, expires_in=3600)
+        return url
 
     class Meta:
         unknown = EXCLUDE

@@ -43,13 +43,17 @@ function toUploadResult(file: FileRecord, deduplicated: boolean): FileUploadResu
 
 export const fileService = {
   list: (workspaceId: string, params?: { page?: number; per_page?: number; state?: string; uploaded_by?: string }) => {
-    const sp = new URLSearchParams({ workspace_id: workspaceId });
+    const sp = new URLSearchParams();
     if (params?.page) sp.set("page", String(params.page));
     if (params?.per_page) sp.set("per_page", String(params.per_page));
     if (params?.state) sp.set("state", params.state);
     if (params?.uploaded_by) sp.set("uploaded_by", params.uploaded_by);
-    return apiClient.get<FileListResponse>(`/files/?${sp}`);
+    const qs = sp.toString();
+    return apiClient.get<FileListResponse>(`/workspaces/${workspaceId}/files${qs ? `?${qs}` : ""}`);
   },
+
+  register: (workspaceId: string, data: { file_name: string; mime_type: string; file_size: number; content_hash: string }) =>
+    apiClient.post<FileResponse>(`/workspaces/${workspaceId}/files`, data),
 
   upload: async (workspaceId: string, file: File, onProgress?: (pct: number) => void): Promise<FileUploadResult> => {
     if (file.size >= MULTIPART_THRESHOLD_BYTES) {
@@ -76,8 +80,8 @@ export const fileService = {
     }
 
     await fileService.uploadViaPresign(presign.upload_url, file, onProgress);
-    const confirmed = await fileService.confirm(presign.file_id, workspaceId);
-    const ready = await fileService.waitForProcessing(confirmed.data.id, confirmed.data);
+    const confirmed = await fileService.confirm(workspaceId, presign.file_id);
+    const ready = await fileService.waitForProcessing(workspaceId, confirmed.data.id, confirmed.data);
     return toUploadResult(ready, false);
   },
 
@@ -106,11 +110,12 @@ export const fileService = {
     }
 
     const completed = await fileService.multipartComplete({
+      workspace_id: workspaceId,
       upload_id: multipart.upload_id,
       file_id: multipart.file_id,
       parts,
     });
-    const ready = await fileService.waitForProcessing(completed.data.id, completed.data);
+    const ready = await fileService.waitForProcessing(workspaceId, completed.data.id, completed.data);
     onProgress?.(100);
     return toUploadResult(ready, Boolean(completed.data.deduplicated));
   },
@@ -132,54 +137,24 @@ export const fileService = {
       xhr.send(blob);
     }),
 
-  waitForProcessing: async (fileId: string, initial?: FileRecord): Promise<FileRecord> => {
+  waitForProcessing: async (workspaceId: string, fileId: string, initial?: FileRecord): Promise<FileRecord> => {
     let current = initial;
     for (let attempt = 0; attempt < 30; attempt++) {
       if (current && !PROCESSING_STATES.includes(current.state)) return current;
       await new Promise((resolve) => setTimeout(resolve, attempt < 5 ? 1000 : 3000));
-      const response = await fileService.getMetadata(fileId);
+      const response = await fileService.getMetadata(workspaceId, fileId);
       current = response.data;
     }
-    return current || (await fileService.getMetadata(fileId)).data;
+    return current || (await fileService.getMetadata(workspaceId, fileId)).data;
   },
-
-  uploadFormData: (workspaceId: string, file: File, onProgress?: (pct: number) => void): Promise<FileRecord> =>
-    new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
-      };
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const json = JSON.parse(xhr.responseText);
-          resolve(json.data);
-        } else {
-          reject(new Error(`Upload failed (${xhr.status})`));
-        }
-      };
-      xhr.onerror = () => reject(new Error("Upload failed"));
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("workspace_id", workspaceId);
-      xhr.open("POST", `${API_URL}${API_BASE_PATH}/files/upload`);
-      import("@/stores/authStore").then(({ useAuthStore }) => {
-        const token = useAuthStore.getState().tokens?.access_token;
-        if (!token) {
-          reject(new Error("Not authenticated"));
-          return;
-        }
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-        xhr.send(formData);
-      }).catch(() => reject(new Error("Failed to load auth module")));
-    }),
 
   presign: (data: {
     workspace_id: string;
     file_name: string;
     content_type: string;
     file_size: number;
-    content_hash: string;
-  }) => apiClient.post<PresignResponse>("/files/presign", data),
+    content_hash?: string;
+  }) => apiClient.post<PresignResponse>(`/workspaces/${data.workspace_id}/files/presign`, data),
 
   uploadViaPresign: (presignedUrl: string, file: File, onProgress?: (pct: number) => void) =>
     new Promise<void>((resolve, reject) => {
@@ -202,53 +177,56 @@ export const fileService = {
     content_type: string;
     content_length: number;
     part_size: number;
-  }) => apiClient.post<{ data: MultipartInitResult }>("/files/presign-multipart", data),
+  }) => apiClient.post<{ data: MultipartInitResult }>(`/workspaces/${data.workspace_id}/files/presign-multipart`, data),
 
-  multipartComplete: (data: { upload_id: string; file_id: string; parts: Array<{ PartNumber: number; ETag: string }> }) =>
-    apiClient.post<{ data: FileRecord & { deduplicated?: boolean } }>("/files/presign-multipart/complete", data),
+  multipartComplete: (data: { workspace_id: string; upload_id: string; file_id: string; parts: Array<{ PartNumber: number; ETag: string }> }) =>
+    apiClient.post<{ data: FileRecord & { deduplicated?: boolean } }>(`/workspaces/${data.workspace_id}/files/presign-multipart/complete`, data),
 
-  confirm: (fileId: string, workspaceId: string) =>
-    apiClient.post<FileResponse>(`/files/${fileId}/confirm`, { workspace_id: workspaceId }),
+  confirm: (workspaceId: string, fileId: string) =>
+    apiClient.post<FileResponse>(`/workspaces/${workspaceId}/files/${fileId}/confirm`),
 
-  getDownloadUrl: (fileId: string) =>
-    `${API_URL}${API_BASE_PATH}/files/${fileId}/download`,
+  getDownloadUrl: (workspaceId: string, fileId: string) =>
+    apiClient.get<{ data: { presigned_url: string } }>(`/workspaces/${workspaceId}/files/${fileId}/download`),
 
-  getThumbnailUrl: (fileId: string) =>
-    apiClient.get<{ data: { presigned_url: string } }>(`/files/${fileId}/thumbnail`),
+  getThumbnailUrl: (workspaceId: string, fileId: string) =>
+    apiClient.get<{ data: { presigned_url: string } }>(`/workspaces/${workspaceId}/files/${fileId}/thumbnail`),
 
-  getPreviewUrl: (fileId: string) =>
-    apiClient.get<{ data: { presigned_url: string } }>(`/files/${fileId}/preview`),
+  getPreviewUrl: (workspaceId: string, fileId: string) =>
+    apiClient.get<{ data: { presigned_url: string } }>(`/workspaces/${workspaceId}/files/${fileId}/preview`),
 
-  getVariants: (fileId: string) =>
-    apiClient.get(`/files/${fileId}/variants`),
+  getOptimizedUrl: (workspaceId: string, fileId: string) =>
+    apiClient.get<{ data: { presigned_url: string } }>(`/workspaces/${workspaceId}/files/${fileId}/optimized`),
 
-  getVariant: (fileId: string, type: string) =>
-    apiClient.get(`/files/${fileId}/variants/${type}`),
+  getVariants: (workspaceId: string, fileId: string) =>
+    apiClient.get(`/workspaces/${workspaceId}/files/${fileId}/variants`),
 
-  linkToEntity: (fileId: string, entityId: string) =>
-    apiClient.post(`/files/${fileId}/entities/${entityId}`),
+  getVariant: (workspaceId: string, fileId: string, type: string) =>
+    apiClient.get(`/workspaces/${workspaceId}/files/${fileId}/variants/${type}`),
 
-  unlinkFromEntity: (fileId: string, entityId: string) =>
-    apiClient.delete(`/files/${fileId}/entities/${entityId}`),
+  linkToEntity: (workspaceId: string, fileId: string, entityId: string) =>
+    apiClient.post(`/workspaces/${workspaceId}/files/${fileId}/entities/${entityId}`),
 
-  getMetadata: (fileId: string) =>
-    apiClient.get<FileResponse>(`/files/${fileId}`),
+  unlinkFromEntity: (workspaceId: string, fileId: string, entityId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/files/${fileId}/entities/${entityId}`),
 
-  delete: (fileId: string) =>
-    apiClient.delete(`/files/${fileId}`),
+  getMetadata: (workspaceId: string, fileId: string) =>
+    apiClient.get<FileResponse>(`/workspaces/${workspaceId}/files/${fileId}`),
 
-  quarantineResolve: (fileId: string, approve: boolean) =>
-    apiClient.post(`/files/quarantine/${fileId}/resolve`, { approve }),
+  delete: (workspaceId: string, fileId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/files/${fileId}`),
+
+  quarantineResolve: (workspaceId: string, fileId: string, approve: boolean) =>
+    apiClient.post(`/workspaces/${workspaceId}/files/quarantine/${fileId}/resolve`, { approve }),
 
   getStorageStats: (workspaceId: string) =>
-    apiClient.get<StorageInfoResponse>(`/files/storage-info?workspace_id=${workspaceId}`),
+    apiClient.get<StorageInfoResponse>(`/workspaces/${workspaceId}/files/storage-info`),
 
-  cleanupOrphans: () =>
-    apiClient.post("/files/cleanup-orphans"),
+  cleanupOrphans: (workspaceId: string) =>
+    apiClient.post(`/workspaces/${workspaceId}/files/cleanup-orphans`),
 
-  cleanupQuarantine: () =>
-    apiClient.post("/files/cleanup-quarantine"),
+  cleanupQuarantine: (workspaceId: string) =>
+    apiClient.post(`/workspaces/${workspaceId}/files/cleanup-quarantine`),
 
-  cleanupDeleted: () =>
-    apiClient.post("/files/cleanup-deleted"),
+  cleanupDeleted: (workspaceId: string) =>
+    apiClient.post(`/workspaces/${workspaceId}/files/cleanup-deleted`),
 };

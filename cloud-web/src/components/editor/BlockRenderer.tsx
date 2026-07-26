@@ -9,13 +9,16 @@ import QuoteBlock from "./blocks/QuoteBlock";
 import CalloutBlock from "./blocks/CalloutBlock";
 import DividerBlock from "./blocks/DividerBlock";
 import ToggleBlock from "./blocks/ToggleBlock";
-import TableBlock from "./blocks/TableBlock";
 import ImageBlock from "./blocks/ImageBlock";
-import EmbedBlock from "./blocks/EmbedBlock";
 import EquationBlock from "./blocks/EquationBlock";
-import MentionBlock from "./blocks/MentionBlock";
-import AIBlock from "./blocks/AIBlock";
 import TextBlock from "./blocks/TextBlock";
+import VideoBlock from "./blocks/VideoBlock";
+import FileBlock from "./blocks/FileBlock";
+import BookmarkBlock from "./blocks/BookmarkBlock";
+import TableOfContentsBlock from "./blocks/TableOfContentsBlock";
+import ColumnListBlock from "./blocks/ColumnListBlock";
+import ColumnBlock from "./blocks/ColumnBlock";
+import BreadcrumbBlock from "./blocks/BreadcrumbBlock";
 
 interface BlockRendererProps {
   block: Block;
@@ -28,13 +31,13 @@ export default function BlockRenderer({ block, token, onUpdateBlock, onDeleteBlo
   const update = (content: BlockContent) => onUpdateBlock(token, block.id, { content });
 
   const renderContent = () => {
-    switch (block.block_type) {
-      case "heading_1":
-      case "heading_2":
-      case "heading_3":
+    switch (block.type) {
+      case "heading1":
+      case "heading2":
+      case "heading3":
         return (
           <HeadingBlock
-            blockType={block.block_type}
+            blockType={block.type}
             content={(block.content as { text: string }) || { text: "" }}
             onChange={(c) => update(c)}
           />
@@ -43,13 +46,13 @@ export default function BlockRenderer({ block, token, onUpdateBlock, onDeleteBlo
       case "numbered_list":
         return (
           <ListBlock
-            blockType={block.block_type}
+            blockType={block.type}
             content={(block.content as { text: string }) || { text: "" }}
             onChange={(c) => update(c)}
             position={block.position}
           />
         );
-      case "to_do":
+      case "to-do":
         return (
           <ToDoBlock
             content={(block.content as { text: string; checked: boolean }) || { text: "", checked: false }}
@@ -86,13 +89,6 @@ export default function BlockRenderer({ block, token, onUpdateBlock, onDeleteBlo
             onChange={(c) => update(c)}
           />
         );
-      case "table":
-        return (
-          <TableBlock
-            content={(block.content as { rows?: string[][]; columns?: string[] }) || {}}
-            onChange={(c) => update(c)}
-          />
-        );
       case "image":
         return (
           <ImageBlock
@@ -100,25 +96,33 @@ export default function BlockRenderer({ block, token, onUpdateBlock, onDeleteBlo
             onChange={(c) => update(c)}
           />
         );
-      case "embed":
-        return <EmbedBlock content={(block.content as { url: string; title?: string }) || { url: "" }} onChange={(c) => update(c)} />;
       case "equation":
         return <EquationBlock content={(block.content as { text: string; display?: boolean }) || { text: "" }} onChange={(c) => update(c)} />;
-      case "mention":
-        return <MentionBlock content={(block.content as { text: string; entity_id?: string; entity_title?: string }) || { text: "" }} onChange={(c) => update(c)} />;
-      case "ai":
-        return <AIBlock content={(block.content as { text: string; prompt?: string; model?: string }) || { text: "" }} onChange={(c) => update(c)} />;
+      case "video":
+        return <VideoBlock content={(block.content as { url?: string; caption?: string }) || {}} onChange={(c) => update(c)} />;
+      case "file":
+        return <FileBlock content={(block.content as { url?: string; name?: string }) || {}} onChange={(c) => update(c)} />;
+      case "bookmark":
+        return <BookmarkBlock content={(block.content as { url?: string; title?: string; description?: string; icon?: string }) || {}} onChange={(c) => update(c)} />;
+      case "table_of_contents":
+        return <TableOfContentsBlock content={(block.content as Record<string, unknown>) || {}} onChange={(c) => update(c)} />;
+      case "column_list":
+        return <ColumnListBlock content={(block.content as { columns?: number }) || {}} onChange={(c) => update(c)} />;
+      case "column":
+        return <ColumnBlock content={(block.content as Record<string, unknown>) || {}} onChange={(c) => update(c)} />;
+      case "breadcrumb":
+        return <BreadcrumbBlock content={(block.content as { pages?: string[] }) || {}} onChange={(c) => update(c)} />;
       default:
         return <TextBlock content={(block.content as { text: string }) || { text: "" }} onChange={(c) => update(c)} />;
     }
   };
 
   return (
-    <div className="group relative rounded-md border border-transparent p-2 hover:border-zinc-700">
+    <div className="group relative rounded-md border border-transparent p-2 card-hover">
       {renderContent()}
       <button
         onClick={() => onDeleteBlock(token, block.id)}
-        className="absolute right-1 top-1 hidden rounded p-1 text-zinc-600 hover:bg-zinc-800 hover:text-red-400 group-hover:block"
+        className="absolute right-1 top-1 hidden rounded p-1 text-muted hover:bg-surface hover:text-red-400 group-hover:block"
       >
         ×
       </button>

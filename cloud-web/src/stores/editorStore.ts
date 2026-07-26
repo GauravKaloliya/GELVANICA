@@ -32,12 +32,12 @@ interface EditorState {
   isEntitySelected: (id: string) => boolean;
   handleEntityClick: (id: string, allIds: string[], shiftKey: boolean, metaKey: boolean) => void;
 
-  addBlock: (token: string, block: Partial<Block> & { entity_id: string; block_type: BlockType }) => Promise<Block>;
-  updateBlock: (token: string, id: string, data: { block_type?: BlockType; content?: BlockContent }) => Promise<void>;
-  deleteBlock: (token: string, id: string) => Promise<void>;
-  moveBlock: (token: string, id: string, parentBlockId: string | null, position: number) => Promise<void>;
-  reorderBlocks: (token: string, entityId: string, blocks: Array<{ id: string; position: number }>) => Promise<void>;
-  fetchBlocks: (token: string, entityId: string) => Promise<void>;
+  addBlock: (token: string, workspaceId: string, block: Partial<Block> & { entity_id: string; type: BlockType }) => Promise<Block>;
+  updateBlock: (token: string, workspaceId: string, id: string, data: { type?: BlockType; content?: BlockContent }) => Promise<void>;
+  deleteBlock: (token: string, workspaceId: string, id: string) => Promise<void>;
+  moveBlock: (token: string, workspaceId: string, id: string, parentBlockId: string | null, position: number) => Promise<void>;
+  reorderBlocks: (token: string, workspaceId: string, entityId: string, blocks: Array<{ id: string; position: number }>) => Promise<void>;
+  fetchBlocks: (token: string, workspaceId: string, entityId: string) => Promise<void>;
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -130,24 +130,31 @@ export const useEditorStore = create<EditorState>()(
     }
   },
 
-  fetchBlocks: async (token, entityId) => {
+  fetchBlocks: async (token, workspaceId, entityId) => {
     try {
-      const res = await apiClient.get<{ data: Block[] }>(`/blocks/entity/${entityId}`, token);
+      const res = await apiClient.get<{ data: Block[] }>(`/workspaces/${workspaceId}/blocks/entity/${entityId}`, token);
       set({ blocks: res.data, entityId });
     } catch (e) {
       set({ error: (e as Error).message });
     }
   },
 
-  addBlock: async (token, block) => {
-    const res = await apiClient.post<{ data: Block }>("/blocks/", block, token);
+  addBlock: async (token, workspaceId, block) => {
+    const blocks = get().blocks;
+    const nextPos = blocks.length > 0 ? String(Math.max(...blocks.map(b => Number(b.position || 0))) + 1) : "0";
+    const payload = {
+      ...block,
+      branch_id: block.branch_id || "00000000-0000-0000-0000-000000000003",
+      position: block.position !== undefined ? String(block.position) : nextPos,
+    };
+    const res = await apiClient.post<{ data: Block }>(`/workspaces/${workspaceId}/blocks/`, payload, token);
     const newBlock = res.data;
-    set({ blocks: [...get().blocks, newBlock], isDirty: true });
+    set({ blocks: [...blocks, newBlock], isDirty: true });
     return newBlock;
   },
 
-  updateBlock: async (token, id, data) => {
-    const res = await apiClient.patch<{ data: Block }>(`/blocks/${id}`, data, token);
+  updateBlock: async (token, workspaceId, id, data) => {
+    const res = await apiClient.patch<{ data: Block }>(`/workspaces/${workspaceId}/blocks/${id}`, data, token);
     const updated = res.data;
     set({
       blocks: get().blocks.map((b) => (b.id === id ? updated : b)),
@@ -156,21 +163,21 @@ export const useEditorStore = create<EditorState>()(
     });
   },
 
-  deleteBlock: async (token, id) => {
-    await apiClient.delete(`/blocks/${id}`, token);
+  deleteBlock: async (token, workspaceId, id) => {
+    await apiClient.delete(`/workspaces/${workspaceId}/blocks/${id}`, token);
     set({
       blocks: get().blocks.filter((b) => b.id !== id),
       isDirty: true,
     });
   },
 
-  moveBlock: async (token, id, parentBlockId, position) => {
-    await apiClient.post(`/blocks/${id}/move`, { parent_block_id: parentBlockId, position }, token);
+  moveBlock: async (token, workspaceId, id, parentBlockId, position) => {
+    await apiClient.post(`/workspaces/${workspaceId}/blocks/${id}/move`, { parent_block_id: parentBlockId, position }, token);
     set({ isDirty: true });
   },
 
-  reorderBlocks: async (token, entityId, blocks) => {
-    await apiClient.post("/blocks/reorder", { entity_id: entityId, blocks }, token);
+  reorderBlocks: async (token, workspaceId, entityId, blocks) => {
+    await apiClient.post(`/workspaces/${workspaceId}/blocks/reorder`, { entity_id: entityId, blocks }, token);
     set({ isDirty: true });
   },
 }),

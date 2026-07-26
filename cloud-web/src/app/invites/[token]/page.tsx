@@ -44,8 +44,8 @@ export default function InviteAcceptPage() {
       <div className="w-full max-w-md text-center space-y-4">
         {status === "loading" && (
           <>
-            <Loader2 className="mx-auto h-12 w-12 animate-spin text-zinc-400" />
-            <p className="text-sm text-zinc-400">Accepting invitation...</p>
+            <Loader2 className="mx-auto h-12 w-12 animate-spin text-muted" />
+            <p className="text-sm text-muted">Accepting invitation...</p>
           </>
         )}
         {status === "success" && (
@@ -60,7 +60,7 @@ export default function InviteAcceptPage() {
             <p className="text-sm text-red-400">{message}</p>
             <button
               onClick={() => router.push("/workspaces")}
-              className="mt-4 rounded-lg bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700"
+              className="mt-4 rounded-lg bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-2"
             >
               Go to Workspaces
             </button>

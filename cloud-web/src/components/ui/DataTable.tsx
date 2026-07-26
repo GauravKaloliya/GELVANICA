@@ -132,13 +132,13 @@ export function DataTable<T>({
         <div className="flex items-center justify-between gap-3 mb-3">
           {searchable && (
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-surface py-1.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
               />
             </div>
           )}
@@ -146,7 +146,7 @@ export function DataTable<T>({
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-2 py-1.5 text-xs text-zinc-400 focus:outline-none"
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-muted focus:outline-none"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>{size} per page</option>
@@ -157,9 +157,9 @@ export function DataTable<T>({
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className={cn("border-b border-zinc-800 bg-zinc-900/50", headerClassName)}>
+          <thead className={cn("border-b border-border bg-card", headerClassName)}>
             <tr>
               {selectable && (
                 <th className="w-10 px-3 py-3">
@@ -167,7 +167,7 @@ export function DataTable<T>({
                     type="checkbox"
                     checked={allSelected}
                     onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-800"
+                    className="h-4 w-4 rounded border-border bg-surface"
                   />
                 </th>
               )}
@@ -175,8 +175,8 @@ export function DataTable<T>({
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider",
-                    col.sortable && "cursor-pointer select-none hover:text-white",
+                    "px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider",
+                    col.sortable && "cursor-pointer select-none hover:text-foreground",
                     col.className
                   )}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
@@ -194,14 +194,14 @@ export function DataTable<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800/50">
+          <tbody className="divide-y divide-border">
             {loading ? (
               Array.from({ length: pageSize }).map((_, i) => (
                 <tr key={`skeleton-${i}`}>
-                  {selectable && <td className="px-3 py-3"><div className="h-4 w-4 rounded bg-zinc-800 animate-pulse" /></td>}
+                  {selectable && <td className="px-3 py-3"><div className="h-4 w-4 rounded skeleton" /></td>}
                   {columns.map((col) => (
                     <td key={col.key} className={cn("px-4 py-3", col.className)}>
-                      <div className="h-4 rounded bg-zinc-800 animate-pulse" style={{ width: `${50 + Math.random() * 40}%` }} />
+                      <div className="h-4 rounded skeleton" style={{ width: `${50 + Math.random() * 40}%` }} />
                     </td>
                   ))}
                 </tr>
@@ -212,8 +212,8 @@ export function DataTable<T>({
                   colSpan={columns.length + (selectable ? 1 : 0)}
                   className="px-4 py-12 text-center"
                 >
-                  {emptyIcon && <div className="mx-auto mb-2 text-zinc-600">{emptyIcon}</div>}
-                  <p className="text-sm text-zinc-500">{emptyMessage}</p>
+                  {emptyIcon && <div className="mx-auto mb-2 text-muted">{emptyIcon}</div>}
+                  <p className="text-sm text-muted">{emptyMessage}</p>
                 </td>
               </tr>
             ) : (
@@ -225,9 +225,9 @@ export function DataTable<T>({
                     key={key}
                     onClick={onRowClick ? () => onRowClick(item) : undefined}
                     className={cn(
-                      "transition-colors hover:bg-zinc-900/50",
+                      "transition-colors hover:bg-surface",
                       onRowClick && "cursor-pointer",
-                      isSelected && "bg-zinc-800/50",
+                      isSelected && "bg-surface",
                       typeof rowClassName === "function" ? rowClassName(item, index) : rowClassName
                     )}
                   >
@@ -237,12 +237,12 @@ export function DataTable<T>({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelect(key)}
-                          className="h-4 w-4 rounded border-zinc-600 bg-zinc-800"
+                          className="h-4 w-4 rounded border-border bg-surface"
                         />
                       </td>
                     )}
                     {columns.map((col) => (
-                      <td key={col.key} className={cn("px-4 py-3 text-zinc-300", col.cellClassName, col.className)}>
+                      <td key={col.key} className={cn("px-4 py-3 text-foreground", col.cellClassName, col.className)}>
                         {col.render ? col.render(item, index) : String((item as Record<string, unknown>)[col.key] ?? "")}
                       </td>
                     ))}
@@ -257,14 +257,14 @@ export function DataTable<T>({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-3">
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-muted">
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -278,8 +278,8 @@ export function DataTable<T>({
                   className={cn(
                     "h-8 w-8 rounded-md text-xs font-medium transition-colors",
                     pageNum === page
-                      ? "bg-white text-black"
-                      : "text-zinc-500 hover:bg-zinc-800 hover:text-white"
+                      ? "accent-bg"
+                      : "text-muted hover:bg-surface hover:text-foreground"
                   )}
                 >
                   {pageNum}
@@ -289,7 +289,7 @@ export function DataTable<T>({
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

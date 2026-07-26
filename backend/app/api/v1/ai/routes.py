@@ -8,10 +8,12 @@ Endpoints:
   POST /<workspace_id>/ai/complete         — AI autocomplete
   POST /<workspace_id>/ai/embed            — Generate embeddings
   POST /<workspace_id>/ai/semantic-search  — Vector similarity search
+  POST /<workspace_id>/ai/bulk             — Run an AI action on multiple entities
 """
 
 from flask import Blueprint, Response
 
+from app.api.v1.helpers import check_workspace_access, item_response, request_json
 from app.core.constants import RATE_LIMIT_STRICT
 from app.core.response import error
 from app.extensions import limiter
@@ -74,3 +76,17 @@ def embed(workspace_id: str) -> Response:
 def semantic_search(workspace_id: str) -> Response:
     """Vector similarity search."""
     return error("not_implemented", "AI semantic search is not implemented yet", status=501)
+
+
+@bp.post("/<string:workspace_id>/ai/bulk")
+@limiter.limit(RATE_LIMIT_STRICT)
+@secured
+def bulk_ai(workspace_id: str) -> Response:
+    """Run an AI action on multiple entities (placeholder)."""
+    data = request_json()
+    if not isinstance(data, dict):
+        return error("bad_request", "Request body must be a JSON object", status=400)
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    return item_response({"message": "AI bulk action queued", "entity_ids": data.get("entity_ids", [])})

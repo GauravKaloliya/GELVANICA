@@ -55,12 +55,12 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-800">
+    <div className="overflow-x-auto rounded-lg border border-border">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-zinc-800">
+          <tr className="border-b border-border">
             {columns.map((col, colIdx) => (
-              <th key={colIdx} className="relative bg-zinc-900/50 px-3 py-2 text-left">
+              <th key={colIdx} className="relative bg-surface px-3 py-2 text-left">
                 {editingCol === colIdx ? (
                   <input
                     type="text"
@@ -69,12 +69,12 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
                     onBlur={() => setEditingCol(null)}
                     onKeyDown={(e) => e.key === "Enter" && setEditingCol(null)}
                     autoFocus
-                    className="w-full bg-transparent text-xs font-medium text-zinc-300 outline-none"
+                    className="w-full bg-transparent text-xs font-medium text-foreground outline-none"
                   />
                 ) : (
                   <button
                     onClick={() => !readOnly && setEditingCol(colIdx)}
-                    className="text-xs font-medium text-zinc-400 hover:text-zinc-200"
+                    className="text-xs font-medium text-muted hover:text-foreground"
                   >
                     {col}
                   </button>
@@ -82,7 +82,7 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
                 {!readOnly && columns.length > 1 && (
                   <button
                     onClick={() => removeColumn(colIdx)}
-                    className="absolute right-1 top-1 hidden rounded p-0.5 text-zinc-600 hover:text-red-400 group-hover:block"
+                    className="absolute right-1 top-1 hidden rounded p-0.5 text-muted hover:text-red-400 group-hover:block"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -90,8 +90,8 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
               </th>
             ))}
             {!readOnly && (
-              <th className="w-8 bg-zinc-900/50">
-                <button onClick={addColumn} className="text-zinc-600 hover:text-zinc-300" aria-label="Add column">
+              <th className="w-8 bg-surface">
+                <button onClick={addColumn} className="text-muted hover:text-foreground" aria-label="Add column">
                   <Plus className="h-3.5 w-3.5" />
                 </button>
               </th>
@@ -100,7 +100,7 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
         </thead>
         <tbody>
           {rows.map((row, rowIdx) => (
-            <tr key={rowIdx} className="group border-b border-zinc-800/50">
+            <tr key={rowIdx} className="group border-b border-border">
               {row.map((cell, colIdx) => (
                 <td key={colIdx} className="px-3 py-1.5">
                   <input
@@ -109,7 +109,7 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
                     onChange={(e) => updateCell(rowIdx, colIdx, e.target.value)}
                     readOnly={readOnly}
                     placeholder="..."
-                    className="w-full bg-transparent text-xs text-zinc-300 outline-none placeholder:text-zinc-700"
+                    className="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-text-faint"
                   />
                 </td>
               ))}
@@ -118,7 +118,7 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
                   {rows.length > 1 && (
                     <button
                       onClick={() => removeRow(rowIdx)}
-                      className="hidden rounded p-0.5 text-zinc-600 hover:text-red-400 group-hover:block"
+                      className="hidden rounded p-0.5 text-muted hover:text-red-400 group-hover:block"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -132,7 +132,7 @@ export default function TableBlock({ content, onChange, readOnly }: TableBlockPr
       {!readOnly && (
         <button
           onClick={addRow}
-          className="flex w-full items-center justify-center gap-1 border-t border-zinc-800 py-1.5 text-[11px] text-zinc-600 hover:text-zinc-400"
+          className="flex w-full items-center justify-center gap-1 border-t border-border py-1.5 text-[11px] text-muted hover:text-foreground"
         >
           <Plus className="h-3 w-3" /> Add row
         </button>

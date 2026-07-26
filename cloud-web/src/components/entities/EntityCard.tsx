@@ -22,7 +22,7 @@ const ENTITY_TYPE_COLORS: Record<string, string> = {
   task: "bg-amber-500/10 text-amber-400",
   document: "bg-purple-500/10 text-purple-400",
   bookmark: "bg-cyan-500/10 text-cyan-400",
-  file: "bg-zinc-500/10 text-zinc-400",
+  file: "bg-surface text-muted",
 };
 
 export default function EntityCard({
@@ -33,7 +33,7 @@ export default function EntityCard({
   hasSelection = false,
   onToggleSelect,
 }: EntityCardProps) {
-  const typeColor = ENTITY_TYPE_COLORS[entity.entity_type_id] || "bg-zinc-500/10 text-zinc-400";
+  const typeColor = ENTITY_TYPE_COLORS[entity.entity_type_id] || "bg-surface text-muted";
 
   const handleClick = (e: React.MouseEvent) => {
     if (!onToggleSelect) return;
@@ -53,7 +53,7 @@ export default function EntityCard({
   return (
     <div
       className={cn(
-        "group relative rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition-all hover:border-zinc-700 hover:bg-zinc-900",
+        "group relative rounded-lg border border-card-border bg-card p-4 transition-all neo-depth-zinc card-hover hover-glow",
         isSelected && "border-white/40 bg-white/5",
         className
       )}
@@ -95,22 +95,15 @@ export default function EntityCard({
             <span className="text-sm">{entity.icon || "📄"}</span>
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-medium text-white group-hover:text-blue-400">
-              {entity.title || "Untitled"}
+            <h3 className="truncate text-sm font-medium text-foreground group-hover:text-blue-400 display-heading">
+              {entity.name || "Untitled"}
             </h3>
-            {entity.properties && Object.keys(entity.properties).length > 0 && (
-              <p className="mt-1 truncate text-[11px] text-zinc-500">
-                {Object.entries(entity.properties)
-                  .slice(0, 2)
-                  .map(([k, v]) => `${k}: ${String(v)}`)
-                  .join(" · ")}
-              </p>
-            )}
-            <p className="mt-1.5 text-[10px] text-zinc-600">
+
+            <p className="mt-1.5 text-[10px] text-muted">
               Updated {formatRelativeTime(entity.updated_at)}
             </p>
           </div>
-          <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-zinc-600 group-hover:text-zinc-400" />
+          <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-muted group-hover:text-foreground" />
         </div>
       </Link>
     </div>

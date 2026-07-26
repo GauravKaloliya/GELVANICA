@@ -22,14 +22,14 @@ export function useSearch(workspaceId: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await searchService.search(tokens.access_token, {
+        const res = await searchService.search({
           workspaceId,
           query: searchQuery,
           mode: searchMode || mode,
           limit,
           filters,
         });
-        setResults(data);
+        setResults(res.data);
       } catch (e) {
         setError((e as Error).message);
         setResults([]);

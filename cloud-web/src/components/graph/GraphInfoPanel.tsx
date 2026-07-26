@@ -23,28 +23,28 @@ export default function GraphInfoPanel({
   const router = useRouter();
 
   return (
-    <div className={cn("rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-2xl", className)}>
+    <div className={cn("rounded-xl border border-border bg-card p-4 neo-depth-zinc", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {nodeIcon && <span className="text-lg">{nodeIcon}</span>}
-          <h3 className="text-sm font-semibold text-white">{nodeLabel}</h3>
+          <h3 className="text-sm font-semibold text-foreground">{nodeLabel}</h3>
         </div>
-        <button onClick={onClose} className="rounded p-0.5 text-zinc-500 hover:text-white" aria-label="Close panel">
+        <button onClick={onClose} className="rounded p-0.5 text-muted hover:text-foreground" aria-label="Close panel">
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
       <div className="mt-3 space-y-2">
         {nodeType && (
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <Network className="h-3 w-3 text-zinc-500" />
-            <span>Type: <span className="text-zinc-300">{nodeType}</span></span>
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <Network className="h-3 w-3 text-muted" />
+            <span>Type: <span className="text-foreground">{nodeType}</span></span>
           </div>
         )}
         {edgeCount !== undefined && (
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <Link2 className="h-3 w-3 text-zinc-500" />
-            <span>Connections: <span className="text-zinc-300">{edgeCount}</span></span>
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <Link2 className="h-3 w-3 text-muted" />
+            <span>Connections: <span className="text-foreground">{edgeCount}</span></span>
           </div>
         )}
       </div>
@@ -52,14 +52,14 @@ export default function GraphInfoPanel({
       <div className="mt-4 flex gap-2">
         <button
           onClick={() => router.push(`/workspace/${workspaceId}/entity/${nodeId}`)}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-zinc-800 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface py-1.5 text-xs text-foreground hover:bg-surface-2"
         >
           Open <ArrowRight className="h-3 w-3" />
         </button>
         {onTraverse && (
           <button
             onClick={() => onTraverse(nodeId)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-white py-1.5 text-xs font-medium text-black hover:bg-zinc-200"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-card py-1.5 text-xs font-medium text-foreground hover:opacity-90"
           >
             Traverse
           </button>

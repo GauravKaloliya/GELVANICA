@@ -85,11 +85,10 @@ export default function KnowledgeGraph({
     svg.selectAll('*').remove();
     const g = svg.append('g');
 
-    const isDark = theme === 'dark' || theme === 'midnight' || theme === 'ocean';
-    const nodeColor = isDark ? '#60a5fa' : '#2563eb';
-    const nodeHoverColor = isDark ? '#93c5fd' : '#1d4ed8';
-    const linkColor = isDark ? '#334155' : '#cbd5e1';
-    const textColor = isDark ? '#e2e8f0' : '#1e293b';
+    const nodeColor = 'var(--accent)';
+    const nodeHoverColor = 'var(--accent)';
+    const linkColor = 'var(--border)';
+    const textColor = 'var(--foreground)';
 
     const simEdges: Array<{ source: string; target: string; label?: string; weight?: number }> = data.edges;
     const simulation = d3.forceSimulation<SimNode>(data.nodes as SimNode[])
@@ -145,7 +144,7 @@ export default function KnowledgeGraph({
     node.append('circle')
       .attr('r', (d: SimNode) => Math.max(6, Math.min(16, (d.val || 1) * 6)))
       .attr('fill', nodeColor)
-      .attr('stroke', isDark ? '#1e293b' : '#ffffff')
+      .attr('stroke', 'var(--card-bg)')
       .attr('stroke-width', 2);
 
     node.append('text')

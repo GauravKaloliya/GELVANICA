@@ -30,7 +30,7 @@ export default function BranchesPage() {
   const [mergeConflicts, setMergeConflicts] = useState<MergeConflict[]>([]);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
 
-  const { listBranches, createBranch, mergeBranch } = useBranch(entityId);
+  const { listBranches, createBranch, mergeBranch } = useBranch(workspaceId, entityId);
 
   const fetchBranches = useCallback(async () => {
     try {
@@ -92,7 +92,7 @@ export default function BranchesPage() {
   const handleDelete = async (branchId: string) => {
     if (!token) return;
     try {
-      await branchService.delete(branchId);
+      await branchService.delete(workspaceId, branchId);
       fetchBranches();
       toast.success("Branch deleted");
     } catch {
@@ -105,7 +105,7 @@ export default function BranchesPage() {
     if (!token) return;
     setResolvingId(conflict.id);
     try {
-      await branchService.resolveConflict(conflict.id, { resolution });
+      await branchService.resolveConflict(workspaceId, conflict.id, { resolution });
       setMergeConflicts((prev) => prev.filter((c) => c.id !== conflict.id));
       toast.success(`Conflict resolved: kept ${resolution === "ours" ? "mine" : "theirs"}`);
     } catch {
@@ -123,20 +123,20 @@ export default function BranchesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl p-6 space-y-6">
-      <div className="flex items-center gap-2 text-sm text-zinc-500">
-        <Link href={`/workspace/${workspaceId}/dashboard`} className="hover:text-white">
+    <div className="p-6 space-y-6">
+      <div className="flex items-center gap-2 text-sm text-muted">
+        <Link href={`/workspace/${workspaceId}/dashboard`} className="hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <Link href={`/workspace/${workspaceId}/dashboard`} className="hover:text-white">
+        <Link href={`/workspace/${workspaceId}/dashboard`} className="hover:text-foreground">
           Workspace
         </Link>
         <span>/</span>
-        <span className="text-zinc-300">Branches</span>
+        <span className="text-foreground">Branches</span>
       </div>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Branches</h1>
+        <h1 className="text-2xl font-bold text-foreground display-heading">Branches</h1>
       </div>
 
       <form onSubmit={handleCreate} className="flex gap-3">
@@ -145,12 +145,12 @@ export default function BranchesPage() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="New branch name"
-          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+          className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
         />
         <button
           type="submit"
           disabled={creating || !newName.trim()}
-          className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 text-sm font-semibold text-black hover:bg-surface disabled:opacity-50"
         >
           {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           Create Branch
@@ -160,7 +160,7 @@ export default function BranchesPage() {
       {loading ? (
         <div className="space-y-2 py-6">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+            <div key={i} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
               <div className="flex items-center gap-3">
                 <Skeleton variant="circular" width={16} height={16} />
                 <div className="space-y-1.5">
@@ -176,32 +176,32 @@ export default function BranchesPage() {
           ))}
         </div>
       ) : branches.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-700 py-12 text-center">
-          <GitBranch className="mx-auto h-8 w-8 text-zinc-600" />
-          <p className="mt-2 text-sm text-zinc-500">No branches yet</p>
+        <div className="rounded-lg border border-dashed border-border py-12 text-center">
+          <GitBranch className="mx-auto h-8 w-8 text-muted" />
+          <p className="mt-2 text-step-3 text-muted">No branches yet</p>
         </div>
       ) : (
         <div className="space-y-2">
           {branches.map((branch) => (
             <div
               key={branch.id}
-              className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
+              className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
             >
               <div className="flex items-center gap-3">
-                <GitBranch className="h-4 w-4 text-zinc-500" />
+                <GitBranch className="h-4 w-4 text-muted" />
                 <div>
-                  <p className="text-sm font-medium text-white">
+                    <p className="text-step-3 font-medium text-foreground">
                     {branch.name}
                     {branch.is_default && (
-                      <span className="ml-2 rounded-full bg-zinc-700 px-2 py-0.5 text-xs text-zinc-300">
+                      <span className="ml-2 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-foreground">
                         default
                       </span>
                     )}
                   </p>
                   {branch.description && (
-                    <p className="text-xs text-zinc-500">{branch.description}</p>
+                    <p className="text-step-1 text-muted">{branch.description}</p>
                   )}
-                  <p className="text-xs text-zinc-500">{formatRelativeTime(branch.created_at)}</p>
+                  <p className="text-step-1 text-muted">{formatRelativeTime(branch.created_at)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -210,7 +210,7 @@ export default function BranchesPage() {
                     <button
                       onClick={() => setMergeTarget(branch)}
                       disabled={merging === branch.id}
-                      className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                      className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted hover:bg-surface hover:text-foreground"
                     >
                       {merging === branch.id ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -221,7 +221,7 @@ export default function BranchesPage() {
                     </button>
                     <button
                       onClick={() => setDeleteTarget(branch)}
-                      className="rounded-md p-1 text-zinc-600 hover:text-red-400"
+                      className="rounded-md p-1 text-muted hover:text-red-400"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -253,13 +253,13 @@ export default function BranchesPage() {
           </div>
           <div className="space-y-3">
             {mergeConflicts.map((conflict) => (
-              <div key={conflict.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+              <div key={conflict.id} className="rounded-lg border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-white">
+                  <p className="text-step-3 font-medium text-foreground">
                       Entity {conflict.entity_id.slice(0, 8)}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-step-1 text-muted">
                       Type: {conflict.conflict_type}
                     </p>
                   </div>
@@ -281,7 +281,7 @@ export default function BranchesPage() {
                   </div>
                 </div>
                 {conflict.details && Object.keys(conflict.details).length > 0 && (
-                  <pre className="mt-2 max-h-24 overflow-auto rounded bg-zinc-800 p-2 text-[10px] text-zinc-400">
+                  <pre className="mt-2 max-h-24 overflow-auto rounded bg-surface p-2 text-[10px] text-muted">
                     {JSON.stringify(conflict.details, null, 2)}
                   </pre>
                 )}

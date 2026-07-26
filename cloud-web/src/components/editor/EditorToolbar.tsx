@@ -32,7 +32,7 @@ function ToolbarButton({ icon: Icon, label, active, disabled, onClick }: Toolbar
       title={label}
       className={cn(
         "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
-        active ? "bg-zinc-700 text-white" : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200",
+        active ? "bg-surface-2 text-foreground" : "text-muted hover:bg-surface hover:text-foreground",
         disabled && "opacity-30"
       )}
     >
@@ -45,7 +45,7 @@ export default function EditorToolbar({ onFormat, activeFormats = [], disabled }
   const isActive = (format: string) => activeFormats.includes(format);
 
   return (
-    <div className="flex items-center gap-0.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-2 py-1">
+    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface px-2 py-1">
       <ToolbarButton
         icon={Undo}
         label="Undo"
@@ -56,7 +56,7 @@ export default function EditorToolbar({ onFormat, activeFormats = [], disabled }
         label="Redo"
         disabled={disabled}
       />
-      <div className="mx-1 h-5 w-px bg-zinc-700" />
+      <div className="mx-1 h-5 w-px bg-border" />
       <ToolbarButton
         icon={Heading1}
         label="Heading 1"
@@ -78,7 +78,7 @@ export default function EditorToolbar({ onFormat, activeFormats = [], disabled }
         disabled={disabled}
         onClick={() => onFormat?.("heading_3")}
       />
-      <div className="mx-1 h-5 w-px bg-zinc-700" />
+      <div className="mx-1 h-5 w-px bg-border" />
       <ToolbarButton
         icon={Bold}
         label="Bold"
@@ -114,7 +114,7 @@ export default function EditorToolbar({ onFormat, activeFormats = [], disabled }
         disabled={disabled}
         onClick={() => onFormat?.("link")}
       />
-      <div className="mx-1 h-5 w-px bg-zinc-700" />
+      <div className="mx-1 h-5 w-px bg-border" />
       <ToolbarButton
         icon={AlignLeft}
         label="Align left"
@@ -122,7 +122,7 @@ export default function EditorToolbar({ onFormat, activeFormats = [], disabled }
         disabled={disabled}
         onClick={() => onFormat?.("align_left")}
       />
-      <div className="mx-1 h-5 w-px bg-zinc-700" />
+      <div className="mx-1 h-5 w-px bg-border" />
       <ToolbarButton
         icon={List}
         label="Bulleted list"
@@ -144,7 +144,7 @@ export default function EditorToolbar({ onFormat, activeFormats = [], disabled }
         disabled={disabled}
         onClick={() => onFormat?.("to_do")}
       />
-      <div className="mx-1 h-5 w-px bg-zinc-700" />
+      <div className="mx-1 h-5 w-px bg-border" />
       <ToolbarButton
         icon={Quote}
         label="Quote"

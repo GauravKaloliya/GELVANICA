@@ -48,8 +48,8 @@ export default function BranchSelector({
         className={cn(
           "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
           open
-            ? "bg-white text-black"
-            : "bg-zinc-800 text-zinc-400 hover:text-white"
+            ? "bg-accent text-foreground"
+            : "bg-surface text-muted hover:text-foreground"
         )}
       >
         <GitBranch className="h-3.5 w-3.5" />
@@ -63,7 +63,7 @@ export default function BranchSelector({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-zinc-800 bg-zinc-900 p-1 shadow-2xl">
+        <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border-border bg-card neo-depth-zinc p-1">
           {branches.map((branch) => {
             const isActive = branch.id === currentBranchId;
             return (
@@ -76,14 +76,14 @@ export default function BranchSelector({
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors",
                   isActive
-                    ? "bg-zinc-800 text-white"
-                    : "text-zinc-400 hover:bg-zinc-800/60 hover:text-white"
+                    ? "bg-surface text-foreground"
+                    : "text-muted hover:bg-surface hover:text-foreground"
                 )}
               >
                 {isActive ? (
                   <Check size={14} className="shrink-0 text-white" />
                 ) : (
-                  <GitBranch size={14} className="shrink-0 text-zinc-600" />
+                  <GitBranch size={14} className="shrink-0 text-muted" />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -93,11 +93,11 @@ export default function BranchSelector({
                     {branch.is_default && (
                       <Star
                         size={10}
-                        className="shrink-0 fill-zinc-500 text-zinc-500"
+                        className="shrink-0 fill-muted text-muted"
                       />
                     )}
                   </div>
-                  <span className="text-[10px] text-zinc-600">
+                  <span className="text-[10px] text-muted">
                     {formatRelativeTime(branch.created_at)}
                   </span>
                 </div>
@@ -105,7 +105,7 @@ export default function BranchSelector({
             );
           })}
 
-          <div className="my-1 h-px bg-zinc-800" />
+          <div className="my-1 h-px bg-surface" />
 
           {creating ? (
             <div className="flex items-center gap-1.5 px-2 py-1.5">
@@ -118,12 +118,12 @@ export default function BranchSelector({
                   if (e.key === "Escape") setCreating(false);
                 }}
                 placeholder="branch-name"
-                className="flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-white placeholder-zinc-600 outline-none focus:border-zinc-500"
+                className="flex-1 rounded-md border-border bg-surface px-2 py-1 text-xs text-foreground placeholder:text-muted outline-none focus:border-accent"
               />
               <button
                 onClick={handleCreate}
                 disabled={!newBranchName.trim()}
-                className="rounded-md bg-white px-2 py-1 text-xs font-medium text-black disabled:opacity-40"
+                className="rounded-md bg-accent px-2 py-1 text-xs font-medium text-foreground disabled:opacity-40"
               >
                 Create
               </button>
@@ -131,7 +131,7 @@ export default function BranchSelector({
           ) : (
             <button
               onClick={() => setCreating(true)}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-zinc-500 transition-colors hover:text-white"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-muted transition-colors hover:text-foreground"
             >
               <Plus size={14} className="shrink-0" />
               <span className="text-xs font-medium">New branch</span>

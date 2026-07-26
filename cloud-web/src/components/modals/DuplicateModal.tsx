@@ -46,7 +46,7 @@ export function DuplicateModal({ open, onClose, onConfirm, originalTitle }: Dupl
         </DialogHeader>
 
         <div className="space-y-2">
-          <label htmlFor="duplicate-new-title" className="text-sm font-medium text-zinc-400">New title</label>
+          <label htmlFor="duplicate-new-title" className="text-sm font-medium text-muted">New title</label>
           <Input
             id="duplicate-new-title"
             type="text"

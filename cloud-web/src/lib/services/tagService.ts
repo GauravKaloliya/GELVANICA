@@ -1,5 +1,5 @@
-import { API_BASE } from "@/lib/config/constants";
-import type { Tag, EntityTag } from "@/lib/types";
+import { apiClient } from "../apiClient";
+import type { Tag, EntityTag } from "../types";
 
 interface TagResponse {
   data: Tag;
@@ -10,70 +10,28 @@ interface TagListResponse {
   meta?: { total: number };
 }
 
-interface EntityTagListResponse {
-  data: EntityTag[];
-  meta?: { total: number };
-}
-
-async function tagApi<T>(endpoint: string, token: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: { message: "Tag request failed" } }));
-    throw new Error(error.error?.message || `HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
 export const tagService = {
-  list: async (token: string, workspaceId: string): Promise<Tag[]> => {
-    const res = await tagApi<TagListResponse>(`/tags/?workspace_id=${workspaceId}`, token);
-    return res.data || [];
-  },
+  list: (workspaceId: string) =>
+    apiClient.get<TagListResponse>(`/workspaces/${workspaceId}/tags/`),
 
-  create: async (token: string, data: { workspace_id: string; name: string; color?: string }): Promise<Tag> => {
-    const res = await tagApi<TagResponse>("/tags/", token, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  },
+  create: (workspaceId: string, data: { name: string; color?: string }) =>
+    apiClient.post<TagResponse>(`/workspaces/${workspaceId}/tags/`, data),
 
-  update: async (token: string, tagId: string, data: { name?: string; color?: string }): Promise<Tag> => {
-    const res = await tagApi<TagResponse>(`/tags/${tagId}`, token, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  },
+  get: (workspaceId: string, tagId: string) =>
+    apiClient.get<TagResponse>(`/workspaces/${workspaceId}/tags/${tagId}`),
 
-  delete: async (token: string, tagId: string): Promise<void> => {
-    await tagApi(`/tags/${tagId}`, token, { method: "DELETE" });
-  },
+  update: (workspaceId: string, tagId: string, data: { name?: string; color?: string }) =>
+    apiClient.patch<TagResponse>(`/workspaces/${workspaceId}/tags/${tagId}`, data),
 
-  listEntities: async (token: string, tagId: string, workspaceId: string): Promise<EntityTag[]> => {
-    const res = await tagApi<EntityTagListResponse>(
-      `/tags/${tagId}/entities?workspace_id=${workspaceId}`,
-      token
-    );
-    return res.data || [];
-  },
+  delete: (workspaceId: string, tagId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/tags/${tagId}`),
 
-  attachToEntity: async (token: string, tagId: string, entityId: string): Promise<EntityTag> => {
-    const res = await tagApi<{ data: EntityTag }>(`/tags/${tagId}/entities`, token, {
-      method: "POST",
-      body: JSON.stringify({ entity_id: entityId }),
-    });
-    return res.data;
-  },
+  restore: (workspaceId: string, tagId: string) =>
+    apiClient.post<TagResponse>(`/workspaces/${workspaceId}/tags/${tagId}/restore`),
 
-  detachFromEntity: async (token: string, tagId: string, entityId: string): Promise<void> => {
-    await tagApi(`/tags/${tagId}/entities/${entityId}`, token, { method: "DELETE" });
-  },
+  attachToEntity: (workspaceId: string, tagId: string, entityId: string) =>
+    apiClient.post<{ data: EntityTag }>(`/workspaces/${workspaceId}/tags/${tagId}/entities/${entityId}`),
+
+  detachFromEntity: (workspaceId: string, tagId: string, entityId: string) =>
+    apiClient.delete(`/workspaces/${workspaceId}/tags/${tagId}/entities/${entityId}`),
 };

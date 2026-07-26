@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { authApi } from "@/lib/services/auth";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { authService } from "@/lib/services/auth";
 import { useSession } from "@/lib/session";
 import { DESKTOP_AUTH_SCHEME } from "@/lib/config/constants";
+import { useUIStore } from "@/stores/uiStore";
+import { getAvatarUrl } from "@/lib/utils/avatar";
+import { UniversalNavbar, CloudWebRightSlot, CloudWebMobileAuthSlot } from "@gnovium/shared";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -52,7 +55,9 @@ const itemVariants = {
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login: loginSession, tokens } = useSession();
+  const pathname = usePathname();
+  const { login: loginSession, tokens, user, logout, isLoading: sessionLoading } = useSession();
+  const { resolvedTheme, toggleTheme } = useUIStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,7 +73,7 @@ export default function SignInPage() {
     if (exchangeStartedRef.current) return;
     exchangeStartedRef.current = true;
     const state = crypto.randomUUID();
-    const { code } = await authApi.exchangeCode(accessToken);
+    const { data: { code } } = await authService.exchangeCode(accessToken);
     window.location.href = `${DESKTOP_AUTH_SCHEME}://callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
   }, []);
 
@@ -108,15 +113,13 @@ export default function SignInPage() {
   const handleGoogleAuth = useCallback(async (idToken: string) => {
     setLoading(true);
     try {
-      const { user, tokens } = await authApi.googleLogin(idToken);
-      loginSession(user, tokens);
+      const { data } = await authService.googleLogin(idToken);
+      const tokens = { access_token: data.access_token, refresh_token: data.refresh_token, token_type: data.token_type, expires_in: data.expires_in };
+      loginSession(data.user, tokens);
       if (isDesktop) {
         await completeDesktopAuth(tokens.access_token);
-      } else {
-        router.push("/");
       }
-    } catch {
-      setError("Google sign-in failed. Please try again.");
+      window.location.href = "/app";
     } finally {
       setLoading(false);
     }
@@ -148,22 +151,47 @@ export default function SignInPage() {
 
     setLoading(true);
     try {
-      const { user, tokens } = await authApi.login(emailTrimmed, password);
-      loginSession(user, tokens);
+      const { data } = await authService.login(emailTrimmed, password);
+      const tokens = { access_token: data.access_token, refresh_token: data.refresh_token, token_type: data.token_type, expires_in: data.expires_in };
+      loginSession(data.user, tokens);
       if (isDesktop) {
         await completeDesktopAuth(tokens.access_token);
-      } else {
-        router.push("/");
       }
-    } catch {
-      setError("Incorrect email or password. Please verify your credentials and try again.");
+      window.location.href = "/app";
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-[90vh] flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <>
+      <UniversalNavbar
+        variant="cloud-web"
+        theme={resolvedTheme}
+        onToggleTheme={toggleTheme}
+        navItems={[]}
+        pathname={pathname}
+        rightSlot={
+          <CloudWebRightSlot
+            user={user}
+            isLoading={sessionLoading}
+            pathname={pathname}
+            onLogout={logout}
+            getAvatarUrl={getAvatarUrl}
+          />
+        }
+        mobileBottomSlot={(onClose) => (
+          <CloudWebMobileAuthSlot
+            user={user}
+            isLoading={sessionLoading}
+            pathname={pathname}
+            onLogout={logout}
+            onClose={onClose}
+            getAvatarUrl={getAvatarUrl}
+          />
+        )}
+      />
+      <div className="flex min-h-screen flex-col justify-center pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 z-0">
         <ParticleGraph className="opacity-60" />
       </div>
@@ -207,7 +235,7 @@ export default function SignInPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 16 }}
-            className="text-3xl sm:text-4xl font-black font-mono uppercase tracking-tight text-[var(--foreground)]"
+            className="text-3xl sm:text-4xl font-black font-mono uppercase tracking-tight text-[var(--foreground)] display-heading"
           >
             {isDesktop ? "Link Desktop App" : "Sign In"}
           </motion.h1>
@@ -216,7 +244,7 @@ export default function SignInPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, type: "spring", stiffness: 100, damping: 16 }}
-            className="text-xs text-[var(--muted)] font-mono font-bold mt-2"
+            className="text-step-1 text-[var(--muted)] font-mono font-bold mt-2"
           >
             {isDesktop ? "Authenticate your GNOVIUM desktop application" : "Access your knowledge operating system"}
           </motion.p>
@@ -251,5 +279,6 @@ export default function SignInPage() {
         </motion.div>
       </motion.div>
     </div>
+    </>
   );
 }

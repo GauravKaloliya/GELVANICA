@@ -16,7 +16,7 @@ interface GraphMinimapProps {
 }
 
 const NODE_COLORS: Record<string, string> = {
-  page: "#60a5fa",
+  page: "var(--accent)",
   note: "#a78bfa",
   document: "#34d399",
   task: "#fbbf24",
@@ -27,7 +27,7 @@ const NODE_COLORS: Record<string, string> = {
   resource: "#94a3b8",
 };
 
-const DEFAULT_COLOR = "#60a5fa";
+const DEFAULT_COLOR = "var(--accent)";
 
 const MINIMAP_W = 150;
 const MINIMAP_H = 100;
@@ -76,7 +76,7 @@ export default function GraphMinimap({
   return (
     <div
       className={cn(
-        "absolute bottom-3 left-3 z-10 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/95 shadow-2xl",
+        "absolute bottom-3 left-3 z-10 overflow-hidden rounded-lg border border-border bg-card neo-depth-zinc",
         onNavigate && "cursor-crosshair",
         className
       )}
@@ -107,7 +107,7 @@ export default function GraphMinimap({
         />
       </svg>
 
-      <div className="absolute bottom-0.5 right-1 font-mono text-[8px] text-zinc-600 select-none">
+      <div className="absolute bottom-0.5 right-1 font-mono text-[8px] text-muted select-none">
         {nodes.length}
       </div>
     </div>

@@ -34,26 +34,26 @@ router.push("/auth/sign-in")
   return (
     <div className="mx-auto max-w-2xl p-6 space-y-8">
       <div className="flex items-center gap-3">
-        <Link href="/" className="text-zinc-400 hover:text-white">
+        <Link href="/" className="text-muted hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <h1 className="text-2xl font-bold text-foreground display-heading">Settings</h1>
       </div>
 
       {/* Account */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Shield className="h-5 w-5 text-zinc-400" />
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 display-heading">
+          <Shield className="h-5 w-5 text-muted" />
           Account
         </h2>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
           <div>
-            <p className="text-sm text-zinc-400">Email</p>
-            <p className="text-sm text-white">{user.email}</p>
+            <p className="text-step-3 text-muted">Email</p>
+            <p className="text-step-3 text-foreground">{user.email}</p>
           </div>
           <div>
-            <p className="text-sm text-zinc-400">Account Created</p>
-            <p className="text-sm text-white">{new Date(user.created_at).toLocaleDateString()}</p>
+            <p className="text-step-3 text-muted">Account Created</p>
+            <p className="text-step-3 text-foreground">{new Date(user.created_at).toLocaleDateString()}</p>
           </div>
           <Link
             href="/profile"
@@ -66,9 +66,9 @@ router.push("/auth/sign-in")
 
       {/* Appearance */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-white">Appearance</h2>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5 space-y-3">
-          <p className="text-sm text-zinc-400">
+        <h2 className="text-lg font-semibold text-foreground display-heading">Appearance</h2>
+        <div className="rounded-lg border border-border bg-card p-5 space-y-3">
+          <p className="text-step-3 text-muted">
             Theme is controlled via the theme toggle in the top navigation bar.
           </p>
         </div>
@@ -76,10 +76,10 @@ router.push("/auth/sign-in")
 
       {/* Sign Out */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-white">Session</h2>
+        <h2 className="text-lg font-semibold text-foreground display-heading">Session</h2>
         <button
           onClick={() => { logout(); router.push("/auth") }}
-          className="flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white"
+          className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm text-foreground hover:border-accent hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
           Sign Out
@@ -88,9 +88,9 @@ router.push("/auth/sign-in")
 
       {/* Danger Zone */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-red-400">Danger Zone</h2>
+        <h2 className="text-lg font-semibold text-red-400 display-heading">Danger Zone</h2>
         <div className="rounded-lg border border-red-900/50 bg-red-950/20 p-5 space-y-3">
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Account deletion is permanent and cannot be undone. All your data will be removed.
           </p>
           {!showDeleteConfirm ? (
@@ -105,13 +105,13 @@ router.push("/auth/sign-in")
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:text-white"
+                className="rounded-lg border border-border px-4 py-2 text-sm text-muted hover:text-foreground"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm text-foreground hover:bg-red-700"
               >
                 Confirm Deletion
               </button>

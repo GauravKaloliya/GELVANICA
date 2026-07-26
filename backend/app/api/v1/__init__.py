@@ -17,6 +17,7 @@ from app.api.v1.backups import bp as backups_bp
 from app.api.v1.blocks import bp as blocks_bp
 from app.api.v1.branches import bp as branches_bp
 from app.api.v1.comments import bp as comments_bp
+from app.api.v1.config import bp as config_bp
 from app.api.v1.dashboard import bp as dashboard_bp
 from app.api.v1.diffs import bp as diffs_bp
 from app.api.v1.docs import bp as docs_bp
@@ -77,6 +78,7 @@ api_v1.register_blueprint(relations_bp, url_prefix="/workspaces")
 api_v1.register_blueprint(comments_bp, url_prefix="/workspaces")
 api_v1.register_blueprint(tags_bp, url_prefix="/workspaces")
 api_v1.register_blueprint(properties_bp, url_prefix="/workspaces")
+api_v1.register_blueprint(config_bp, url_prefix="/workspaces")
 
 # Workspace-scoped: Versions, Branches, Diffs
 api_v1.register_blueprint(branches_bp, url_prefix="/workspaces")

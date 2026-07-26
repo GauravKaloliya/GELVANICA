@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
+import { configService } from "@/lib/services/configService";
+import type { NotificationPref } from "@/lib/services/configService";
 import { ExportModal, ImportModal, ConfirmDialog } from "@/components/modals";
 import { BackupPanel } from "@/components/settings/BackupPanel";
 import { WorkspaceGeneral } from "@/components/settings/WorkspaceGeneral";
@@ -37,12 +39,8 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  const [notifPrefs, setNotifPrefs] = useState({
-    entity_updates: true,
-    mentions: true,
-    governance_alerts: true,
-    sync_conflicts: true,
-  });
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean> | null>(null);
+  const [notifItems, setNotifItems] = useState<NotificationPref[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(true);
   const [savingNotifs, setSavingNotifs] = useState(false);
   const notifSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,12 +56,16 @@ export default function SettingsPage() {
       if (!tokens?.access_token) return;
       setLoadingNotifs(true);
       try {
-        const data = await settingsService.get(workspaceId, "notifications");
+        const [data, cfg] = await Promise.all([
+          settingsService.get(workspaceId, "notifications"),
+          configService.get(workspaceId),
+        ]);
+        setNotifItems((cfg.notification_prefs ?? []).filter(n => ["entity_updates", "mentions", "governance_alerts", "sync_conflicts"].includes(n.key)));
         setNotifPrefs({
-          entity_updates: Boolean(data.entity_updates ?? true),
-          mentions: Boolean(data.mentions ?? true),
-          governance_alerts: Boolean(data.governance_alerts ?? true),
-          sync_conflicts: Boolean(data.sync_conflicts ?? true),
+          entity_updates: Boolean(data.entity_updates ?? false),
+          mentions: Boolean(data.mentions ?? false),
+          governance_alerts: Boolean(data.governance_alerts ?? false),
+          sync_conflicts: Boolean(data.sync_conflicts ?? false),
         });
       } catch { /* ignore */ } finally {
         setLoadingNotifs(false);
@@ -73,7 +75,7 @@ export default function SettingsPage() {
   }, [tokens, workspaceId]);
 
   const saveNotifPrefs = useCallback(
-    (prefs: typeof notifPrefs) => {
+    (prefs: Record<string, boolean>) => {
       if (!tokens?.access_token || !workspaceId) return;
       if (notifSaveTimerRef.current) clearTimeout(notifSaveTimerRef.current);
       notifSaveTimerRef.current = setTimeout(async () => {
@@ -89,8 +91,9 @@ export default function SettingsPage() {
   );
 
   const toggleNotifPref = useCallback(
-    (key: keyof typeof notifPrefs) => {
+    (key: string) => {
       setNotifPrefs((prev) => {
+        if (!prev) return prev;
         const next = { ...prev, [key]: !prev[key] };
         saveNotifPrefs(next);
         return next;
@@ -103,7 +106,7 @@ export default function SettingsPage() {
     if (!tokens?.access_token || !workspaceId) return;
     setResetting(true);
     try {
-      await apiClient.post("/settings/reset", { workspace_id: workspaceId }, tokens.access_token);
+      await apiClient.post(`/workspaces/${workspaceId}/settings/reset`, undefined, tokens.access_token);
     } catch { /* handle error */ } finally {
       setResetting(false);
     }
@@ -121,83 +124,78 @@ export default function SettingsPage() {
   }, [tokens, deleteConfirmText, currentWorkspace?.name, workspaceId, deleteWorkspace, router]);
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-8">
+    <div className="mx-auto max-w-4xl p-6 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">Workspace Settings</h1>
-        <p className="mt-1 text-sm text-zinc-500">Manage your workspace configuration</p>
+        <h1 className="text-2xl font-bold text-foreground display-heading">Workspace Settings</h1>
+        <p className="mt-1 text-step-3 text-muted">Manage your workspace configuration</p>
       </div>
 
       <WorkspaceGeneral workspaceId={workspaceId} />
 
       {/* Notification Settings */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-          <Bell className="h-5 w-5 text-zinc-400" />
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground display-heading">
+          <Bell className="h-5 w-5 text-muted" />
           Notifications
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">Configure notification preferences</p>
+        <p className="mt-1 text-step-3 text-muted">Configure notification preferences</p>
         <div className="mt-4 space-y-3">
-          {([
-            ["entity_updates", "Entity Updates", "When entities you follow are updated"],
-            ["mentions", "Mentions", "When someone mentions you in a comment"],
-            ["governance_alerts", "Governance Alerts", "Health score changes and compliance issues"],
-            ["sync_conflicts", "Sync Conflicts", "When sync conflicts need resolution"],
-          ] as const).map(([key, label, desc]) => (
-            <div key={key} className="flex items-center justify-between rounded-lg border border-zinc-800 p-3">
+          {notifItems.map((item) => (
+            <div key={item.key} className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
-                <p className="text-sm font-medium text-white">{label}</p>
-                <p className="text-xs text-zinc-500">{desc}</p>
+                <p className="text-step-3 font-medium text-foreground">{item.label}</p>
+                <p className="text-step-1 text-muted">{item.description}</p>
               </div>
               <Switch
-                checked={notifPrefs[key]}
-                onCheckedChange={() => toggleNotifPref(key)}
+                checked={notifPrefs?.[item.key] ?? false}
+                onCheckedChange={() => toggleNotifPref(item.key)}
                 disabled={loadingNotifs}
               />
             </div>
           ))}
         </div>
         {savingNotifs && (
-          <p className="mt-2 text-xs text-zinc-500 flex items-center gap-1">
+          <p className="mt-2 text-step-1 text-muted flex items-center gap-1">
             <Loader2 className="h-3 w-3 animate-spin" /> Saving...
           </p>
         )}
       </div>
 
       {/* Data Management */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">Data Management</h2>
-        <p className="mt-1 text-sm text-zinc-500">Export, import, or delete workspace data</p>
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground display-heading">Data Management</h2>
+        <p className="mt-1 text-step-3 text-muted">Export, import, or delete workspace data</p>
         <div className="mt-4 space-y-3">
           <button
             onClick={() => setShowExport(true)}
-            className="flex w-full items-center gap-3 rounded-lg border border-zinc-800 p-3 text-left transition-colors hover:border-zinc-700"
+            className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-border"
           >
             <Download className="h-5 w-5 text-blue-400" />
             <div>
-              <p className="text-sm font-medium text-white">Export Workspace</p>
-              <p className="text-xs text-zinc-500">Download all data as JSON or Markdown</p>
+              <p className="text-step-3 font-medium text-foreground">Export Workspace</p>
+              <p className="text-step-1 text-muted">Download all data as JSON or Markdown</p>
             </div>
           </button>
           <button
             onClick={() => setShowImport(true)}
-            className="flex w-full items-center gap-3 rounded-lg border border-zinc-800 p-3 text-left transition-colors hover:border-zinc-700"
+            className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-border"
           >
             <Upload className="h-5 w-5 text-green-400" />
             <div>
-              <p className="text-sm font-medium text-white">Import Data</p>
-              <p className="text-xs text-zinc-500">Import data from a JSON backup</p>
+              <p className="text-step-3 font-medium text-foreground">Import Data</p>
+              <p className="text-step-1 text-muted">Import data from a JSON backup</p>
             </div>
           </button>
         </div>
       </div>
 
       {/* Backups */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-          <Database className="h-5 w-5 text-zinc-400" />
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground display-heading">
+          <Database className="h-5 w-5 text-muted" />
           Backups
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">Create and restore workspace backups</p>
+        <p className="mt-1 text-step-3 text-muted">Create and restore workspace backups</p>
         <div className="mt-4">
           <BackupPanel workspaceId={workspaceId} />
         </div>
@@ -205,13 +203,13 @@ export default function SettingsPage() {
 
       {/* Reset to Defaults */}
       {canManageSettings && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-          <h2 className="text-lg font-semibold text-white">Reset Settings</h2>
-          <p className="mt-1 text-sm text-zinc-500">Reset all settings to their default values</p>
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h2 className="text-lg font-semibold text-foreground display-heading">Reset Settings</h2>
+          <p className="mt-1 text-step-3 text-muted">Reset all settings to their default values</p>
           <button
             onClick={handleResetDefaults}
             disabled={resetting}
-            className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white disabled:opacity-50"
+            className="mt-4 flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-accent hover:text-foreground disabled:opacity-50"
           >
             {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Reset to Defaults
@@ -222,11 +220,11 @@ export default function SettingsPage() {
       {/* Danger Zone */}
       {canDeleteWorkspace && (
         <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-red-400">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-red-400 display-heading">
             <AlertCircle className="h-5 w-5" />
             Danger Zone
           </h2>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-step-3 text-muted">
             Permanently delete this workspace and all its data. This action cannot be undone.
           </p>
           <button

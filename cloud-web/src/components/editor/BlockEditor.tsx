@@ -10,7 +10,7 @@ import { GripVertical, Plus, Loader2 } from "lucide-react";
 interface BlockEditorProps {
   blocks: Block[];
   token: string;
-  onUpdateBlock: (token: string, id: string, data: { content?: BlockContent; block_type?: BlockType; position?: number }) => void;
+  onUpdateBlock: (token: string, id: string, data: { content?: BlockContent; type?: BlockType; position?: number }) => void;
   onDeleteBlock: (token: string, id: string) => void;
   onAddBlock?: () => void;
   onReorder?: (blockId: string, newPosition: number) => void;
@@ -74,7 +74,7 @@ export default function BlockEditor({
   const handleSlashSelect = useCallback(
     (blockType: BlockType) => {
       if (!slashMenu.blockId) return;
-      onUpdateBlock(token, slashMenu.blockId, { block_type: blockType });
+      onUpdateBlock(token, slashMenu.blockId, { type: blockType });
       setSlashMenu({ open: false, blockId: null, query: "" });
     },
     [slashMenu.blockId, token, onUpdateBlock]
@@ -92,7 +92,7 @@ export default function BlockEditor({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, block: Block) => {
       if (readOnly) return;
-      if (e.key === "/" && block.block_type === "text") {
+      if (e.key === "/" && block.type === "text") {
         const content = block.content as { text?: string };
         if (!content?.text || content.text === "") {
           e.preventDefault();
@@ -106,9 +106,9 @@ export default function BlockEditor({
   return (
     <div className="space-y-1">
       {blocks.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-700 py-16 text-center">
-          <p className="text-sm text-zinc-500">No content yet</p>
-          <p className="mt-1 text-xs text-zinc-600">Start typing or click below to add a block</p>
+        <div className="rounded-lg border border-dashed border-border py-16 text-center">
+          <p className="text-sm text-muted">No content yet</p>
+          <p className="mt-1 text-xs text-muted">Start typing or click below to add a block</p>
         </div>
       ) : (
         blocks.map((block) => (
@@ -123,7 +123,7 @@ export default function BlockEditor({
             onClick={() => onBlockSelect?.(block.id)}
             className={cn(
               "group relative flex items-start gap-1 rounded-md transition-all",
-              !readOnly && "hover:bg-zinc-900/30",
+              !readOnly && "hover:bg-surface",
               draggedId === block.id && "opacity-40",
               dragOverId === block.id && draggedId !== block.id && "border-t-2 border-blue-500"
             )}
@@ -132,12 +132,12 @@ export default function BlockEditor({
               <div className="flex shrink-0 items-center gap-0.5 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => setSlashMenu({ open: true, blockId: block.id, query: "" })}
-                  className="rounded p-0.5 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400"
+                  className="rounded p-0.5 text-muted hover:bg-surface hover:text-foreground"
                   title="Insert block"
                 >
                   <Plus className="h-3 w-3" />
                 </button>
-                <div className="cursor-grab rounded p-0.5 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400 active:cursor-grabbing">
+                <div className="cursor-grab rounded p-0.5 text-muted hover:bg-surface hover:text-foreground active:cursor-grabbing">
                   <GripVertical className="h-3 w-3" />
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function BlockEditor({
         <button
           onClick={handleAddBlock}
           disabled={addingBlock}
-          className="w-full rounded-md border border-dashed border-zinc-700 py-3 text-sm text-zinc-500 hover:border-zinc-500 hover:text-zinc-300 disabled:opacity-50"
+          className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted hover:border-border/80 hover:text-foreground disabled:opacity-50"
         >
           {addingBlock ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "+ Add block"}
         </button>

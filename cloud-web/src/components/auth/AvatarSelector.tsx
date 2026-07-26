@@ -9,6 +9,7 @@ interface AvatarSelectorProps {
   name: string;
   isUploading: boolean;
   uploadProgress: number;
+  uploadAttempt: number;
   avatarWarning: string | null;
   uploadSucceeded: boolean;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -22,6 +23,7 @@ export default function AvatarSelector({
   name,
   isUploading,
   uploadProgress,
+  uploadAttempt,
   avatarWarning,
   onFileSelect,
   onRemoveAvatar,
@@ -81,14 +83,14 @@ export default function AvatarSelector({
         {avatarFile ? "Profile photo selected" : "Default avatar"}
       </span>
 
-      {isUploading && uploadProgress > 0 && uploadProgress < 100 && (
+      {isUploading && (
         <motion.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-[180px] mt-3"
         >
           <div className="flex justify-between font-mono text-[8px] font-black uppercase tracking-wider text-[var(--muted)] mb-1">
-            <span>Uploading</span>
+            <span>{uploadAttempt > 1 ? `Retry ${uploadAttempt}/3` : "Uploading"}</span>
             <span>{uploadProgress}%</span>
           </div>
           <div className="w-full bg-[var(--sunken-bg)] border-2 border-[var(--foreground)] overflow-hidden h-3 rounded-none">
@@ -117,7 +119,7 @@ export default function AvatarSelector({
         <motion.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-3 p-2 border-2 border-amber-500 bg-amber-500/10 font-mono text-[8px] font-bold text-amber-500 text-center max-w-[250px]"
+          className="mt-3 p-2 border-2 border-rose-500 bg-rose-500/10 font-mono text-[8px] font-bold text-rose-500 text-center max-w-[250px]"
         >
           {avatarWarning}
         </motion.div>

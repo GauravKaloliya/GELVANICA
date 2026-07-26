@@ -36,7 +36,7 @@ export function useActivity(workspaceId: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/activity/?workspace_id=${workspaceId}`);
+      const res = await request(`/workspaces/${workspaceId}/activity`);
       setEntries(res.data);
       return res.data;
     } catch {
@@ -51,7 +51,7 @@ export function useActivity(workspaceId: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/activity/events?workspace_id=${workspaceId}`);
+      const res = await request(`/workspaces/${workspaceId}/activity/events`);
       setEvents(res.data);
       return res.data;
     } catch {

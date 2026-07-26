@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/stores/editorStore";
 
-type SortKey = "title" | "updated_at" | "created_at";
+type SortKey = "name" | "updated_at" | "created_at";
 type ViewMode = "grid" | "list";
 
 const PER_PAGE = 50;
@@ -53,7 +53,7 @@ export default function EntitiesPage() {
       setError(null);
       try {
         const json = await apiClient.get<Entity[]>(
-          `/entities/?workspace_id=${workspaceId}&page=${pageNum}&per_page=${PER_PAGE}`
+          `/workspaces/${workspaceId}/entities/?page=${pageNum}&per_page=${PER_PAGE}`
         );
         setEntities((prev) => (pageNum === 1 ? json : [...prev, ...json]));
         setHasMore(json.length >= PER_PAGE);
@@ -74,12 +74,12 @@ export default function EntitiesPage() {
     let list = entities;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      list = list.filter((e) => (e.title || "").toLowerCase().includes(q));
+      list = list.filter((e) => (e.name || "").toLowerCase().includes(q));
     }
     list = [...list].sort((a, b) => {
       const av = a[sortKey] ?? "";
       const bv = b[sortKey] ?? "";
-      if (sortKey === "title") {
+      if (sortKey === "name") {
         return sortAsc
           ? String(av).localeCompare(String(bv))
           : String(bv).localeCompare(String(av));
@@ -112,23 +112,23 @@ export default function EntitiesPage() {
   const hasSelection = selectedEntityIds.length > 0;
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Entities</h1>
-        <p className="mt-1 text-sm text-zinc-500">Browse and manage all entities in this workspace</p>
+        <h1 className="text-2xl font-bold text-foreground display-heading">Entities</h1>
+        <p className="mt-1 text-step-3 text-muted">Browse and manage all entities in this workspace</p>
       </div>
 
       {/* Toolbar */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter by title..."
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-900/50 py-2 pl-9 pr-3 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
+            className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
           />
         </div>
 
@@ -145,8 +145,8 @@ export default function EntitiesPage() {
             className={cn(
               "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
               hasSelection
-                ? "bg-white text-black"
-                : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                ? "bg-card text-black"
+                : "bg-surface text-muted hover:text-foreground"
             )}
           >
             <CheckSquare className="h-3.5 w-3.5" />
@@ -158,7 +158,7 @@ export default function EntitiesPage() {
         <div className="flex items-center gap-1">
           {(
             [
-              ["title", "Title"],
+              ["name", "Name"],
               ["updated_at", "Updated"],
               ["created_at", "Created"],
             ] as const
@@ -169,8 +169,8 @@ export default function EntitiesPage() {
               className={cn(
                 "flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
                 sortKey === key
-                  ? "bg-white text-black"
-                  : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-card text-black"
+                  : "bg-surface text-muted hover:text-foreground"
               )}
             >
               <ArrowUpDown className="h-3 w-3" />
@@ -180,12 +180,12 @@ export default function EntitiesPage() {
         </div>
 
         {/* View toggle */}
-        <div className="flex items-center rounded-lg border border-zinc-800">
+        <div className="flex items-center rounded-lg border border-border">
           <button
             onClick={() => setView("grid")}
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-l-lg transition-colors",
-              view === "grid" ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"
+              view === "grid" ? "bg-surface-2 text-foreground" : "text-muted hover:text-foreground"
             )}
             aria-label="Grid view"
           >
@@ -195,7 +195,7 @@ export default function EntitiesPage() {
             onClick={() => setView("list")}
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-r-lg transition-colors",
-              view === "list" ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"
+              view === "list" ? "bg-surface-2 text-foreground" : "text-muted hover:text-foreground"
             )}
             aria-label="List view"
           >
@@ -216,9 +216,9 @@ export default function EntitiesPage() {
         <div className={cn(view === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-1")}>
           {Array.from({ length: 6 }).map((_, i) =>
             view === "grid" ? (
-              <div key={i} className="h-40 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900/50" />
+              <div key={i} className="h-40 animate-pulse rounded-lg border border-border bg-card" />
             ) : (
-              <div key={i} className="h-12 animate-pulse rounded-md bg-zinc-900/50" />
+              <div key={i} className="h-12 animate-pulse rounded-md bg-card" />
             )
           )}
         </div>
@@ -270,7 +270,7 @@ export default function EntitiesPage() {
               fetchEntities(next);
             }}
             disabled={isLoading}
-            className="flex items-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-2 disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
             Load more

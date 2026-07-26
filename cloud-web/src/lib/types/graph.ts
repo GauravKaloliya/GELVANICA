@@ -6,10 +6,7 @@ export interface GraphNode {
 }
 
 export interface GraphEdge {
-  id: string;
-  source: string;
-  target: string;
-  type: string;
+  id: string; source: string; target: string; type: string; label?: string;
 }
 
 export interface GraphSnapshot {
@@ -30,6 +27,19 @@ export interface GraphQueryResult {
   edges: GraphEdge[];
   node_count: number;
   edge_count: number;
+}
+
+export interface GraphMaterialization {
+  id: string;
+  workspace_id: string;
+  graph_snapshot: Record<string, unknown>;
+  generated_at: string;
+  version_hash: string | null;
+  created_at: string;
+  updated_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface GraphPath {

@@ -39,14 +39,20 @@ export const workspaceService = {
   delete: (workspaceId: string) =>
     apiClient.delete(`/workspaces/${workspaceId}`),
 
+  restore: (workspaceId: string) =>
+    apiClient.post<WorkspaceResponse>(`/workspaces/${workspaceId}/restore`),
+
   getStats: (workspaceId: string) =>
     apiClient.get<StatsResponse>(`/workspaces/${workspaceId}/stats`),
 
   listMembers: (workspaceId: string) =>
     apiClient.get<MemberListResponse>(`/workspaces/${workspaceId}/members`),
 
+  getMember: (workspaceId: string, userId: string) =>
+    apiClient.get<MemberResponse>(`/workspaces/${workspaceId}/members/${userId}`),
+
   inviteMember: (workspaceId: string, data: { email: string; role: "admin" | "editor" | "viewer" }) =>
-    apiClient.post<MemberResponse>(`/workspaces/${workspaceId}/members`, data),
+    apiClient.post<MemberResponse>(`/workspaces/${workspaceId}/members/invite`, data),
 
   updateMember: (workspaceId: string, userId: string, data: { role: "admin" | "editor" | "viewer" }) =>
     apiClient.patch<MemberResponse>(`/workspaces/${workspaceId}/members/${userId}`, data),

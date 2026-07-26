@@ -21,15 +21,15 @@ export default function RouteError({ error, reset }: RouteErrorProps) {
         <AlertTriangle className="h-6 w-6 text-red-400" />
       </div>
       <h2 className="mt-4 text-lg font-semibold text-white">Something went wrong</h2>
-      <p className="mt-1.5 max-w-md text-sm text-zinc-400">
+      <p className="mt-1.5 max-w-md text-sm text-muted">
         An unexpected error occurred. Please try again later.
       </p>
       {process.env.NODE_ENV === "development" && error.digest && (
-        <p className="mt-1 font-mono text-xs text-zinc-600">Error: {error.digest}</p>
+        <p className="mt-1 font-mono text-xs text-muted">Error: {error.digest}</p>
       )}
       <button
         onClick={reset}
-        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-zinc-200"
+        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface"
       >
         <RefreshCw className="h-3.5 w-3.5" />
         Try again

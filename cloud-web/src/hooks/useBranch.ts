@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { API_BASE } from "@/lib/config/constants";
 import type { Branch, BranchMerge } from "@/lib/types/branch";
 
-export function useBranch(entityId: string) {
+export function useBranch(workspaceId: string, entityId: string) {
   const { tokens } = useAuthStore();
   const token = tokens?.access_token;
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ export function useBranch(entityId: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await request(`/branches/?entity_id=${entityId}`);
+      const res = await request(`/workspaces/${workspaceId}/branches/?entity_id=${entityId}`);
       return res.data;
     } catch {
       setError("Failed to load branches");
@@ -42,14 +42,14 @@ export function useBranch(entityId: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [entityId, request]);
+  }, [workspaceId, entityId, request]);
 
   const createBranch = useCallback(
     async (data: { name: string; from_branch_id?: string }): Promise<Branch> => {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request("/branches/", {
+        const res = await request(`/workspaces/${workspaceId}/branches/`, {
           method: "POST",
           body: JSON.stringify({ entity_id: entityId, ...data }),
         });
@@ -61,7 +61,7 @@ export function useBranch(entityId: string) {
         setIsLoading(false);
       }
     },
-    [entityId, request]
+    [workspaceId, entityId, request]
   );
 
   const mergeBranch = useCallback(
@@ -72,7 +72,7 @@ export function useBranch(entityId: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request(`/branches/${branchId}/merge`, {
+        const res = await request(`/workspaces/${workspaceId}/branches/${branchId}/merge`, {
           method: "POST",
           body: JSON.stringify(data),
         });
@@ -84,7 +84,7 @@ export function useBranch(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   const merge = useCallback(
@@ -96,7 +96,7 @@ export function useBranch(entityId: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await request("/branches/merge", {
+        const res = await request(`/workspaces/${workspaceId}/branches/merge`, {
           method: "POST",
           body: JSON.stringify(data),
         });
@@ -108,7 +108,7 @@ export function useBranch(entityId: string) {
         setIsLoading(false);
       }
     },
-    [request]
+    [workspaceId, request]
   );
 
   return { isLoading, error, listBranches, createBranch, mergeBranch, merge };

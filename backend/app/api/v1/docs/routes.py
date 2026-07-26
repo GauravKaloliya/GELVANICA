@@ -29,7 +29,7 @@ def api_docs():
             "endpoints": {
                 "register": {"method": "POST", "path": "/auth/register", "auth": False, "mode": "local+cloud"},
                 "login": {"method": "POST", "path": "/auth/login", "auth": False, "mode": "local+cloud"},
-                "check_email": {"method": "GET", "path": "/auth/check-email", "auth": "access_token"},
+                "check_email": {"method": "GET", "path": "/auth/check-email", "auth": False},
                 "google_login": {"method": "POST", "path": "/auth/google", "auth": False, "mode": "cloud"},
                 "refresh": {"method": "POST", "path": "/auth/refresh", "auth": "refresh_token"},
                 "logout": {"method": "POST", "path": "/auth/logout", "auth": "refresh_token"},
@@ -43,6 +43,7 @@ def api_docs():
                 "forgot_password": {"method": "POST", "path": "/auth/forgot-password", "auth": False, "mode": "local+cloud"},
                 "reset_password": {"method": "POST", "path": "/auth/reset-password", "auth": False, "mode": "local+cloud"},
                 "profile_changed": {"method": "POST", "path": "/auth/profile-changed", "auth": "access_token"},
+                "avatar": {"method": "POST", "path": "/auth/avatar", "auth": "access_token"},
             }
         },
         "endpoints": {

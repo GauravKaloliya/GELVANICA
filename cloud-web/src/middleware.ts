@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const API_PROXY_TARGET = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 const PUBLIC_PATHS = [
   "/auth",
   "/auth/sign-in",
@@ -105,11 +107,43 @@ function buildCspHeader(): string {
   ].join("; ");
 }
 
-export function proxy(request: NextRequest) {
+async function proxyApiRequest(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  if (!pathname.startsWith("/api/")) return undefined;
+
+  const targetUrl = `${API_PROXY_TARGET}${pathname}${search}`;
+
+  const headers = new Headers(request.headers);
+  headers.delete("host");
+
+  const method = request.method;
+  const body = method !== "GET" && method !== "HEAD" ? await request.blob() : undefined;
+
+  const response = await fetch(targetUrl, {
+    method,
+    headers,
+    body,
+    redirect: "manual",
+  });
+
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.delete("content-encoding");
+  responseHeaders.delete("content-length");
+  responseHeaders.delete("transfer-encoding");
+
+  return new NextResponse(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
+}
+
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (isApiPath(pathname)) {
-    return NextResponse.next();
+  if (pathname.startsWith("/api/")) {
+    const apiResponse = await proxyApiRequest(request);
+    if (apiResponse) return apiResponse;
   }
 
   if (isPublicPath(pathname)) {

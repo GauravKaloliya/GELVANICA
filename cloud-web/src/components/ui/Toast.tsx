@@ -29,12 +29,12 @@ export function useToast() {
 }
 
 const VARIANT_CONFIG: Record<ToastVariant, { icon: React.ElementType; className: string }> = {
-  default: { icon: Info, className: "border-zinc-700 bg-zinc-800 text-white" },
+  default: { icon: Info, className: "bg-card border-border text-foreground" },
   success: { icon: CheckCircle, className: "border-green-500/20 bg-green-500/10 text-green-400" },
   error: { icon: AlertCircle, className: "border-red-500/20 bg-red-500/10 text-red-400" },
   warning: { icon: AlertTriangle, className: "border-amber-500/20 bg-amber-500/10 text-amber-400" },
   info: { icon: Info, className: "border-blue-500/20 bg-blue-500/10 text-blue-400" },
-  loading: { icon: Loader2, className: "border-zinc-700 bg-zinc-800 text-white" },
+  loading: { icon: Loader2, className: "bg-card border-border text-foreground" },
 };
 
 function ToastProvider({ children }: { children: React.ReactNode }) {

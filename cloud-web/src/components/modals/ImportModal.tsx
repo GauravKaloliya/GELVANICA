@@ -76,9 +76,9 @@ export function ImportModal({ open, onClose, workspaceId, onImportComplete }: Im
           <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-4">
             <div className="flex items-center gap-2">
               <Check className="h-5 w-5 text-green-400" />
-              <p className="text-sm font-medium text-green-400">Import complete!</p>
+              <p className="text-step-3 font-medium text-green-400">Import complete!</p>
             </div>
-            <div className="mt-2 space-y-1 text-xs text-zinc-400">
+            <div className="mt-2 space-y-1 text-step-1 text-muted">
               {Object.entries(result.imported).map(([key, count]) => (
                 <p key={key}>
                   <Badge variant="outline" size="sm" className="mr-1">{key}</Badge>
@@ -91,21 +91,21 @@ export function ImportModal({ open, onClose, workspaceId, onImportComplete }: Im
           <>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer rounded-lg border-2 border-dashed border-zinc-700 p-8 text-center hover:border-zinc-500 transition-colors"
+              className="cursor-pointer rounded-lg border-2 border-dashed border-border p-8 text-center card-hover transition-colors"
             >
               {file ? (
                 <div className="flex items-center justify-center gap-3">
                   <FileJson className="h-8 w-8 text-green-400" />
                   <div className="text-left">
-                    <p className="text-sm font-medium text-white">{file.name}</p>
-                    <p className="text-xs text-zinc-500">{(file.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-step-3 font-medium text-foreground">{file.name}</p>
+                    <p className="text-step-1 text-muted">{(file.size / 1024).toFixed(1)} KB</p>
                   </div>
                 </div>
               ) : (
                 <>
-                  <Upload className="mx-auto h-8 w-8 text-zinc-600" />
-                  <p className="mt-2 text-sm text-zinc-400">Click to select a JSON file</p>
-                  <p className="mt-1 text-xs text-zinc-600">Accepts .json export files</p>
+                  <Upload className="mx-auto h-8 w-8 text-muted" />
+                  <p className="mt-2 text-step-3 text-muted">Click to select a JSON file</p>
+                  <p className="mt-1 text-step-1 text-muted">Accepts .json export files</p>
                 </>
               )}
             </div>
@@ -120,7 +120,7 @@ export function ImportModal({ open, onClose, workspaceId, onImportComplete }: Im
             {error && (
               <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
                 <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
-                <p className="text-xs text-red-300">{error}</p>
+                <p className="text-step-1 text-red-300">{error}</p>
               </div>
             )}
           </>

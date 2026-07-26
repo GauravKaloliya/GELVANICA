@@ -8,7 +8,7 @@ import Script from "next/script";
 bootstrapEnv();
 
 import { Providers } from "./providers";
-import Navbar from "./components/Navbar";
+
 import { OfflineIndicator } from "@/components/shared/OfflineIndicator";
 import RouteLoading from "@/components/ui/RouteLoading";
 const geistSans = Geist({
@@ -75,14 +75,13 @@ export default function RootLayout({
           {themeScript}
         </Script>
         <Providers>
-          <Navbar />
           <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-black focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
           >
             Skip to content
           </a>
-          <main className="pt-20">
+          <main className="pt-6">
             <Suspense fallback={<RouteLoading variant="page" />}>
               {children}
             </Suspense>

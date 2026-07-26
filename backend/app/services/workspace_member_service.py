@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from flask import current_app
+from sqlalchemy.orm import joinedload
 
 from app.core.errors import ApiError, ConflictError, NotFoundError
 from app.core.logging import logger
@@ -39,6 +40,25 @@ VALID_ROLES = {"owner", "admin", "editor", "viewer"}
 class WorkspaceMemberService:
     """Service for managing workspace membership and roles."""
 
+    def _presign_url(self, url):
+        if url and isinstance(url, str) and url.startswith("v1/"):
+            from flask import current_app
+            from app.services.storage_provider import create_storage_provider
+            provider = create_storage_provider(current_app.config)
+            return provider.presign_download(url, expires_in=3600)
+        return url
+
+    def _fill_member_display(self, member):
+        if hasattr(member, 'user') and member.user:
+            if not member.display_name:
+                member.display_name = member.user.name or ""
+            if not member.email:
+                member.email = member.user.email
+            if not member.avatar_url and member.user.avatar_url:
+                member.avatar_url = member.user.avatar_url
+        member.avatar_url = self._presign_url(member.avatar_url)
+        return member
+
     def list_members(self, workspace_id: str, page: int = 1, per_page: int = 25, search: str = None) -> Any:
         _ensure_member_cloud()
         """List all members of a workspace, paginated."""
@@ -56,11 +76,20 @@ class WorkspaceMemberService:
                     User.email.ilike(f"%{search}%"),
                 )
             ).order_by(WorkspaceMember.joined_at.desc())
-            return query.paginate(page=page, per_page=per_page, error_out=False)
-        return WorkspaceMemberRepository().list(
-            filters={"workspace_id": workspace_id}, page=page, per_page=per_page,
-            order_by="joined_at", descending=True,
+            result = query.paginate(page=page, per_page=per_page, error_out=False)
+            if hasattr(result, 'items'):
+                for m in result.items:
+                    self._fill_member_display(m)
+            return result
+        result = WorkspaceMemberRepository().list(
+            {"workspace_id": workspace_id}, page, per_page,
+            "joined_at", True,
+            joinedload(WorkspaceMember.user),
         )
+        if hasattr(result, 'items'):
+            for m in result.items:
+                self._fill_member_display(m)
+        return result
 
     def get_member(self, workspace_id: str, user_id: str, for_update: bool = False) -> Any:
         """Get a single workspace membership, or raise NotFoundError.
@@ -104,6 +133,9 @@ class WorkspaceMemberService:
             "workspace_id": workspace_id,
             "user_id": user.id,
             "role": data.get("role", "editor"),
+            "display_name": user.name or "",
+            "email": user.email,
+            "avatar_url": user.avatar_url,
         })
         try:
             db.session.commit()

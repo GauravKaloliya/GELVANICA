@@ -116,7 +116,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
   },
 
   inviteMember: async (token, workspaceId, email, role) => {
-    await apiClient.post(`/workspaces/${workspaceId}/members`, { email, role }, token);
+    await apiClient.post(`/workspaces/${workspaceId}/members/invite`, { email, role }, token);
   },
 
   removeMember: async (token, workspaceId, userId) => {

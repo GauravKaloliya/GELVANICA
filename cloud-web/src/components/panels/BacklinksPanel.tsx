@@ -25,18 +25,18 @@ export default function BacklinksPanel({ entityId, workspaceId }: BacklinksPanel
 
     const fetchBacklinks = async () => {
       try {
-        const json = await apiClient.get<{ data: BacklinkRelation[] }>(`/relations/backlinks/${entityId}`);
+        const json = await apiClient.get<{ data: BacklinkRelation[] }>(`/workspaces/${workspaceId}/relations/backlinks/${entityId}`);
         const relations: BacklinkRelation[] = json.data || [];
 
         // Fetch source entity titles in parallel
-        const sourceIds = [...new Set(relations.map((r) => r.source_entity_id))];
+        const sourceIds = [...new Set(relations.map((r) => r.source_id))];
         const titleMap: Record<string, string> = {};
 
         await Promise.all(
           sourceIds.map(async (id) => {
             try {
-              const entityJson = await apiClient.get<{ data: { title?: string } }>(`/entities/${id}`);
-              titleMap[id] = entityJson.data?.title || "Untitled";
+              const entityJson = await apiClient.get<{ data: { name?: string } }>(`/workspaces/${workspaceId}/entities/${id}`);
+              titleMap[id] = entityJson.data?.name || "Untitled";
             } catch {
               titleMap[id] = "Unknown";
             }
@@ -46,7 +46,7 @@ export default function BacklinksPanel({ entityId, workspaceId }: BacklinksPanel
         setBacklinks(
           relations.map((r) => ({
             ...r,
-            source_title: titleMap[r.source_entity_id] || "Unknown",
+            source_title: titleMap[r.source_id] || "Unknown",
           }))
         );
       } catch {
@@ -77,9 +77,9 @@ export default function BacklinksPanel({ entityId, workspaceId }: BacklinksPanel
   if (backlinks.length === 0) {
     return (
       <div className="py-8 text-center">
-        <ArrowLeftRight className="mx-auto h-8 w-8 text-zinc-600" />
-        <p className="mt-2 text-xs text-zinc-500">No incoming links yet</p>
-        <p className="mt-1 text-[11px] text-zinc-600">
+        <ArrowLeftRight className="mx-auto h-8 w-8 text-muted" />
+        <p className="mt-2 text-xs text-muted">No incoming links yet</p>
+        <p className="mt-1 text-[11px] text-muted">
           Other entities that reference this one will appear here.
         </p>
       </div>
@@ -91,18 +91,18 @@ export default function BacklinksPanel({ entityId, workspaceId }: BacklinksPanel
       {backlinks.map((link) => (
         <Link
           key={link.id}
-          href={`/workspace/${workspaceId}/entity/${link.source_entity_id}`}
-          className="flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-zinc-800/50 group"
+          href={`/workspace/${workspaceId}/entity/${link.source_id}`}
+          className="flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-surface group"
         >
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-zinc-300 group-hover:text-white">
+            <p className="truncate text-xs font-medium text-foreground group-hover:text-foreground">
               {link.source_title}
             </p>
-            <p className="mt-0.5 text-[10px] text-zinc-600">
-              {link.relation_type}
+            <p className="mt-0.5 text-[10px] text-muted">
+              {link.type}
             </p>
           </div>
-          <ExternalLink className="h-3 w-3 shrink-0 text-zinc-600 group-hover:text-zinc-400" />
+          <ExternalLink className="h-3 w-3 shrink-0 text-muted group-hover:text-foreground" />
         </Link>
       ))}
     </div>

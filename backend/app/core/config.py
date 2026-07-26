@@ -90,7 +90,7 @@ class Config:
     GNOVIUM_MODE = os.getenv("GNOVIUM_MODE", "local")
     VERCEL_DEPLOYMENT = os.getenv("VERCEL", "0") == "1"
     SECRET_KEY = os.getenv("SECRET_KEY", "")
-    REDIS_URL = os.getenv("REDIS_URL", "")
+    REDIS_URL = redis_url()
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "")
     try:
         JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.getenv("JWT_ACCESS_MINUTES", "30")))

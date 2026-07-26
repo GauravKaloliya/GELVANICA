@@ -1,5 +1,4 @@
 import { apiClient } from "../apiClient";
-import type { ActivityEntry } from "../types";
 
 interface DashboardOverview {
   entity_count: number;
@@ -9,7 +8,7 @@ interface DashboardOverview {
   member_count: number;
   file_count: number;
   tag_count: number;
-  recent_activity: ActivityEntry[];
+  recent_activity: unknown[];
   governance_score?: number;
 }
 
@@ -17,22 +16,12 @@ interface OverviewResponse {
   data: DashboardOverview;
 }
 
-interface StatsResponse {
-  data: DashboardOverview;
-}
-
-interface ActivityResponse {
-  data: ActivityEntry[];
-  meta?: { total: number };
-}
-
 export const dashboardService = {
   getOverview: (workspaceId: string) =>
-    apiClient.get<OverviewResponse>(`/dashboard/overview?workspace_id=${workspaceId}`),
+    apiClient.get<OverviewResponse>(`/workspaces/${workspaceId}/dashboard/overview`),
 
-  getStats: (workspaceId: string) =>
-    apiClient.get<StatsResponse>(`/workspaces/${workspaceId}/stats`),
-
-  getRecentActivity: (workspaceId: string, limit = 10) =>
-    apiClient.get<ActivityResponse>(`/activity/?workspace_id=${workspaceId}&per_page=${limit}`),
+  getStorage: (workspaceId: string) =>
+    apiClient.get<{ data: { used_bytes: number; quota_bytes: number; file_count: number } }>(
+      `/workspaces/${workspaceId}/dashboard/storage`
+    ),
 };

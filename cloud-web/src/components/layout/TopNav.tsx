@@ -18,35 +18,35 @@ export function TopNav({ workspaceId }: TopNavProps) {
   const { toggleSidebar } = useUIStore();
 
   return (
-    <header role="banner" aria-label="Top navigation" className="flex h-14 shrink-0 items-center gap-4 border-b border-zinc-800 bg-zinc-950/80 px-4 backdrop-blur-sm">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleSidebar}
-        className="md:hidden"
-        aria-label="Toggle menu"
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
+    <header role="banner" aria-label="Top navigation" className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border bg-nav/80 px-6 backdrop-blur-md">
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="md:hidden"
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
 
-      <div className="flex flex-1 items-center gap-3">
         <WorkspaceSwitcher />
 
         <Button
           variant="outline"
           size="sm"
           onClick={() => useUIStore.getState().setSearchOpen(true)}
-          className="gap-2 text-zinc-500 hover:text-zinc-300"
+          className="gap-2 text-muted hover:text-foreground"
         >
           <Search className="h-4 w-4" />
           <span className="hidden sm:inline">Search</span>
-          <kbd className="hidden rounded border border-zinc-700 px-1 py-0.5 text-[10px] text-zinc-600 sm:inline">
+          <kbd className="hidden rounded border border-border px-1 py-0.5 text-step-0 text-muted sm:inline">
             ⌘K
           </kbd>
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <ThemeToggle />
 
         <NotificationBell />

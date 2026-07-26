@@ -24,9 +24,12 @@ export interface ImportResult {
     entity_types: number;
     entities: number;
     properties: number;
+    property_values: number;
     blocks: number;
     relations: number;
     tags: number;
     comments: number;
+    files: number;
+    entity_files: number;
   };
 }

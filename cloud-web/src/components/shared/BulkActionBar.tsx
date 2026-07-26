@@ -63,7 +63,7 @@ export function BulkActionBar({
 
   useEffect(() => {
     if (tagDialogOpen && token) {
-      tagService.list(token, workspaceId).then(setAvailableTags).catch(() => {});
+      tagService.list(workspaceId).then((res) => setAvailableTags(res.data)).catch(() => {});
     }
   }, [tagDialogOpen, token, workspaceId]);
 
@@ -93,7 +93,7 @@ export function BulkActionBar({
       description: `This will delete ${selectedCount} item${selectedCount !== 1 ? "s" : ""}.`,
       action: {
         label: "Delete",
-        onClick: () => handleBulkAction("/entities/bulk-delete"),
+        onClick: () => handleBulkAction("/workspaces/" + workspaceId + "/entities/bulk-delete"),
       },
       cancel: { label: "Cancel", onClick: () => {} },
       duration: 10000,
@@ -101,12 +101,12 @@ export function BulkActionBar({
   }, [selectedCount, handleBulkAction]);
 
   const handleArchive = useCallback(
-    () => handleBulkAction("/entities/bulk-archive"),
+    () => handleBulkAction("/workspaces/" + workspaceId + "/entities/bulk-archive"),
     [handleBulkAction]
   );
 
   const handleRestore = useCallback(
-    () => handleBulkAction("/entities/bulk-restore"),
+    () => handleBulkAction("/workspaces/" + workspaceId + "/entities/bulk-restore"),
     [handleBulkAction]
   );
 
@@ -115,7 +115,7 @@ export function BulkActionBar({
     setTagLoading(true);
     try {
       await apiClient.post(
-        "/entities/bulk-tag",
+        "/workspaces/" + workspaceId + "/entities/bulk-tag",
         { entity_ids: selectedIds, tag_id: tagIdInput.trim(), workspace_id: workspaceId },
         token
       );
@@ -136,7 +136,7 @@ export function BulkActionBar({
     setMoveLoading(true);
     try {
       await apiClient.post(
-        "/entities/bulk-move",
+        "/workspaces/" + workspaceId + "/entities/bulk-move",
         { entity_ids: selectedIds, target_workspace_id: targetWorkspaceId.trim(), workspace_id: workspaceId },
         token
       );
@@ -157,7 +157,7 @@ export function BulkActionBar({
     setAiLoading(true);
     try {
       await apiClient.post(
-        "/ai/bulk",
+        "/workspaces/" + workspaceId + "/ai/bulk",
         { entity_ids: selectedIds, workspace_id: workspaceId, prompt: aiPrompt.trim() },
         token
       );
@@ -191,15 +191,15 @@ export function BulkActionBar({
       <div
         className={cn(
           "fixed bottom-6 left-1/2 z-50 -translate-x-1/2",
-          "flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900/95 px-4 py-3 shadow-2xl backdrop-blur-sm",
+          "flex items-center gap-3 rounded-xl border border-border bg-card/95 px-4 py-3 shadow-2xl backdrop-blur-sm",
           className
         )}
       >
-        <span className="text-sm font-medium text-white">
+        <span className="text-sm font-medium text-foreground">
           {selectedCount} selected
         </span>
 
-        <div className="h-5 w-px bg-zinc-700" />
+        <div className="h-5 w-px bg-border" />
 
         <div className="flex items-center gap-1">
           {activeActions.map((action) => (
@@ -210,7 +210,7 @@ export function BulkActionBar({
                 "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                 action.variant === "danger"
                   ? "text-red-400 hover:bg-red-500/10"
-                  : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  : "text-foreground hover:bg-surface hover:text-foreground"
               )}
             >
               {action.icon}
@@ -219,11 +219,11 @@ export function BulkActionBar({
           ))}
         </div>
 
-        <div className="h-5 w-px bg-zinc-700" />
+        <div className="h-5 w-px bg-border" />
 
         <button
           onClick={onClearSelection}
-          className="flex items-center gap-1 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+          className="flex items-center gap-1 rounded-md p-1.5 text-muted transition-colors hover:bg-surface hover:text-foreground"
           title="Clear selection"
           aria-label="Clear selection"
         >
@@ -249,8 +249,8 @@ export function BulkActionBar({
                   className={cn(
                     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
                     tagIdInput === tag.id
-                      ? "bg-white/10 text-white"
-                      : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                      ? "bg-card/10 text-foreground"
+                      : "text-muted hover:bg-surface hover:text-foreground"
                   )}
                 >
                   <span
@@ -267,7 +267,7 @@ export function BulkActionBar({
               value={tagIdInput}
               onChange={(e) => setTagIdInput(e.target.value)}
               placeholder="Tag ID"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
               onKeyDown={(e) => { if (e.key === "Enter") handleTag(); }}
               autoFocus
             />
@@ -275,14 +275,14 @@ export function BulkActionBar({
           <DialogFooter>
             <button
               onClick={() => setTagDialogOpen(false)}
-              className="rounded-lg px-3 py-2 text-sm text-zinc-400 hover:text-white"
+              className="rounded-lg px-3 py-2 text-sm text-muted hover:text-foreground"
             >
               Cancel
             </button>
             <button
               onClick={handleTag}
               disabled={!tagIdInput.trim() || tagLoading}
-              className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
+              className="rounded-lg bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-surface disabled:opacity-50"
             >
               {tagLoading ? "Applying..." : "Apply Tag"}
             </button>
@@ -304,21 +304,21 @@ export function BulkActionBar({
             value={targetWorkspaceId}
             onChange={(e) => setTargetWorkspaceId(e.target.value)}
             placeholder="Target workspace ID"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
             onKeyDown={(e) => { if (e.key === "Enter") handleMove(); }}
             autoFocus
           />
           <DialogFooter>
             <button
               onClick={() => setMoveDialogOpen(false)}
-              className="rounded-lg px-3 py-2 text-sm text-zinc-400 hover:text-white"
+              className="rounded-lg px-3 py-2 text-sm text-muted hover:text-foreground"
             >
               Cancel
             </button>
             <button
               onClick={handleMove}
               disabled={!targetWorkspaceId.trim() || moveLoading}
-              className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
+              className="rounded-lg bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-surface disabled:opacity-50"
             >
               {moveLoading ? "Moving..." : "Move"}
             </button>
@@ -340,20 +340,20 @@ export function BulkActionBar({
             onChange={(e) => setAiPrompt(e.target.value)}
             placeholder="e.g. Summarize all entities, Add tags to all, Generate relations..."
             rows={3}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none resize-none"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none resize-none"
             autoFocus
           />
           <DialogFooter>
             <button
               onClick={() => setAiDialogOpen(false)}
-              className="rounded-lg px-3 py-2 text-sm text-zinc-400 hover:text-white"
+              className="rounded-lg px-3 py-2 text-sm text-muted hover:text-foreground"
             >
               Cancel
             </button>
             <button
               onClick={handleBulkAI}
               disabled={!aiPrompt.trim() || aiLoading}
-              className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
+              className="rounded-lg bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-surface disabled:opacity-50"
             >
               {aiLoading ? "Running..." : "Run AI Action"}
             </button>

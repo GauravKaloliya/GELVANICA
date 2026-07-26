@@ -3,6 +3,8 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from sqlalchemy import inspect
 
+from sqlalchemy.exc import StatementError
+
 from app.core.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.core.errors import ConflictError, NotFoundError
 from app.extensions import db
@@ -73,13 +75,19 @@ class BaseRepository(Generic[T]):
 
     def exists(self, object_id: str, include_deleted: bool = False) -> bool:
         """Check whether a record with the given ID exists without loading it."""
-        query = self.query(include_deleted=include_deleted)
-        query = query.filter(self.model.id == str(object_id))
-        return self.session.query(query.exists()).scalar()
+        try:
+            query = self.query(include_deleted=include_deleted)
+            query = query.filter(self.model.id == str(object_id))
+            return self.session.query(query.exists()).scalar()
+        except StatementError:
+            return False
 
     def get(self, object_id: str, include_deleted: bool = False) -> T:
         """Return a single record by ID, or raise NotFoundError."""
-        item = self.query(include_deleted=include_deleted).filter(self.model.id == str(object_id)).first()
+        try:
+            item = self.query(include_deleted=include_deleted).filter(self.model.id == str(object_id)).first()
+        except StatementError:
+            raise NotFoundError(f"{self.model.__name__} not found")
         if not item:
             raise NotFoundError(f"{self.model.__name__} not found")
         return item

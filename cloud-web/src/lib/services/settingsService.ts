@@ -6,21 +6,24 @@ interface SettingsListResponse {
 
 export const settingsService = {
   list: async (workspaceId: string): Promise<Record<string, unknown>> => {
-    const res = await apiClient.get<SettingsListResponse>(`/settings/?workspace_id=${workspaceId}`);
+    const res = await apiClient.get<SettingsListResponse>(`/workspaces/${workspaceId}/settings`);
     return res.data;
   },
 
   get: async (workspaceId: string, category: string): Promise<Record<string, unknown>> => {
-    const res = await apiClient.get<{ data: Record<string, unknown> }>(`/settings/${category}?workspace_id=${workspaceId}`);
+    const res = await apiClient.get<{ data: Record<string, unknown> }>(`/workspaces/${workspaceId}/settings/${category}`);
     return res.data;
   },
 
   update: (workspaceId: string, category: string, data: Record<string, unknown>) =>
-    apiClient.put(`/settings/${category}`, { workspace_id: workspaceId, ...data }),
+    apiClient.put(`/workspaces/${workspaceId}/settings/${category}`, data),
 
-  delete: (workspaceId: string, category: string) =>
-    apiClient.post(`/settings/reset`, { workspace_id: workspaceId, category }),
+  updateMulti: (workspaceId: string, data: Record<string, unknown>) =>
+    apiClient.patch(`/workspaces/${workspaceId}/settings`, data),
+
+  reset: (workspaceId: string, category: string) =>
+    apiClient.post(`/workspaces/${workspaceId}/settings/reset`, { category }),
 
   resetAll: (workspaceId: string) =>
-    apiClient.post(`/settings/reset`, { workspace_id: workspaceId, reset_all: true }),
+    apiClient.post(`/workspaces/${workspaceId}/settings/reset`, { reset_all: true }),
 };

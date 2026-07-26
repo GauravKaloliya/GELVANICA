@@ -23,9 +23,11 @@ const CONFIG = {
       cwd: ROOT,
       env: {
         GNOVIUM_MODE: 'cloud',
-        DATABASE_URL: process.env.CLOUD_DATABASE_URL || process.env.DATABASE_URL || 'postgresql://gaurav@localhost:5432/gnovium',
+        DATABASE_URL: process.env.CLOUD_DATABASE_URL || process.env.DATABASE_URL || 'postgresql://gaurav:GnoviummT3hadyrlVJCBsY@localhost:5432/gnovium_cloud',
+        ALLOWED_HOSTS: 'localhost,127.0.0.1',
         AUTO_CREATE_TABLES: 'true',
         CORS_ORIGINS: DEV_CORS_ORIGINS,
+        REDIS_URL: 'redis://localhost:6379/0',
       },
       port: 5000,
     },

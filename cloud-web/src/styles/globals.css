@@ -3,10 +3,10 @@
 @source "../../../packages/shared/index.ts";
 @import "../../../packages/shared/styles/base.css";
 
-@layer base {
-  *:focus-visible {
-    @apply outline-none ring-2 ring-white/20;
-  }
+@theme {
+  --color-nav: var(--nav-bg);
+  --color-code: var(--code-bg);
+  --color-sidebar-active: var(--sidebar-active);
 }
 
 :root {

@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 
 type Theme = "system" | "light" | "dark" | "sepia" | "high-contrast" | "ocean" | "midnight";
 
-type PanelId = "properties" | "ai" | "comments" | "backlinks" | "history";
+type PanelId = "properties" | "ai" | "comments" | "backlinks" | "history" | "versions" | "info" | "relations";
 
 interface UIState {
   theme: Theme;

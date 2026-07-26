@@ -44,14 +44,14 @@ export default function EquationBlock({ content, onChange }: EquationBlockProps)
             onKeyDown={handleKeyDown}
             placeholder="E = mc²"
             autoFocus
-            className="flex-1 bg-transparent font-mono text-sm text-purple-300 outline-none placeholder:text-zinc-600"
+            className="flex-1 bg-transparent font-mono text-sm text-purple-300 outline-none placeholder:text-muted"
           />
         ) : (
           <button
             onClick={() => setEditing(true)}
             className={cn(
               "flex-1 rounded px-2 py-1 text-left font-mono text-sm transition-colors",
-              content.text ? "text-purple-300 hover:bg-zinc-800/50" : "text-zinc-600 hover:bg-zinc-800/50"
+              content.text ? "text-purple-300 hover:bg-surface/50" : "text-muted hover:bg-surface/50"
             )}
           >
             {content.text || "Click to add equation..."}

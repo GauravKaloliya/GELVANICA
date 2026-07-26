@@ -1,17 +1,21 @@
 export { cn } from "./cn";
 
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(date));
+  }).format(d);
 }
 
-export function formatRelativeTime(date: string | Date): string {
-  const now = new Date();
+export function formatRelativeTime(date: string | Date | null | undefined): string {
+  if (!date) return "";
   const then = new Date(date);
-  const diffMs = now.getTime() - then.getTime();
+  if (isNaN(then.getTime())) return "";
+  const diffMs = Date.now() - then.getTime();
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHr = Math.floor(diffMin / 60);

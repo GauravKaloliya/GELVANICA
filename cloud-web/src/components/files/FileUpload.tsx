@@ -12,7 +12,7 @@ import type { FileUploadResult } from "@/lib/types/file";
 interface FileUploadProps {
   workspaceId: string;
   token: string;
-  onUploadComplete?: (result: FileUploadResult) => void;
+  onUploadComplete?: (result?: FileUploadResult) => void;
   onUploadProgress?: (progress: number) => void;
   maxSizeMB?: number;
   accept?: string[];
@@ -74,10 +74,11 @@ export function FileUpload({
             setUploadProgress(progress);
             onUploadProgress?.(progress);
           });
-          onUploadComplete?.(result);
-        } catch {
+          setUploadError(null);
+        } catch (e) {
           setUploadError(`Failed to upload ${file.name}`);
         }
+        onUploadComplete?.();
         const progress = ((i + 1) / files.length) * 100;
         setUploadProgress(progress);
         onUploadProgress?.(progress);
@@ -151,28 +152,28 @@ export function FileUpload({
         onClick={() => !uploading && fileInputRef.current?.click()}
         className={cn(
           "relative cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors",
-          dragOver
-            ? "border-white bg-white/5"
-            : "border-zinc-800 hover:border-zinc-700",
+dragOver
+              ? "border-accent bg-accent/5"
+              : "border-border card-hover",
           uploading && "pointer-events-none opacity-50"
         )}
       >
         {uploading ? (
           <div className="space-y-3">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-zinc-500" />
-            <p className="text-sm text-zinc-400">Uploading...</p>
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted" />
+            <p className="text-sm text-muted">Uploading...</p>
             <Progress value={uploadProgress} size="md" />
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted">
               {Math.round(uploadProgress)}%
             </p>
           </div>
         ) : (
           <>
-            <Upload className="mx-auto h-8 w-8 text-zinc-600" />
-            <p className="mt-2 text-sm text-zinc-400">
+            <Upload className="mx-auto h-8 w-8 text-muted" />
+            <p className="mt-2 text-sm text-muted">
               Drag and drop files here, or click to browse
             </p>
-            <p className="mt-1 text-xs text-zinc-600">
+            <p className="mt-1 text-xs text-muted">
               Max {maxSizeMB}MB per file ·{" "}
               {accept.length > 0
                 ? accept.slice(0, 5).join(", ") +
@@ -214,12 +215,12 @@ export function FileUpload({
                 "flex items-center gap-3 rounded-lg border p-2.5 text-sm",
                 pf.error
                   ? "border-red-500/20 bg-red-500/5 text-red-400"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-300"
+                  : "border-border bg-card text-foreground"
               )}
             >
-              <File className="h-4 w-4 shrink-0 text-zinc-500" />
+              <File className="h-4 w-4 shrink-0 text-muted" />
               <span className="truncate flex-1">{pf.file.name}</span>
-              <span className="shrink-0 text-xs text-zinc-600">
+              <span className="shrink-0 text-xs text-muted">
                 {formatFileSize(pf.file.size)}
               </span>
               {pf.error && (
@@ -232,7 +233,7 @@ export function FileUpload({
           <div className="flex justify-end pt-1">
             <button
               onClick={handleClear}
-              className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white"
+              className="rounded-lg border-border px-3 py-1.5 text-xs text-muted hover:bg-surface hover:text-foreground"
             >
               Clear
             </button>

@@ -30,12 +30,12 @@ export default function SnapshotsTab({
             value={snapshotName}
             onChange={(e) => onSnapshotNameChange(e.target.value)}
             placeholder="Snapshot name (optional)"
-            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+            className="flex-1 rounded-lg border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
           />
           <button
             type="submit"
             disabled={creatingSnapshot}
-            className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface disabled:opacity-50"
           >
             {creatingSnapshot ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -48,31 +48,31 @@ export default function SnapshotsTab({
       )}
 
       {!branchId ? (
-        <div className="rounded-lg border border-dashed border-zinc-700 py-12 text-center">
-          <p className="text-sm text-zinc-500">No default branch found for this workspace.</p>
+        <div className="rounded-lg border border-dashed border-border py-12 text-center">
+          <p className="text-sm text-muted">No default branch found for this workspace.</p>
         </div>
       ) : snapshots.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-700 py-12 text-center">
-          <Layers className="mx-auto h-8 w-8 text-zinc-600" />
-          <p className="mt-2 text-sm text-zinc-500">No snapshots yet.</p>
+        <div className="rounded-lg border border-dashed border-border py-12 text-center">
+          <Layers className="mx-auto h-8 w-8 text-muted" />
+          <p className="mt-2 text-sm text-muted">No snapshots yet.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {snapshots.map((snap) => (
             <div
               key={snap.id}
-              className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
+              className="flex items-center justify-between rounded-lg border-border bg-card px-4 py-3"
             >
               <div className="flex items-center gap-3">
-                <Layers className="h-4 w-4 text-zinc-500" />
+                <Layers className="h-4 w-4 text-muted" />
                 <div>
                   <p className="text-sm font-medium text-white">
                     {snap.name || `Snapshot ${snap.id.slice(0, 8)}`}
                   </p>
                   {snap.description && (
-                    <p className="text-xs text-zinc-500">{snap.description}</p>
+                    <p className="text-xs text-muted">{snap.description}</p>
                   )}
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-muted">
                     {formatRelativeTime(snap.created_at)}
                   </p>
                 </div>

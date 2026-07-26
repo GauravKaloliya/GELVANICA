@@ -1,44 +1,28 @@
-import type { Entity } from "./entity";
+export type GovernanceReportType = 'access_audit' | 'change_log' | 'storage_summary' | 'activity_summary' | 'compliance' | 'health_check';
+
+export type GovernanceReportStatus = 'pending' | 'running' | 'completed' | 'failed';
 
 export interface GovernanceReport {
   id: string;
   workspace_id: string;
-  health_score: number;
-  duplicate_count: number;
-  orphan_count: number;
-  stale_count: number;
-  report: {
-    duplicates: Array<{ title: string; count: number }>;
-    orphans: Entity[];
-    stale: Entity[];
-    entity_count: number;
-  };
-  created_at: string;
-}
-
-export interface GovernanceHealth {
-  health_score: number;
-  duplicate_count: number;
-  orphan_count: number;
-  stale_count: number;
-  entity_count: number;
-  created_at: string;
-}
-
-export interface DuplicateGroup {
+  type: GovernanceReportType;
   title: string;
-  count: number;
-  entity_ids?: string[];
+  status: GovernanceReportStatus;
+  data: Record<string, unknown> | null;
+  params: Record<string, unknown> | null;
+  created_by: string | null;
+  created_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
-export interface GovernanceOverview {
-  duplicates: DuplicateGroup[];
-}
-
-export interface OrphansResponse {
-  orphans: Entity[];
-}
-
-export interface StaleResponse {
-  stale: Entity[];
+export interface GovernanceHealthScore {
+  entity_count: number;
+  block_count: number;
+  relation_count: number;
+  duplicate_count: number;
+  orphan_count: number;
+  stale_count: number;
+  health_score: number;
 }

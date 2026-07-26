@@ -52,6 +52,18 @@ def create_sync_operation(workspace_id: str) -> Response:
     )
 
 
+@bp.get("/<string:workspace_id>/sync/devices")
+@limiter.limit(RATE_LIMIT_STANDARD)
+@secured
+
+def list_sync_devices(workspace_id: str) -> Response:
+    """List sync device IDs that have pushed operations."""
+    access_err = check_workspace_access(workspace_id)
+    if access_err:
+        return access_err
+    return raw_response(SyncService().list_devices(workspace_id))
+
+
 @bp.get("/<string:workspace_id>/sync/<string:op_id>")
 @limiter.limit(RATE_LIMIT_STANDARD)
 @secured

@@ -146,7 +146,6 @@ class FileService:
                 File.is_deleted.is_(False),
                 File.state.in_(["READY", "VALIDATING", "UPLOADED"]),
             )
-            .with_for_update()
         )
         used = db.session.execute(subq).scalar()
         if used + additional_bytes > max_bytes:
@@ -365,6 +364,19 @@ class FileService:
         """
         provider = self._get_provider()
         return provider.presign_download(file_record.object_key, expires_in)
+
+    def get_file_content(self, file_record):
+        """Read and return the raw text content of a file.
+
+        Args:
+            file_record: The File model instance to read.
+
+        Returns:
+            Decoded UTF-8 string content of the file.
+        """
+        provider = self._get_provider()
+        raw = provider.retrieve(file_record.object_key)
+        return raw.decode("utf-8")
 
     def delete_file(self, file_record, deleted_by=None):
         """Soft-delete a file, removing it from storage in local mode.

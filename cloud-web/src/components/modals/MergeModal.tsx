@@ -53,12 +53,12 @@ export function MergeModal({
           </div>
         </DialogHeader>
 
-        <div className="rounded-lg border border-zinc-800 bg-zinc-800/50 p-4">
+        <div className="rounded-lg border-border bg-surface p-4">
           <div className="flex items-center gap-3 text-sm">
             <Badge variant="outline" className="font-mono text-purple-400 border-purple-500/30">
               {sourceBranch}
             </Badge>
-            <span className="text-zinc-500">→</span>
+            <span className="text-muted">→</span>
             <Badge variant="outline" className="font-mono">
               {targetBranch}
             </Badge>

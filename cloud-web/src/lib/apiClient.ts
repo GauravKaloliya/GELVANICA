@@ -28,7 +28,7 @@ function isAuthEndpoint(endpoint: string): boolean {
   return AUTH_ENDPOINTS.some((p) => endpoint.startsWith(p));
 }
 
-let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
 
 const inflightRequests = new Map<string, Promise<unknown>>();
 
@@ -76,26 +76,31 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
           signal: controller.signal,
         });
 
-        if (res.status === 401 && !isAuthEndpoint(endpoint) && !isRefreshing) {
-          isRefreshing = true;
-          try {
-            const { tokens, refreshAccessToken } = useAuthStore.getState();
-            if (tokens?.refresh_token) {
-              const newToken = await refreshAccessToken();
-              if (newToken) {
-                const { tokens: refreshedTokens } = useAuthStore.getState();
-                headers["Authorization"] = `Bearer ${refreshedTokens?.access_token}`;
-                res = await fetch(`${API_BASE}${endpoint}`, {
-                  ...fetchOptions,
-                  headers,
-                  signal: controller.signal,
-                });
+        if (res.status === 401 && !isAuthEndpoint(endpoint)) {
+          if (!refreshPromise) {
+            refreshPromise = (async () => {
+              try {
+                const { tokens, refreshAccessToken } = useAuthStore.getState();
+                if (tokens?.refresh_token) {
+                  return await refreshAccessToken();
+                }
+                return false;
+              } catch {
+                useAuthStore.getState().logout();
+                return false;
               }
-            }
-          } catch {
-            useAuthStore.getState().logout();
-          } finally {
-            isRefreshing = false;
+            })();
+          }
+          const refreshed = await refreshPromise;
+          refreshPromise = null;
+          if (refreshed) {
+            const { tokens: refreshedTokens } = useAuthStore.getState();
+            headers["Authorization"] = `Bearer ${refreshedTokens?.access_token}`;
+            res = await fetch(`${API_BASE}${endpoint}`, {
+              ...fetchOptions,
+              headers,
+              signal: controller.signal,
+            });
           }
         }
 
@@ -163,26 +168,31 @@ async function requestBlob(endpoint: string, options: RequestOptions = {}): Prom
         signal: controller.signal,
       });
 
-      if (res.status === 401 && !isAuthEndpoint(endpoint) && !isRefreshing) {
-        isRefreshing = true;
-        try {
-          const { tokens, refreshAccessToken } = useAuthStore.getState();
-          if (tokens?.refresh_token) {
-            const newToken = await refreshAccessToken();
-            if (newToken) {
-              const { tokens: refreshedTokens } = useAuthStore.getState();
-              headers["Authorization"] = `Bearer ${refreshedTokens?.access_token}`;
-              res = await fetch(`${API_BASE}${endpoint}`, {
-                ...fetchOptions,
-                headers,
-                signal: controller.signal,
-              });
+      if (res.status === 401 && !isAuthEndpoint(endpoint)) {
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            try {
+              const { tokens, refreshAccessToken } = useAuthStore.getState();
+              if (tokens?.refresh_token) {
+                return await refreshAccessToken();
+              }
+              return false;
+            } catch {
+              useAuthStore.getState().logout();
+              return false;
             }
-          }
-        } catch {
-          useAuthStore.getState().logout();
-        } finally {
-          isRefreshing = false;
+          })();
+        }
+        const refreshed = await refreshPromise;
+        refreshPromise = null;
+        if (refreshed) {
+          const { tokens: refreshedTokens } = useAuthStore.getState();
+          headers["Authorization"] = `Bearer ${refreshedTokens?.access_token}`;
+          res = await fetch(`${API_BASE}${endpoint}`, {
+            ...fetchOptions,
+            headers,
+            signal: controller.signal,
+          });
         }
       }
 

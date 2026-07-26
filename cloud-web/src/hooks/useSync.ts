@@ -53,15 +53,15 @@ export function useSync(workspaceId: string) {
   const ackOperation = useCallback(
     async (opId: string) => {
       if (!tokens?.access_token) return;
-      return acknowledge(tokens.access_token, opId);
+      return acknowledge(tokens.access_token, workspaceId, opId);
     },
-    [tokens, acknowledge]
+    [tokens, workspaceId, acknowledge]
   );
 
   const computeDiff = useCallback(
     async (exportData: Record<string, unknown>): Promise<SyncDiff | null> => {
       if (!tokens?.access_token) return null;
-      return syncService.diff(tokens.access_token, workspaceId, exportData);
+      return syncService.diff(workspaceId, exportData).then(res => res.data);
     },
     [tokens, workspaceId]
   );
@@ -69,7 +69,7 @@ export function useSync(workspaceId: string) {
   const applyDiff = useCallback(
     async (diff: SyncDiff) => {
       if (!tokens?.access_token) return;
-      const res = await syncService.applyDiff(tokens.access_token, workspaceId, diff);
+      const res = await syncService.applyDiff(workspaceId, diff).then(res => res.data);
       loadOperations();
       return res;
     },
@@ -82,7 +82,7 @@ export function useSync(workspaceId: string) {
       setIsSyncing(true);
       setStatus("syncing");
       try {
-        const res = await syncService.syncFromExport(tokens.access_token, workspaceId, exportData);
+        const res = await syncService.syncFromExport(workspaceId, exportData);
         loadOperations();
         return res;
       } catch (e) {

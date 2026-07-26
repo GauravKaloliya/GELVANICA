@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { PROPERTY_TYPES } from "@/lib/config/constants";
+import { configService } from "@/lib/services/configService";
 
 interface EntityType {
   id: string;
@@ -45,6 +45,7 @@ export default function EntityTypesPage() {
 
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([]);
   const [properties, setProperties] = useState<CustomProperty[]>([]);
+  const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingType, setCreatingType] = useState(false);
   const [creatingProperty, setCreatingProperty] = useState(false);
@@ -55,7 +56,7 @@ export default function EntityTypesPage() {
   const [newTypeName, setNewTypeName] = useState("");
   const [newTypeIcon, setNewTypeIcon] = useState("");
   const [newPropertyName, setNewPropertyName] = useState("");
-  const [newPropertyType, setNewPropertyType] = useState<string>(PROPERTY_TYPES[0]);
+  const [newPropertyType, setNewPropertyType] = useState<string>("");
   const [newPropertyEntityTypeId, setNewPropertyEntityTypeId] = useState("");
 
   const fetchData = useCallback(async () => {
@@ -63,12 +64,17 @@ export default function EntityTypesPage() {
     setLoading(true);
     setError(null);
     try {
-      const [typesJson, propsJson] = await Promise.all([
-        apiClient.get<{ data: EntityType[] }>(`/entities/types?workspace_id=${workspaceId}`),
-        apiClient.get<{ data: CustomProperty[] }>(`/entities/properties?workspace_id=${workspaceId}`),
+      const [typesJson, propsJson, configJson] = await Promise.all([
+        apiClient.get<{ data: EntityType[] }>(`/workspaces/${workspaceId}/entities/types`),
+        apiClient.get<{ data: CustomProperty[] }>(`/workspaces/${workspaceId}/entities/properties`),
+        configService.get(workspaceId),
       ]);
       setEntityTypes(typesJson.data || []);
       setProperties(propsJson.data || []);
+      setPropertyTypes(configJson.property_types ?? []);
+      if ((configJson.property_types ?? []).length > 0) {
+        setNewPropertyType(configJson.property_types[0]);
+      }
     } catch {
       setError("Failed to load entity types and properties.");
     } finally {
@@ -86,7 +92,7 @@ export default function EntityTypesPage() {
     setCreatingType(true);
     setError(null);
     try {
-      const data = await apiClient.post<{ data: EntityType }>("/entities/types", {
+      const data = await apiClient.post<{ data: EntityType }>(`/workspaces/${workspaceId}/entities/types`, {
         workspace_id: workspaceId,
         name: newTypeName.trim(),
         icon: newTypeIcon.trim() || null,
@@ -110,7 +116,7 @@ export default function EntityTypesPage() {
     setCreatingProperty(true);
     setError(null);
     try {
-      const data = await apiClient.post<{ data: CustomProperty }>("/entities/properties", {
+      const data = await apiClient.post<{ data: CustomProperty }>(`/workspaces/${workspaceId}/entities/properties`, {
         workspace_id: workspaceId,
         entity_type_id: newPropertyEntityTypeId,
         name: newPropertyName.trim(),
@@ -119,7 +125,7 @@ export default function EntityTypesPage() {
       });
       setProperties((prev) => [...prev, data.data]);
       setNewPropertyName("");
-      setNewPropertyType(PROPERTY_TYPES[0]);
+      setNewPropertyType(propertyTypes[0] || "");
       setNewPropertyEntityTypeId("");
       setSavedProperty(true);
       setTimeout(() => setSavedProperty(false), 2000);
@@ -133,7 +139,7 @@ export default function EntityTypesPage() {
   const handleDeleteType = async (id: string) => {
     if (!token) return;
     try {
-      await apiClient.delete(`/entities/types/${id}`);
+      await apiClient.delete(`/workspaces/${workspaceId}/entities/types/${id}`);
       setEntityTypes((prev) => prev.filter((t) => t.id !== id));
       setProperties((prev) => prev.filter((p) => p.entity_type_id !== id));
     } catch {
@@ -144,7 +150,7 @@ export default function EntityTypesPage() {
   const handleDeleteProperty = async (id: string) => {
     if (!token) return;
     try {
-      await apiClient.delete(`/entities/properties/${id}`);
+      await apiClient.delete(`/workspaces/${workspaceId}/properties/${id}`);
       setProperties((prev) => prev.filter((p) => p.id !== id));
     } catch {
       setError("Failed to delete property.");
@@ -153,10 +159,10 @@ export default function EntityTypesPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl p-6 space-y-8">
+      <div className="mx-auto max-w-4xl p-6 space-y-8">
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-8 w-64" />
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
+        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
           <Skeleton className="h-6 w-40" />
           <div className="flex gap-3">
             <Skeleton variant="rectangular" className="h-10 w-20 rounded-lg" />
@@ -164,7 +170,7 @@ export default function EntityTypesPage() {
           </div>
           <Skeleton variant="rectangular" className="h-10 w-28 rounded-lg" />
         </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-3">
+        <div className="rounded-xl border border-border bg-card p-6 space-y-3">
           <Skeleton className="h-6 w-32" />
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3">
@@ -181,28 +187,28 @@ export default function EntityTypesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-6 space-y-8">
+    <div className="mx-auto max-w-4xl p-6 space-y-8">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-zinc-500">
+      <div className="flex items-center gap-2 text-sm text-muted">
         <Link
           href={`/workspace/${workspaceId}/settings`}
-          className="hover:text-white"
+          className="hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <Link
           href={`/workspace/${workspaceId}/settings`}
-          className="hover:text-white"
+          className="hover:text-foreground"
         >
           Settings
         </Link>
         <span>/</span>
-        <span className="text-zinc-300">Entity Types</span>
+        <span className="text-foreground">Entity Types</span>
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-white">Entity Types & Properties</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-2xl font-bold text-foreground display-heading">Entity Types & Properties</h1>
+        <p className="mt-1 text-step-3 text-muted">
           Manage custom entity types and their properties for this workspace
         </p>
       </div>
@@ -221,19 +227,19 @@ export default function EntityTypesPage() {
       )}
 
       {/* Create Entity Type */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-          <Tag className="h-5 w-5 text-zinc-400" />
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground display-heading">
+          <Tag className="h-5 w-5 text-muted" />
           Create Entity Type
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-step-3 text-muted">
           Define a new type of entity for your workspace
         </p>
 
         <form onSubmit={handleCreateType} className="mt-6 space-y-4">
           <div className="grid grid-cols-[auto_1fr] gap-3 items-end">
             <div>
-              <label htmlFor="new-type-icon" className="block text-sm font-medium text-zinc-400 mb-1.5">
+              <label htmlFor="new-type-icon" className="block text-sm font-medium text-muted mb-1.5">
                 Icon
               </label>
               <input
@@ -242,11 +248,11 @@ export default function EntityTypesPage() {
                 value={newTypeIcon}
                 onChange={(e) => setNewTypeIcon(e.target.value)}
                 placeholder="e.g. 📝"
-                className="w-20 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-center text-lg text-white placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                className="w-20 rounded-lg border border-border bg-surface px-3 py-2 text-center text-lg text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor="new-type-name" className="block text-sm font-medium text-zinc-400 mb-1.5">
+              <label htmlFor="new-type-name" className="block text-sm font-medium text-muted mb-1.5">
                 Name
               </label>
               <input
@@ -255,7 +261,7 @@ export default function EntityTypesPage() {
                 value={newTypeName}
                 onChange={(e) => setNewTypeName(e.target.value)}
                 placeholder="e.g. RFC, Ticket, Spec"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
                 required
               />
             </div>
@@ -267,8 +273,8 @@ export default function EntityTypesPage() {
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
                 savedType
-                  ? "bg-green-600 text-white"
-                  : "bg-white text-black hover:bg-zinc-200"
+                  ? "bg-green-600 text-foreground"
+                  : "bg-card text-foreground hover:bg-surface"
               )}
             >
               {creatingType ? (
@@ -285,10 +291,10 @@ export default function EntityTypesPage() {
       </div>
 
       {/* Entity Types List */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground display-heading">
           Entity Types{" "}
-          <span className="text-sm font-normal text-zinc-500">
+          <span className="text-step-3 font-normal text-muted">
             ({entityTypes.length})
           </span>
         </h2>
@@ -301,22 +307,22 @@ export default function EntityTypesPage() {
             return (
               <div
                 key={entityType.id}
-                className="group flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-zinc-800/50"
+                className="group flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-surface"
               >
                 <span className="text-xl">
                   {entityType.icon || "📄"}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-step-3 font-medium text-foreground">
                     {entityType.name}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-step-1 text-muted">
                     {typeProperties.length} propert{typeProperties.length === 1 ? "y" : "ies"}
                   </p>
                 </div>
                 <button
                   onClick={() => handleDeleteType(entityType.id)}
-                  className="rounded p-1.5 text-zinc-600 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+                  className="rounded p-1.5 text-muted opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
                   aria-label={`Delete ${entityType.name}`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -328,36 +334,36 @@ export default function EntityTypesPage() {
 
         {entityTypes.length === 0 && (
           <div className="py-8 text-center">
-            <Tag className="mx-auto h-8 w-8 text-zinc-700" />
-            <p className="mt-2 text-sm text-zinc-500">No entity types yet</p>
+            <Tag className="mx-auto h-8 w-8 text-muted" />
+            <p className="mt-2 text-step-3 text-muted">No entity types yet</p>
           </div>
         )}
       </div>
 
       {/* Create Custom Property */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">Create Custom Property</h2>
-        <p className="mt-1 text-sm text-zinc-500">
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground display-heading">Create Custom Property</h2>
+        <p className="mt-1 text-step-3 text-muted">
           Add a custom property to an entity type
         </p>
 
         <form onSubmit={handleCreateProperty} className="mt-6 space-y-4">
           <div>
-            <label htmlFor="new-property-entity-type" className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="new-property-entity-type" className="block text-sm font-medium text-muted mb-1.5">
               Entity Type
             </label>
             <select
               id="new-property-entity-type"
               value={newPropertyEntityTypeId}
               onChange={(e) => setNewPropertyEntityTypeId(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               required
             >
-              <option value="" className="bg-zinc-800">
+              <option value="" className="bg-surface">
                 Select entity type...
               </option>
               {entityTypes.map((et) => (
-                <option key={et.id} value={et.id} className="bg-zinc-800">
+                <option key={et.id} value={et.id} className="bg-surface">
                   {et.icon ? `${et.icon} ` : ""}
                   {et.name}
                 </option>
@@ -365,7 +371,7 @@ export default function EntityTypesPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="new-property-name" className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="new-property-name" className="block text-sm font-medium text-muted mb-1.5">
               Property Name
             </label>
             <input
@@ -374,22 +380,22 @@ export default function EntityTypesPage() {
               value={newPropertyName}
               onChange={(e) => setNewPropertyName(e.target.value)}
               placeholder="e.g. Priority, Status, Due Date"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
               required
             />
           </div>
           <div>
-            <label htmlFor="new-property-type" className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="new-property-type" className="block text-sm font-medium text-muted mb-1.5">
               Property Type
             </label>
             <select
               id="new-property-type"
               value={newPropertyType}
               onChange={(e) => setNewPropertyType(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white focus:border-zinc-500 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
             >
-              {PROPERTY_TYPES.map((pt) => (
-                <option key={pt} value={pt} className="bg-zinc-800">
+              {propertyTypes.map((pt) => (
+                <option key={pt} value={pt} className="bg-surface">
                   {pt.replace(/_/g, " ")}
                 </option>
               ))}
@@ -406,8 +412,8 @@ export default function EntityTypesPage() {
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50",
                 savedProperty
-                  ? "bg-green-600 text-white"
-                  : "bg-white text-black hover:bg-zinc-200"
+                  ? "bg-green-600 text-foreground"
+                  : "bg-card text-foreground hover:bg-surface"
               )}
             >
               {creatingProperty ? (
@@ -424,10 +430,10 @@ export default function EntityTypesPage() {
       </div>
 
       {/* Properties List */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground display-heading">
           Custom Properties{" "}
-          <span className="text-sm font-normal text-zinc-500">
+          <span className="text-step-3 font-normal text-muted">
             ({properties.length})
           </span>
         </h2>
@@ -440,23 +446,23 @@ export default function EntityTypesPage() {
             return (
               <div
                 key={prop.id}
-                className="group flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-zinc-800/50"
+                className="group flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-surface"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-white">{prop.name}</p>
-                    <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                    <p className="text-step-3 font-medium text-foreground">{prop.name}</p>
+                    <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-medium text-muted">
                       {prop.property_type.replace(/_/g, " ")}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-step-1 text-muted">
                     {entityType?.icon ? `${entityType.icon} ` : ""}
                     {entityType?.name || "Unknown type"}
                   </p>
                 </div>
                 <button
                   onClick={() => handleDeleteProperty(prop.id)}
-                  className="rounded p-1.5 text-zinc-600 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+                  className="rounded p-1.5 text-muted opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
                   aria-label={`Delete ${prop.name}`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -468,8 +474,8 @@ export default function EntityTypesPage() {
 
         {properties.length === 0 && (
           <div className="py-8 text-center">
-            <Tag className="mx-auto h-8 w-8 text-zinc-700" />
-            <p className="mt-2 text-sm text-zinc-500">
+            <Tag className="mx-auto h-8 w-8 text-muted" />
+            <p className="mt-2 text-step-3 text-muted">
               No custom properties yet
             </p>
           </div>

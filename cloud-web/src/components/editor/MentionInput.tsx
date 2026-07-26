@@ -115,12 +115,12 @@ export default function MentionInput({
         placeholder={placeholder}
         disabled={disabled}
         rows={1}
-        className="w-full resize-none rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-zinc-500"
+        className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:border-accent"
       />
       {showMentions && filteredUsers.length > 0 && (
         <div
           ref={mentionListRef}
-          className="absolute bottom-full left-0 mb-1 w-64 max-h-48 overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-900 p-1 shadow-xl z-50"
+          className="absolute bottom-full left-0 mb-1 w-64 max-h-48 overflow-y-auto rounded-lg border border-border bg-card p-1 neo-depth-zinc z-50"
           role="listbox"
         >
           {filteredUsers.map((user, idx) => (
@@ -132,10 +132,10 @@ export default function MentionInput({
               aria-selected={idx === selectedIndex}
               className={cn(
                 "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors",
-                idx === selectedIndex ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50"
+                idx === selectedIndex ? "bg-surface text-foreground" : "text-muted hover:bg-surface"
               )}
             >
-              <AtSign className="h-3 w-3 text-zinc-500" />
+              <AtSign className="h-3 w-3 text-muted" />
               <span className="font-medium">{user.name || user.email}</span>
             </button>
           ))}

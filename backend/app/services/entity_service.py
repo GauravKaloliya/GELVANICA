@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.errors import ApiError, ConflictError, NotFoundError
 from app.events.service import EventService
 from app.extensions import db
-from app.models import Block, Entity, EntityEvent, EntityPropertyValue, EntityTag, Notification, Property, Relation, SearchDocument
+from app.models import Block, Entity, EntityEvent, EntityPropertyValue, EntityTag, EntityType, Notification, Property, Relation, SearchDocument
 from app.repositories import (
     BlockRepository,
     EntityFileRepository,
@@ -129,11 +129,26 @@ class EntityService:
             "created_at": prop.created_at.isoformat() if prop.created_at else None,
         }
 
+    def _ensure_entity_type(self, workspace_id: str) -> str:
+        existing = EntityType.query.filter_by(workspace_id=workspace_id, is_deleted=False).first()
+        if existing:
+            return str(existing.id)
+        entity_type = EntityType(
+            workspace_id=workspace_id,
+            name="Page",
+            slug="page",
+            icon="FileText",
+            description="Default page type",
+        )
+        db.session.add(entity_type)
+        db.session.flush()
+        return str(entity_type.id)
+
     def create(self, data: dict, user_id: str) -> dict:
         if not data.get("workspace_id"):
             raise ApiError("workspace_id is required", 400, "bad_request")
         if not data.get("entity_type_id"):
-            raise ApiError("entity_type_id is required", 400, "bad_request")
+            data["entity_type_id"] = self._ensure_entity_type(data["workspace_id"])
         properties = data.get("properties", {})
         if not isinstance(properties, dict):
             raise ApiError("properties must be a dict", 400, "bad_request")

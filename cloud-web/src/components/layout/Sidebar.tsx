@@ -18,8 +18,6 @@ import {
   Brain,
   ChevronLeft,
   Plus,
-  Clock,
-  Archive,
 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
@@ -41,8 +39,7 @@ const NAV_ITEMS = [
   { href: "graph", label: "Knowledge Graph", icon: Link2 },
   { href: "files", label: "Files", icon: Upload },
   { href: "tags", label: "Tags", icon: Tag },
-  { href: "recent", label: "Recent", icon: Clock },
-  { href: "archive", label: "Archive", icon: Archive },
+
   { href: "governance", label: "Governance", icon: Shield },
   { href: "activity", label: "Activity", icon: Activity },
   { href: "sync", label: "Sync", icon: RefreshCw },
@@ -84,18 +81,18 @@ export function Sidebar({ workspaceId }: SidebarProps) {
         role="navigation"
         aria-label="Workspace navigation"
         className={cn(
-          "left-0 top-0 z-50 flex h-full flex-col border-r border-zinc-800 bg-zinc-950 transition-all duration-300 max-md:fixed max-md:z-50 max-md:shadow-2xl",
+          "fixed left-0 top-0 z-50 flex h-full flex-col border-r border-border bg-nav shadow-2xl transition-all duration-300 md:shadow-none",
           sidebarCollapsed ? "w-16 -translate-x-full md:translate-x-0" : "w-64 md:translate-x-0"
         )}
       >
       {/* Workspace Header */}
-      <div className="flex h-14 items-center gap-3 border-b border-zinc-800 px-4">
+      <div className="flex h-14 items-center gap-3 border-b border-border px-4">
         {!sidebarCollapsed && (
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">
+            <p className="truncate text-step-3 font-semibold text-foreground">
               {currentWorkspace?.name || "Workspace"}
             </p>
-            <p className="truncate text-[11px] text-zinc-500">
+            <p className="truncate text-step-0 text-muted">
               {currentWorkspace?.deployment_mode || "cloud"}
             </p>
           </div>
@@ -163,10 +160,10 @@ export function Sidebar({ workspaceId }: SidebarProps) {
                 key={navItem.href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-step-3 font-medium transition-colors",
                   isActive
-                    ? "bg-zinc-800 text-white"
-                    : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300",
+                    ? "bg-surface text-foreground"
+                    : "text-muted hover:bg-surface hover:text-foreground",
                   sidebarCollapsed && "justify-center px-0"
                 )}
               >
@@ -187,10 +184,10 @@ export function Sidebar({ workspaceId }: SidebarProps) {
       </ScrollArea>
 
       {/* Member Stack + Collapse */}
-      <div className="border-t border-zinc-800 p-2 space-y-2">
+      <div className="border-t border-border p-2 space-y-2">
         {!sidebarCollapsed && displayMembers.length > 0 && (
           <div className="px-2 py-1.5">
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+            <p className="mb-1.5 text-step-0 font-semibold uppercase tracking-wider text-muted">
               Members
             </p>
             <div className="flex items-center">
@@ -198,23 +195,23 @@ export function Sidebar({ workspaceId }: SidebarProps) {
                 {displayMembers.map((member) => (
                   <TooltipWrapper
                     key={member.id}
-                    content={member.user?.name || "Unknown"}
+                    content={member.display_name || "Unknown"}
                     side="right"
                   >
                     <div className="relative">
                       <UserAvatar
-                        name={member.user?.name}
-                        avatarUrl={member.user?.avatar_url}
+                        name={member.display_name}
+                        avatarUrl={member.avatar_url}
                         size="sm"
-                        className="ring-2 ring-zinc-950 h-6 w-6 text-[9px]"
+                        className="ring-2 ring-nav h-6 w-6 text-[9px]"
                       />
-                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-green-400" />
+                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-nav bg-green-400" />
                     </div>
                   </TooltipWrapper>
                 ))}
               </div>
               {extraCount > 0 && (
-                <span className="ml-2 text-[11px] text-zinc-500">
+                <span className="ml-2 text-step-0 text-muted">
                   +{extraCount} more
                 </span>
               )}

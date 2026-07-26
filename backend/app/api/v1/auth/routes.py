@@ -4,7 +4,7 @@ from functools import wraps
 from urllib.parse import urlparse
 
 import requests as http_requests
-from flask import Blueprint, Response, current_app, request
+from flask import Blueprint, Response, current_app, redirect, request, send_from_directory
 from flask_jwt_extended import verify_jwt_in_request
 from flask_jwt_extended.exceptions import (
     CSRFError,
@@ -131,6 +131,7 @@ def proxy_to_cloud(method: str, path: str, *, json_data=None):
 
 @bp.post("/register")
 @limiter.limit(RATE_LIMIT_AUTH_WRITE)
+@cloud_only
 @require_local_auth
 def register() -> Response:
     """Email/password registration."""
@@ -143,6 +144,7 @@ def register() -> Response:
 
 @bp.post("/login")
 @limiter.limit(RATE_LIMIT_AUTH_WRITE)
+@cloud_only
 @require_local_auth
 def login() -> Response:
     """Email/password login."""
@@ -154,7 +156,7 @@ def login() -> Response:
 
 @bp.get("/check-email")
 @limiter.limit(RATE_LIMIT_STRICT)
-@secured
+@cloud_only
 def check_email() -> Response:
     """Check email availability."""
     email = request.args.get("email", "").strip().lower()
@@ -180,6 +182,7 @@ def google_login() -> Response:
 
 @bp.post("/refresh")
 @limiter.limit(RATE_LIMIT_STANDARD)
+@cloud_only
 def refresh() -> Response:
     """Refresh access token."""
     if deployment_mode() == "local":
@@ -192,6 +195,7 @@ def refresh() -> Response:
 
 @bp.post("/logout")
 @limiter.limit(RATE_LIMIT_STANDARD)
+@cloud_only
 def logout() -> Response:
     """Revoke session. Accepts both access and refresh tokens."""
     if deployment_mode() == "local":
@@ -206,6 +210,7 @@ def logout() -> Response:
 
 @bp.get("/me")
 @limiter.limit(RATE_LIMIT_STANDARD)
+@cloud_only
 def get_me() -> Response:
     """Get current user profile."""
     err = _verify_jwt()
@@ -216,6 +221,7 @@ def get_me() -> Response:
 
 @bp.patch("/me")
 @limiter.limit(RATE_LIMIT_STRICT)
+@cloud_only
 def update_me() -> Response:
     """Update current user profile."""
     err = _verify_jwt()
@@ -227,6 +233,32 @@ def update_me() -> Response:
     data = load_schema(UserUpdateSchema(), data)
     result = AuthService().update_profile(current_user_id(), data)
     return item_response(result)
+
+
+@bp.post("/avatar")
+@limiter.limit(RATE_LIMIT_STRICT)
+@cloud_only
+@secured
+def upload_avatar() -> Response:
+    """Upload profile avatar image."""
+    user_id = current_user_id()
+    if "file" not in request.files:
+        return error("bad_request", "No file provided", status=400)
+    file = request.files["file"]
+    if not file.filename:
+        return error("bad_request", "No file selected", status=400)
+    import hashlib
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "png"
+    ext = ext if ext in {"png", "jpg", "jpeg", "gif", "webp"} else "png"
+    data = file.read()
+    content_hash = hashlib.sha256(data).hexdigest()
+    object_key = f"v1/avatars/{user_id}/{content_hash}.{ext}"
+    from app.services.storage_provider import create_storage_provider
+    provider = create_storage_provider(current_app.config)
+    provider.store(object_key, data, file.content_type or "image/png")
+    AuthService().update_profile(user_id, {"avatar_url": object_key})
+    presigned = provider.presign_download(object_key, expires_in=3600)
+    return item_response({"avatar_url": presigned})
 
 
 @bp.post("/change-password")
@@ -243,6 +275,7 @@ def change_password() -> Response:
 
 @bp.post("/forgot-password")
 @limiter.limit(RATE_LIMIT_PASSWORD_RESET)
+@cloud_only
 @require_local_auth
 def forgot_password() -> Response:
     """Request a password reset email."""
@@ -255,6 +288,7 @@ def forgot_password() -> Response:
 
 @bp.post("/reset-password")
 @limiter.limit(RATE_LIMIT_PASSWORD_RESET)
+@cloud_only
 @require_local_auth
 def reset_password() -> Response:
     """Reset password using a reset token."""
@@ -284,6 +318,7 @@ def generate_exchange_code() -> Response:
 
 @bp.post("/authorize")
 @limiter.limit(RATE_LIMIT_AUTH_WRITE)
+@cloud_only
 @secured
 @require_local_auth
 def authorize() -> Response:
@@ -314,6 +349,7 @@ def authorize() -> Response:
 
 @bp.get("/authorize")
 @limiter.limit(RATE_LIMIT_STANDARD)
+@cloud_only
 def webview_authorize() -> Response:
     """Webview-based authorization redirect.
 
@@ -354,6 +390,7 @@ def webview_authorize() -> Response:
 
 @bp.post("/profile-changed")
 @limiter.limit(RATE_LIMIT_STANDARD)
+@cloud_only
 @secured
 @require_local_auth
 def profile_changed() -> Response:
@@ -379,6 +416,7 @@ def profile_changed() -> Response:
 
 @bp.post("/exchange")
 @limiter.limit(RATE_LIMIT_DESTRUCTIVE)
+@cloud_only
 @require_local_auth
 def exchange_code() -> Response:
     """Exchange a one-time code for access + refresh tokens."""

@@ -1,100 +1,46 @@
-import { API_BASE } from "@/lib/config/constants";
+import { apiClient } from "../apiClient";
 import type { SyncOperation, SyncDiff, SyncApplyResult } from "@/lib/types";
 
-async function syncApi<T>(endpoint: string, token: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: { message: "Sync failed" } }));
-    throw new Error(error.error?.message || `HTTP ${res.status}`);
-  }
-
-  return res.json();
-}
-
 export const syncService = {
-  listOperations: async (token: string, workspaceId: string): Promise<SyncOperation[]> => {
-    const params = new URLSearchParams({ workspace_id: workspaceId });
-    const res = await syncApi<{ data: SyncOperation[] }>(`/sync/?${params}`, token);
-    return res.data;
-  },
+  listOperations: (workspaceId: string) =>
+    apiClient.get<{data: SyncOperation[]}>(`/workspaces/${workspaceId}/sync`),
 
-  ingestOperation: async (
-    token: string,
-    operation: Partial<SyncOperation> & { workspace_id: string; operation_type: string; payload: Record<string, unknown> }
-  ): Promise<SyncOperation> => {
-    const res = await syncApi<{ data: SyncOperation }>("/sync/", token, {
-      method: "POST",
-      body: JSON.stringify(operation),
-    });
-    return res.data;
-  },
+  ingestOperation: (workspaceId: string, operation: { operation_type: string; payload: Record<string, unknown>; device_id?: string | null; client_clock?: number | null; entity_type?: string | null; entity_id?: string | null }) =>
+    apiClient.post<{data: SyncOperation}>(`/workspaces/${workspaceId}/sync`, operation),
 
-  getOperation: async (token: string, id: string): Promise<SyncOperation> => {
-    const res = await syncApi<{ data: SyncOperation }>(`/sync/${id}`, token);
-    return res.data;
-  },
+  getOperation: (workspaceId: string, id: string) =>
+    apiClient.get<{data: SyncOperation}>(`/workspaces/${workspaceId}/sync/${id}`),
 
-  acknowledge: async (token: string, opId: string): Promise<void> => {
-    await syncApi(`/sync/${opId}/ack`, token, { method: "POST" });
-  },
+  acknowledge: (workspaceId: string, opId: string) =>
+    apiClient.post(`/workspaces/${workspaceId}/sync/${opId}/ack`),
 
-  diff: async (
-    token: string,
-    workspaceId: string,
-    exportData: Record<string, unknown>
-  ): Promise<SyncDiff> => {
-    const res = await syncApi<{ data: SyncDiff }>("/sync/diff", token, {
-      method: "POST",
-      body: JSON.stringify({ workspace_id: workspaceId, export_data: exportData }),
-    });
-    return res.data;
-  },
+  diff: (workspaceId: string, exportData: Record<string, unknown>) =>
+    apiClient.post<{data: SyncDiff}>(`/workspaces/${workspaceId}/sync/diff`, { export_data: exportData }),
 
-  applyDiff: async (
-    token: string,
-    workspaceId: string,
-    diff: SyncDiff
-  ): Promise<SyncApplyResult> => {
-    const res = await syncApi<{ data: SyncApplyResult }>("/sync/apply-diff", token, {
-      method: "POST",
-      body: JSON.stringify({ workspace_id: workspaceId, diff }),
-    });
-    return res.data;
-  },
+  applyDiff: (workspaceId: string, diff: SyncDiff) =>
+    apiClient.post<{data: SyncApplyResult}>(`/workspaces/${workspaceId}/sync/apply-diff`, { diff }),
 
-  resolveConflict: async (
-    token: string,
-    workspaceId: string,
-    data: {
-      entity_id: string;
-      resolution: "keep_local" | "keep_remote" | "merge";
-      merged_data?: Record<string, unknown>;
-    }
-  ): Promise<{ resolved: boolean }> => {
-    const res = await syncApi<{ data: { resolved: boolean } }>("/sync/resolve-conflict", token, {
-      method: "POST",
-      body: JSON.stringify({ workspace_id: workspaceId, ...data }),
-    });
-    return res.data;
-  },
+  resolveConflict: (workspaceId: string, data: { entity_id: string; resolution: "keep_local" | "keep_remote" | "merge"; merged_data?: Record<string, unknown> }) =>
+    apiClient.post<{data: {resolved: boolean}}>(`/workspaces/${workspaceId}/sync/resolve-conflict`, data),
 
-  syncFromExport: async (
-    token: string,
-    workspaceId: string,
-    exportData: Record<string, unknown>
-  ): Promise<SyncApplyResult> => {
-    const res = await syncApi<{ data: SyncApplyResult }>("/sync/sync-from-export", token, {
-      method: "POST",
-      body: JSON.stringify({ workspace_id: workspaceId, export_data: exportData }),
-    });
-    return res.data;
-  },
+  resolveConflictById: (workspaceId: string, conflictId: string, data: { resolution: "keep_local" | "keep_remote" | "merge"; merged_data?: Record<string, unknown> }) =>
+    apiClient.post<{data: {resolved: boolean}}>(`/workspaces/${workspaceId}/sync/conflicts/${conflictId}/resolve`, data),
+
+  syncFromExport: (workspaceId: string, exportData: Record<string, unknown>) =>
+    apiClient.post<{data: SyncApplyResult}>(`/workspaces/${workspaceId}/sync/sync-from-export`, { export_data: exportData }),
+
+  push: (workspaceId: string, operations: SyncOperation[]) =>
+    apiClient.post<{data: {synced: number}}>(`/workspaces/${workspaceId}/sync/push`, { operations }),
+
+  pull: (workspaceId: string, lastSyncedAt?: string) =>
+    apiClient.post<{data: {operations: SyncOperation[]; last_synced_at: string}}>(`/workspaces/${workspaceId}/sync/pull`, { last_synced_at: lastSyncedAt }),
+
+  fullSync: (workspaceId: string) =>
+    apiClient.post<{data: {operations: SyncOperation[]}}>(`/workspaces/${workspaceId}/sync/full-sync`),
+
+  status: (workspaceId: string) =>
+    apiClient.get<{data: {pending_count: number; last_synced_at: string | null}}>(`/workspaces/${workspaceId}/sync/status`),
+
+  getChanges: (workspaceId: string, since?: string) =>
+    apiClient.get<{data: {changes: unknown[]}}>(`/workspaces/${workspaceId}/sync/changes${since ? `?since=${since}` : ""}`),
 };

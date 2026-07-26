@@ -40,12 +40,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-card border-border neo-depth-zinc p-12 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
             <AlertTriangle className="h-6 w-6 text-red-400" />
           </div>
           <h3 className="mt-4 text-base font-semibold text-white">Something went wrong</h3>
-          <p className="mt-1.5 max-w-sm text-sm text-zinc-500">
+          <p className="mt-1.5 max-w-sm text-sm text-muted">
             An unexpected error occurred. Please try again.
           </p>
           <Button onClick={this.handleReset} variant="outline" size="sm" className="mt-5">

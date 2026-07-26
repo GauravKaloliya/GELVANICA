@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useSyncStore } from "@/stores/syncStore";
 import { useAuthStore } from "@/stores/authStore";
 import { settingsService } from "@/lib/services/settingsService";
+import { configService } from "@/lib/services/configService";
+import type { SyncFrequency, ConflictStrategy } from "@/lib/services/configService";
 import { Switch } from "@/components/ui/Switch";
 import { Button } from "@/components/ui/Button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/Select";
@@ -27,21 +29,7 @@ interface SyncSettingsProps {
   workspaceId: string;
 }
 
-const SYNC_FREQUENCY_OPTIONS = [
-  { value: "realtime", label: "Real-time" },
-  { value: "5min", label: "Every 5 minutes" },
-  { value: "15min", label: "Every 15 minutes" },
-  { value: "manual", label: "Manual only" },
-] as const;
-
-const CONFLICT_STRATEGIES = [
-  { value: "local_wins", label: "Always keep local", description: "Local changes always take precedence" },
-  { value: "remote_wins", label: "Always keep remote", description: "Server changes always take precedence" },
-  { value: "auto_merge", label: "Auto-merge", description: "Attempt automatic merge on conflicts" },
-  { value: "manual", label: "Ask each time", description: "Prompt for resolution on conflicts" },
-] as const;
-
-const DEVICE_ICONS = {
+const DEVICE_ICONS: Record<string, React.ElementType> = {
   desktop: Monitor,
   mobile: Smartphone,
   web: Globe,
@@ -64,21 +52,28 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
 
   const token = tokens?.access_token;
 
-  const [autoSync, setAutoSync] = useState(true);
-  const [frequency, setFrequency] = useState("realtime");
-  const [conflictStrategy, setConflictStrategy] = useState("local_wins");
-  const [offlineMode, setOfflineMode] = useState(true);
+  const [autoSync, setAutoSync] = useState(false);
+  const [frequency, setFrequency] = useState("");
+  const [conflictStrategy, setConflictStrategy] = useState("");
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [syncFrequencies, setSyncFrequencies] = useState<SyncFrequency[]>([]);
+  const [conflictStrategies, setConflictStrategies] = useState<ConflictStrategy[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     if (!token) return;
-    await Promise.all([
+    const [cfg] = await Promise.all([
+      configService.get(workspaceId),
       fetchDevices(token, workspaceId),
       fetchConflicts(token, workspaceId),
       fetchOperations(token, workspaceId),
     ]);
+    setSyncFrequencies(cfg.sync_frequencies ?? []);
+    setConflictStrategies(cfg.conflict_strategies ?? []);
+    if ((cfg.sync_frequencies ?? []).length > 0) setFrequency(cfg.sync_frequencies[0].value);
+    if ((cfg.conflict_strategies ?? []).length > 0) setConflictStrategy(cfg.conflict_strategies[0].value);
   }, [token, workspaceId, fetchDevices, fetchConflicts, fetchOperations]);
 
   useEffect(() => {
@@ -123,7 +118,7 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
     return (
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+          <div key={i} className="rounded-xl border-border bg-card neo-depth-zinc p-6">
             <Skeleton width="40%" height={20} className="mb-4" />
             <Skeleton lines={3} />
           </div>
@@ -135,37 +130,37 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
   return (
     <div className="space-y-6">
       {/* Status Overview */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">Sync Status</h2>
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+        <h2 className="text-lg font-semibold text-foreground">Sync Status</h2>
         <div className="mt-4 grid grid-cols-3 gap-4">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="rounded-lg border-border bg-card p-4">
             <div className="flex items-center gap-2">
               {status === "offline" ? (
                 <WifiOff className="h-3.5 w-3.5 text-red-400" />
               ) : (
                 <Wifi className="h-3.5 w-3.5 text-green-400" />
               )}
-              <span className="text-xs text-zinc-400">Status</span>
+              <span className="text-xs text-muted">Status</span>
             </div>
             <p className={cn("mt-2 text-sm font-semibold", status === "offline" ? "text-red-400" : "text-green-400")}>
               {status === "syncing" ? "Syncing..." : status === "offline" ? "Offline" : status === "conflict" ? "Conflict" : "Connected"}
             </p>
           </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="rounded-lg border-border bg-card p-4">
             <div className="flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 text-zinc-500" />
-              <span className="text-xs text-zinc-400">Last Sync</span>
+              <Clock className="h-3.5 w-3.5 text-muted" />
+              <span className="text-xs text-muted">Last Sync</span>
             </div>
-            <p className="mt-2 text-sm font-semibold text-white">
+            <p className="mt-2 text-sm font-semibold text-foreground">
               {lastSyncAt ? new Date(lastSyncAt).toLocaleTimeString() : "Never"}
             </p>
           </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="rounded-lg border-border bg-card p-4">
             <div className="flex items-center gap-2">
-              <RefreshCw className="h-3.5 w-3.5 text-zinc-500" />
-              <span className="text-xs text-zinc-400">Pending</span>
+              <RefreshCw className="h-3.5 w-3.5 text-muted" />
+              <span className="text-xs text-muted">Pending</span>
             </div>
-            <p className={cn("mt-2 text-sm font-semibold", offlineQueue.length > 0 ? "text-amber-400" : "text-white")}>
+            <p className={cn("mt-2 text-sm font-semibold", offlineQueue.length > 0 ? "text-amber-400" : "text-foreground")}>
               {offlineQueue.length} ops
             </p>
           </div>
@@ -173,8 +168,8 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
       </div>
 
       {/* Auto-sync & Frequency */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">Sync Behavior</h2>
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+        <h2 className="text-lg font-semibold text-foreground">Sync Behavior</h2>
         <div className="mt-6 space-y-5">
           <Switch
             label="Auto-sync"
@@ -183,7 +178,7 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
             onCheckedChange={setAutoSync}
           />
           <div>
-            <label htmlFor="sync-frequency" className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor="sync-frequency" className="block text-sm font-medium text-muted mb-1.5">
               Sync Frequency
             </label>
             <Select value={frequency} onValueChange={setFrequency}>
@@ -191,7 +186,7 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
                 <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
               <SelectContent>
-                {SYNC_FREQUENCY_OPTIONS.map((opt) => (
+                {syncFrequencies.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
@@ -203,11 +198,11 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
       </div>
 
       {/* Conflict Resolution */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">Conflict Resolution</h2>
-        <p className="mt-1 text-sm text-zinc-500">Choose how conflicts are resolved between devices</p>
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+        <h2 className="text-lg font-semibold text-foreground">Conflict Resolution</h2>
+        <p className="mt-1 text-sm text-muted">Choose how conflicts are resolved between devices</p>
         <div className="mt-4 space-y-2">
-          {CONFLICT_STRATEGIES.map((strategy) => (
+          {conflictStrategies.map((strategy) => (
             <button
               key={strategy.value}
               onClick={() => setConflictStrategy(strategy.value)}
@@ -215,20 +210,20 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
                 "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
                 conflictStrategy === strategy.value
                   ? "border-white/20 bg-white/5"
-                  : "border-zinc-800 hover:border-zinc-700"
+                  : "border-border card-hover"
               )}
             >
               <div
                 className={cn(
                   "h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                  conflictStrategy === strategy.value ? "border-white" : "border-zinc-600"
+                  conflictStrategy === strategy.value ? "border-white" : "border-border"
                 )}
               >
                 {conflictStrategy === strategy.value && <div className="h-2 w-2 rounded-full bg-white" />}
               </div>
               <div>
-                <p className="text-sm font-medium text-zinc-300">{strategy.label}</p>
-                <p className="text-xs text-zinc-500">{strategy.description}</p>
+                <p className="text-sm font-medium text-foreground">{strategy.label}</p>
+                <p className="text-xs text-muted">{strategy.description}</p>
               </div>
             </button>
           ))}
@@ -242,8 +237,8 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
       </div>
 
       {/* Offline Mode */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">Offline Mode</h2>
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+        <h2 className="text-lg font-semibold text-foreground">Offline Mode</h2>
         <div className="mt-4">
           <Switch
             label="Queue changes when offline"
@@ -255,25 +250,25 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
       </div>
 
       {/* Connected Devices */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="text-lg font-semibold text-white">Connected Devices</h2>
-        <p className="mt-1 text-sm text-zinc-500">Devices currently synced with this workspace</p>
+      <div className="rounded-xl border-border bg-card neo-depth-zinc p-6">
+        <h2 className="text-lg font-semibold text-foreground">Connected Devices</h2>
+        <p className="mt-1 text-sm text-muted">Devices currently synced with this workspace</p>
         {devices.length === 0 ? (
           <div className="mt-4 py-6 text-center">
-            <Monitor className="mx-auto h-6 w-6 text-zinc-600" />
-            <p className="mt-2 text-xs text-zinc-500">No devices connected</p>
+            <Monitor className="mx-auto h-6 w-6 text-muted" />
+            <p className="mt-2 text-xs text-muted">No devices connected</p>
           </div>
         ) : (
           <div className="mt-4 space-y-2">
             {devices.map((device) => {
               const DeviceIcon = DEVICE_ICONS[device.type] || Monitor;
               return (
-                <div key={device.id} className="flex items-center justify-between rounded-lg border border-zinc-800 p-3">
+                <div key={device.id} className="flex items-center justify-between rounded-lg border-border p-3">
                   <div className="flex items-center gap-3">
-                    <DeviceIcon className="h-4 w-4 text-zinc-400" />
+                    <DeviceIcon className="h-4 w-4 text-muted" />
                     <div>
-                      <p className="text-sm font-medium text-zinc-300">{device.name}</p>
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-sm font-medium text-foreground">{device.name}</p>
+                      <p className="text-xs text-muted">
                         {device.lastSyncAt ? `Last sync ${new Date(device.lastSyncAt).toLocaleString()}` : "Never synced"}
                       </p>
                     </div>
@@ -285,7 +280,7 @@ export function SyncSettings({ workspaceId }: SyncSettingsProps) {
                         ? "bg-green-500/10 text-green-400"
                         : device.status === "syncing"
                         ? "bg-blue-500/10 text-blue-400"
-                        : "bg-zinc-700/50 text-zinc-400"
+                        : "bg-surface-2 text-muted"
                     )}
                   >
                     {device.status}

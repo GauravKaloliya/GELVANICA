@@ -28,5 +28,5 @@ export function getFileIconColor(mimeType: string): string {
   if (mimeType.includes("pdf")) return "text-red-400";
   if (mimeType.includes("json") || mimeType.includes("code")) return "text-green-400";
   if (mimeType.includes("zip")) return "text-blue-400";
-  return "text-zinc-400";
+  return "text-muted";
 }
